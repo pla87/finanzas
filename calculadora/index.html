@@ -77,6 +77,14 @@
       font-size: 12px; font-weight: 500; color: rgb(var(--brand-textMuted)); line-height: 1.3;
     }
     .control { display: flex; align-items: center; gap: 6px; flex: none; }
+    /* La oferta lleva dos cajas: el descuento ocupa el hueco de la unidad, así la caja del precio
+       sigue alineada con las demás por su borde derecho. */
+    .unidad-campo { display: flex; align-items: center; justify-content: flex-end; gap: 3px; }
+    .campo.campo-corto { width: 3.1rem; padding: 5px 6px; }
+    /* Casilla dentro de la etiqueta: «(☐ IVA)», «(☐ amort. acelerada)». */
+    .casilla { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+    .casilla input { accent-color: rgb(var(--brand-accent)); cursor: pointer; }
+    .fila > .etq-doble { font-size: 12px; font-weight: 500; color: rgb(var(--brand-textMuted)); line-height: 1.3; display: flex; flex-wrap: wrap; align-items: center; column-gap: 5px; }
     .hueco-candado { width: 22px; flex: none; }
     .unidad {
       font-size: 11px; color: rgb(var(--brand-textMuted)); text-align: right;
@@ -154,15 +162,18 @@
         <span id="saveIndicator" class="text-[10px] font-semibold text-brand-emerald opacity-0 transition whitespace-nowrap" aria-live="polite"></span>
       </p>
     </div>
-    <div class="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-2 flex-wrap">
-      <button onclick="alternarIdioma()" id="langBtn" class="h-12 w-12 sm:h-9 sm:w-9 flex items-center justify-center bg-brand-card border border-brand-border hover:bg-brand-cardInner rounded-lg transition"><span id="langIcon" class="flex items-center"></span></button>
-      <button onclick="toggleTheme()" id="themeToggleBtn" class="h-12 w-12 sm:h-9 sm:w-9 text-lg sm:text-sm flex items-center justify-center bg-brand-card border border-brand-border hover:bg-brand-cardInner rounded-lg transition"><span id="themeToggleIcon">🌙</span></button>
-      <button onclick="exportData()" id="btnGuardar" class="h-12 w-12 sm:h-9 sm:w-9 text-lg sm:text-sm bg-brand-emerald/20 border border-brand-emerald/40 text-brand-emerald hover:bg-brand-emerald/30 font-semibold rounded-lg transition flex items-center justify-center"><span>💾</span></button>
-      <button onclick="document.getElementById('backupInput').click()" id="btnCargar" class="h-12 w-12 sm:h-9 sm:w-9 text-lg sm:text-sm bg-brand-card border border-brand-border hover:bg-brand-cardInner font-semibold rounded-lg transition flex items-center justify-center"><span>📂</span></button>
+    <!-- Mismos botones que pacolucena.com/balance: en móvil se reparten el ancho en una fila; en
+         escritorio, cuadrados de 36 px. -->
+    <div class="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-1.5 sm:gap-2 flex-nowrap">
+      <button onclick="alternarIdioma()" id="langBtn" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span id="langIcon" class="flex items-center"></span></button>
+      <button onclick="toggleTheme()" id="themeToggleBtn" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span id="themeToggleIcon">🌙</span></button>
+      <button onclick="exportData()" id="btnGuardar" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-emerald/20 border-brand-emerald/40 text-brand-emerald hover:bg-brand-emerald/30"><span>💾</span></button>
+      <button onclick="document.getElementById('backupInput').click()" id="btnCargar" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span>📂</span></button>
       <input type="file" id="backupInput" accept=".txt,.json" class="hidden" onchange="importData(event)" />
-      <button onclick="resetDefaults()" id="btnReset" class="h-12 w-12 sm:h-9 sm:w-9 text-lg sm:text-sm flex items-center justify-center bg-brand-card border border-brand-border hover:bg-brand-cardInner rounded-lg transition"><span>♻️</span></button>
-      <button onclick="openModal('faqModal')" id="btnFaq" class="h-12 w-12 sm:h-9 sm:w-9 text-lg sm:text-sm flex items-center justify-center bg-brand-card border border-brand-border hover:bg-brand-cardInner rounded-lg transition"><span>🎓</span></button>
-      <button onclick="openModal('helpModal')" id="btnAyuda" class="h-12 w-12 sm:h-9 sm:w-9 text-lg sm:text-sm flex items-center justify-center bg-brand-card border border-brand-border hover:bg-brand-cardInner rounded-lg transition"><span>❓</span></button>
+      <button onclick="openModal('shareModal')" id="btnCompartir" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span>🔗</span></button>
+      <button onclick="resetDefaults()" id="btnReset" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-rose/20 border-brand-rose/50 text-brand-rose hover:bg-brand-rose/30"><span>♻️</span></button>
+      <button onclick="openModal('faqModal')" id="btnFaq" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span>🎓</span></button>
+      <button onclick="openModal('helpModal')" id="btnAyuda" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span>❓</span></button>
     </div>
   </header>
 
@@ -222,16 +233,14 @@
           <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="precioAnunciado" value="500000" class="campo text-brand-accent"></div>
         </div>
         <div class="fila">
-          <label for="oferta" class="tooltip-help" data-i18n="oferta" data-i18n-title="ofertaTip">Oferta (precio pagado)</label>
-          <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="oferta" value="500000" class="campo text-brand-accent"></div>
+          <label for="oferta" class="tooltip-help" data-i18n="oferta" data-i18n-title="ofertaTip">Oferta</label>
+          <div class="control"><span class="hueco-candado"></span><span class="unidad unidad-campo"><input type="text" inputmode="decimal" id="descuentoOferta" value="0" class="campo campo-corto" data-i18n-title="descuentoOfertaTip"><span>%</span></span><input type="text" inputmode="decimal" data-money id="oferta" value="500000" class="campo text-brand-accent"></div>
         </div>
-        <div class="salida"><span data-i18n="descuento">Descuento sobre lo anunciado</span><span id="outDescuento">--</span></div>
 
         <div class="fila">
-          <label for="superficie" class="tooltip-help" data-i18n="superficie" data-i18n-title="superficieTip">Superficie</label>
+          <label for="superficie" class="tooltip-help" data-i18n-title="superficieTip"><span data-i18n="superficie">Superficie</span> <span class="opacity-70">(<span id="outEurM2" class="num">--</span>)</span></label>
           <div class="control"><span class="hueco-candado"></span><span class="unidad">m²</span><input type="text" inputmode="decimal" data-money id="superficie" value="100" class="campo"></div>
         </div>
-        <div class="salida"><span data-i18n="precioM2">Precio por m²</span><span id="outEurM2">--</span></div>
 
         <div class="fila">
           <label for="valor" class="tooltip-help" data-i18n="valor" data-i18n-title="valorTip">Valor real estimado</label>
@@ -260,20 +269,15 @@
         <input type="checkbox" id="autoPctNotaria" checked class="hidden">
 
         <div class="fila">
-          <label for="comision" class="tooltip-help" data-i18n="comision" data-i18n-title="comisionTip">Comisión intermediarios</label>
+          <div class="etq-doble"><label for="comision" class="tooltip-help" data-i18n="comision" data-i18n-title="comisionTip">Comisión intermediarios</label><label class="casilla tooltip-help" data-i18n-title="ivaComisionTip">(<input type="checkbox" id="ivaComision"> <span data-i18n="ivaComision">IVA</span>)</label></div>
           <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="comision" value="0" class="campo"></div>
-        </div>
-        <div class="fila">
-          <label for="ivaComision" class="tooltip-help" data-i18n="ivaComision" data-i18n-title="ivaComisionTip">IVA sobre la comisión</label>
-          <div class="control"><span class="hueco-candado"></span><span class="unidad"></span><select id="ivaComision" class="campo"><option value="no" data-i18n="no">No</option><option value="si" selected data-i18n="si">Sí</option></select></div>
         </div>
         <div class="fila">
           <label for="reforma" class="tooltip-help" data-i18n="reforma" data-i18n-title="reformaTip">Reforma</label>
           <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="reforma" value="0" class="campo"></div>
         </div>
 
-        <div class="salida"><span data-i18n="gastosCompra">Gastos de compra</span><span id="outGastosCompra" class="text-brand-rose">--</span></div>
-        <div class="salida"><span data-i18n="costeTotal">Coste total</span><span id="outCosteTotal" class="text-brand-amber">--</span></div>
+        <div class="salida flex-wrap"><span><span data-i18n="gastosCompra">Gastos de compra</span> <b id="outGastosCompra" class="text-brand-rose num">--</b></span><span><span class="font-normal text-brand-textMuted" data-i18n="costeTotal">Coste total</span> <b id="outCosteTotal" class="text-brand-amber num">--</b></span></div>
       </div>
 
       <!-- Financiación -->
@@ -282,7 +286,6 @@
           <h2 class="text-base font-bold" data-i18n="finTitulo">Financiación</h2>
           <span class="text-xs text-brand-rose font-semibold px-2 py-0.5 rounded bg-brand-rose/10 border border-brand-rose/20" data-i18n="finBadge">Deuda</span>
         </div>
-        <p class="text-[10px] text-brand-textMuted leading-snug" data-i18n="finAyuda">Activa cada fuente con su candado. Lo que no cubran hipoteca y préstamo lo pones tú.</p>
 
         <div class="flex items-center gap-2 pt-1">
           <button type="button" class="lock-btn" onclick="alternarFuente('hipoteca')" id="lockHipoteca"></button>
@@ -295,24 +298,21 @@
             <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="pctFinanciado" value="80" class="campo text-brand-accent"></div>
           </div>
           <div class="fila">
-            <label for="plazoHipoteca" data-i18n="plazo">Plazo</label>
+            <div class="etq-doble"><label for="plazoHipoteca" data-i18n="plazo">Plazo</label><label class="casilla tooltip-help" data-i18n-title="aceleradaHipTip">(<input type="checkbox" id="hipotecaAcelerada"> <span data-i18n="aceleradaCorta">amort. acelerada</span>)</label></div>
             <div class="control"><span class="hueco-candado"></span><span class="unidad" data-i18n="kpiAnos">años</span><input type="text" inputmode="decimal" id="plazoHipoteca" value="30" class="campo"></div>
           </div>
           <div class="fila">
             <label for="tipoHipoteca" data-i18n="tipoInteres">Tipo de interés</label>
             <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoHipoteca" value="2,20" data-dec="2" class="campo"></div>
           </div>
-          <div class="fila">
-            <label for="hipotecaAcelerada" class="tooltip-help" data-i18n="acelerada" data-i18n-title="aceleradaHipTip">Amortización acelerada</label>
-            <div class="control"><span class="hueco-candado"></span><span class="unidad"></span><select id="hipotecaAcelerada" class="campo"><option value="no" selected data-i18n="no">No</option><option value="si" data-i18n="si">Sí</option></select></div>
+          <!-- Principal, cuota y el tipo al que la caja del primer año se queda en cero, en una sola
+               caja. Ese tipo es el margen ante una subida: no hace falta simular una hipoteca
+               variable para saber dónde está la raya. -->
+          <div class="salida flex-wrap gap-y-1">
+            <span><span data-i18n="principal">Principal</span> <b id="outPrincipalHip" class="num">--</b></span>
+            <span><span class="font-normal text-brand-textMuted" data-i18n="cuota">Cuota</span> <b id="outCuotaHipoteca" class="num">--</b></span>
+            <span class="tooltip-help" data-i18n-title="rupturaCajaTip"><span class="font-normal text-brand-textMuted" data-i18n="rupturaCaja">Caja a 0 al</span> <b id="outRupturaCaja" class="num">--</b></span>
           </div>
-          <div class="salida"><span data-i18n="principal">Principal</span><span id="outPrincipalHip">--</span></div>
-          <div class="salida"><span data-i18n="cuotaMensual">Cuota mensual</span><span id="outCuotaHipoteca">--</span></div>
-          <!-- Los dos tipos a los que la operación cambia de carácter. No hace falta simular una
-               hipoteca variable para saber cuánto margen tienes: basta con saber dónde están las
-               dos rayas. -->
-          <div class="salida"><span class="tooltip-help" data-i18n="rupturaCaja" data-i18n-title="rupturaCajaTip">Caja a cero al</span><span id="outRupturaCaja">--</span></div>
-          <div class="salida"><span class="tooltip-help" data-i18n="rupturaTir" data-i18n-title="rupturaTirTip">Deja de compensar al</span><span id="outRupturaTir">--</span></div>
         </div>
 
         <div class="flex items-center gap-2 pt-2 border-t border-brand-border">
@@ -326,16 +326,12 @@
             <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="importePrestamo" value="0" class="campo text-brand-accent"></div>
           </div>
           <div class="fila">
-            <label for="plazoPrestamo" data-i18n="plazo">Plazo</label>
+            <div class="etq-doble"><label for="plazoPrestamo" data-i18n="plazo">Plazo</label><label class="casilla tooltip-help" data-i18n-title="aceleradaPreTip">(<input type="checkbox" id="prestamoAcelerado"> <span data-i18n="aceleradaCorta">amort. acelerada</span>)</label></div>
             <div class="control"><span class="hueco-candado"></span><span class="unidad" data-i18n="kpiAnos">años</span><input type="text" inputmode="decimal" id="plazoPrestamo" value="5" class="campo"></div>
           </div>
           <div class="fila">
             <label for="tipoPrestamo" data-i18n="tipoInteres">Tipo de interés</label>
             <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoPrestamo" value="11,00" data-dec="2" class="campo"></div>
-          </div>
-          <div class="fila">
-            <label for="prestamoAcelerado" class="tooltip-help" data-i18n="acelerada" data-i18n-title="aceleradaPreTip">Amortización acelerada</label>
-            <div class="control"><span class="hueco-candado"></span><span class="unidad"></span><select id="prestamoAcelerado" class="campo"><option value="no" data-i18n="no">No</option><option value="si" selected data-i18n="si">Sí</option></select></div>
           </div>
           <div class="salida"><span data-i18n="cuotaMensual">Cuota mensual</span><span id="outCuotaPrestamo">--</span></div>
         </div>
@@ -350,17 +346,8 @@
         <span class="text-xs text-brand-emerald font-semibold px-2 py-0.5 rounded bg-brand-emerald/10 border border-brand-emerald/20" data-i18n="explotacionBadge">Ingresos</span>
       </div>
 
-      <div class="fila">
-        <label for="inflacion" class="tooltip-help" data-i18n="inflacion" data-i18n-title="inflacionTip">Inflación</label>
-        <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="inflacion" value="3,00" data-dec="2" class="campo"></div>
-      </div>
-      <div class="fila">
-        <label for="revalorizacion" class="tooltip-help" data-i18n="revalorizacion" data-i18n-title="revalorizacionTip">Revalorización anual</label>
-        <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('revalorizacion')" id="lockRevalorizacion"></button><span class="unidad">%</span><input type="text" inputmode="decimal" id="revalorizacion" value="3,00" data-dec="2" class="campo"></div>
-      </div>
-      <input type="checkbox" id="autoRevalorizacion" checked class="hidden">
 
-      <div class="fila border-t border-brand-border pt-4">
+      <div class="fila">
         <label for="alquiler" class="tooltip-help" data-i18n="alquiler" data-i18n-title="alquilerTip">Alquiler mensual</label>
         <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="alquiler" value="2000" class="campo text-brand-emerald"></div>
       </div>
@@ -407,11 +394,19 @@
         </div>
         <input type="checkbox" id="autoMantenimiento" checked class="hidden">
 
-        <div class="salida"><span data-i18n="gastosAnuales">Gastos anuales</span><span id="outGastosAnuales" class="text-brand-rose">--</span></div>
-        <div class="flex items-center justify-between gap-3 text-[11px] px-2.5">
-          <span class="text-brand-textMuted" data-i18n="seComen">Se comen</span>
-          <span class="font-bold num" id="outPesoGastos">--</span>
+        <div class="salida"><span><span data-i18n="gastosAnuales">Gastos anuales</span> <span class="opacity-80">(<span id="outPesoGastos" class="font-bold num">--</span>)</span></span><span id="outGastosAnuales" class="text-brand-rose">--</span></div>
+      </div>
+
+      <div class="border-t border-brand-border pt-4 space-y-3">
+        <div class="fila">
+          <label for="inflacion" class="tooltip-help" data-i18n="inflacion" data-i18n-title="inflacionTip">Inflación</label>
+          <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="inflacion" value="3,00" data-dec="2" class="campo"></div>
         </div>
+        <div class="fila">
+          <label for="revalorizacion" class="tooltip-help" data-i18n="revalorizacion" data-i18n-title="revalorizacionTip">Revalorización anual</label>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('revalorizacion')" id="lockRevalorizacion"></button><span class="unidad">%</span><input type="text" inputmode="decimal" id="revalorizacion" value="3,00" data-dec="2" class="campo"></div>
+        </div>
+        <input type="checkbox" id="autoRevalorizacion" checked class="hidden">
       </div>
     </div>
 
@@ -584,6 +579,24 @@
     </div>
   </section>
 
+  <!-- Compartir: la herramienta tal cual, o con los cálculos que se ven ahora en la dirección. -->
+  <div id="shareModal" class="hidden fixed inset-0 z-50 bg-black/60 items-center justify-center p-4" onclick="if(event.target===this)closeModal('shareModal')">
+    <div class="bg-brand-card border border-brand-border rounded-xl max-w-sm w-full p-6 space-y-4">
+      <div class="flex items-start justify-between gap-4 border-b border-brand-border pb-3">
+        <h2 class="text-lg font-bold" data-i18n="compartirTitulo">Compartir</h2>
+        <button onclick="closeModal('shareModal')" class="text-brand-textMuted hover:text-brand-accent text-xl leading-none">✕</button>
+      </div>
+      <button type="button" onclick="compartir(false)" class="w-full text-left p-3 rounded-lg border border-brand-border hover:border-brand-accent transition">
+        <div class="text-sm font-bold" data-i18n="compartirHerramienta">La calculadora</div>
+        <div class="text-xs text-brand-textMuted mt-0.5" data-i18n="compartirHerramientaSub">Vacía, con el escenario de ejemplo.</div>
+      </button>
+      <button type="button" onclick="compartir(true)" class="w-full text-left p-3 rounded-lg border border-brand-accent/50 bg-brand-accent/10 hover:border-brand-accent transition">
+        <div class="text-sm font-bold text-brand-accent" data-i18n="compartirCalculos">Estos cálculos</div>
+        <div class="text-xs text-brand-textMuted mt-0.5" data-i18n="compartirCalculosSub">Quien abra el enlace verá el piso con tus cifras.</div>
+      </button>
+    </div>
+  </div>
+
   <div id="helpModal" class="hidden fixed inset-0 z-50 bg-black/60 items-center justify-center p-4" onclick="if(event.target===this)closeModal('helpModal')">
     <div class="bg-brand-card border border-brand-border rounded-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto scrollbar-thin p-6 space-y-4">
       <div class="flex items-start justify-between gap-4 border-b border-brand-border pb-3">
@@ -637,7 +650,7 @@
         cabeceraSub: 'Rentabilidad de un piso en alquiler: hipoteca, préstamo, gastos, impuestos y proyección año a año.',
         avisoMovil: 'Las tablas se ven mejor en un ordenador', guardado: 'Guardado',
         btnIdioma: 'Switch to English', btnTema: 'Cambiar de tema', btnGuardar: 'Guardar el escenario en un archivo',
-        btnCargar: 'Cargar un escenario guardado', btnReset: 'Volver al escenario de ejemplo', btnAyuda: 'Cómo funciona el modelo',
+        btnCargar: 'Cargar un escenario guardado', btnReset: 'Volver al escenario de ejemplo', btnCompartir: 'Compartir la calculadora o estos cálculos', compartirTitulo: 'Compartir', compartirHerramienta: 'La calculadora', compartirHerramientaSub: 'Vacía, con el escenario de ejemplo.', compartirCalculos: 'Estos cálculos', compartirCalculosSub: 'Quien abra el enlace verá el piso con tus cifras.', enlaceCopiado: 'Enlace copiado', copiaEnlace: 'Copia el enlace:', btnAyuda: 'Cómo funciona el modelo',
         kpiBruta: 'RENTABILIDAD BRUTA',
         kpiBrutaTip: 'Alquiler anual dividido entre el coste total de la operación (precio + gastos + reforma).\nNo descuenta gastos, impuestos ni cuotas: es la referencia rápida que se usa para descartar.',
         kpiRoce: 'ROCE',
@@ -663,32 +676,28 @@
         kpiSinAportacionTip: 'Sin liquidez aportada no hay nada que recuperar: la operación se financia entera con deuda.',
         compraTitulo: 'Compra', compraBadge: 'Entrada',
         precioAnunciado: 'Precio anunciado', precioAnunciadoTip: 'Precio de venta que pide el vendedor. Sirve de referencia para medir el descuento.',
-        oferta: 'Oferta (precio pagado)', ofertaTip: 'Lo que realmente pagas por el piso. Es la base de los impuestos de compra y de la hipoteca.\nCon el candado cerrado vale lo mismo que el precio anunciado. Ábrelo para ofertar por debajo.',
-        descuento: 'Descuento sobre lo anunciado',
+        oferta: 'Oferta', ofertaTip: 'Lo que pagas por el piso, en euros o como descuento sobre el precio anunciado:\nal cambiar una cifra se ajusta la otra. Es la base de los impuestos de compra y de la hipoteca.',
+        descuentoOfertaTip: 'Descuento sobre el precio anunciado, en porcentaje.',
         superficie: 'Superficie', superficieTip: 'Superficie construida. Sirve para el precio por m² y para estimar la comunidad y el seguro.',
-        precioM2: 'Precio por m²',
         valor: 'Valor real estimado', valorTip: 'Lo que crees que vale el piso de verdad. Es el punto de partida de la revalorización:\nsi compras por debajo de valor, la plusvalía aparece desde el año uno.\nCon el candado cerrado vale lo mismo que la oferta, que es el supuesto prudente.',
         obraNueva: 'Obra nueva', obraNuevaTip: 'La vivienda usada paga ITP, que fija cada comunidad autónoma.\nLa obra nueva paga IVA (o IGIC en Canarias) más Actos Jurídicos Documentados.',
         ccaa: 'Comunidad autónoma', ccaaTip: 'Determina el tipo de ITP de la vivienda usada y el de AJD de la obra nueva.',
         comision: 'Comisión intermediarios', comisionTip: 'Honorarios de la agencia o del personal shopper, si los pagas tú.',
-        ivaComision: 'IVA sobre la comisión', ivaComisionTip: 'Si la comisión lleva IVA (21%), se suma al coste de la operación.',
+        ivaComision: 'IVA', ivaComisionTip: 'Márcalo si la comisión lleva IVA (21%): se suma al coste de la operación.',
         reforma: 'Reforma', reformaTip: 'Obra necesaria antes de alquilar. Suma al coste, a la base de amortización y al valor del inmueble.',
         impuestoCompra: 'Impuesto de compra', impuestoCompraTip: 'Con el candado cerrado sale del tipo que corresponde a la comunidad autónoma elegida\ny a si el piso es obra nueva. Ábrelo para escribir el tipo exacto de tu caso.',
         notaria: 'Notaría y registro', notariaTip: 'Notaría, registro y gestoría, estimados como un porcentaje del precio.',
         gastosCompra: 'Gastos de compra', costeTotal: 'Coste total',
         finTitulo: 'Financiación', finBadge: 'Deuda',
-        finAyuda: 'Activa cada fuente con su candado. Lo que no cubran hipoteca y préstamo lo pones tú.',
         hipoteca: 'Hipoteca', prestamo: 'Préstamo personal',
         pctFinanciado: 'Porcentaje financiado', pctFinanciadoTip: 'Parte del precio del piso que cubre la hipoteca. Los gastos de compra no se financian.',
         importePrestamo: 'Importe', importePrestamoTip: 'Tope: lo que quede por cubrir del coste total una vez aplicada la hipoteca.',
-        plazo: 'Plazo', tipoInteres: 'Tipo de interés', acelerada: 'Amortización acelerada',
-        aceleradaHipTip: 'Si es Sí, cada año la caja acumulada se destina a reducir el principal de la hipoteca\nen lugar de quedarse en tu bolsillo. Cancela la deuda mucho antes.\n\nCon las dos aceleradas, el dinero va primero a la deuda con el tipo más alto.',
-        aceleradaPreTip: 'Si es Sí, la caja acumulada amortiza este préstamo.\n\nCon las dos aceleradas, el dinero va primero a la deuda con el tipo más alto\ny sólo lo que sobre a la otra.',
-        cuotaMensual: 'Cuota mensual', principal: 'Principal', sinHipoteca: 'Sin hipoteca', sinPrestamo: 'Sin préstamo',
-        rupturaCaja: 'Caja a cero al',
+        plazo: 'Plazo', tipoInteres: 'Tipo de interés', aceleradaCorta: 'amort. acelerada',
+        aceleradaHipTip: 'Amortización acelerada. Si está marcada, cada año la caja acumulada se destina a reducir el principal de la hipoteca\nen lugar de quedarse en tu bolsillo. Cancela la deuda mucho antes.\n\nCon las dos aceleradas, el dinero va primero a la deuda con el tipo más alto.',
+        aceleradaPreTip: 'Amortización acelerada. Si está marcada, la caja acumulada amortiza este préstamo.\n\nCon las dos aceleradas, el dinero va primero a la deuda con el tipo más alto\ny sólo lo que sobre a la otra.',
+        cuotaMensual: 'Cuota mensual', cuota: 'Cuota', principal: 'Principal', sinHipoteca: 'Sin hipoteca', sinPrestamo: 'Sin préstamo',
+        rupturaCaja: 'Caja a 0 al',
         rupturaCajaTip: 'Tipo de hipoteca al que la caja del primer año se queda en cero. Por encima de ahí el\npiso deja de pagarse solo y hay que ponerle dinero todos los meses.\n\nEs el margen que tienes ante una subida de tipos sin necesidad de simular una hipoteca\nvariable: si tu tipo ya está por encima, la cifra sale en rojo.',
-        rupturaTir: 'Deja de compensar al',
-        rupturaTirTip: 'Tipo de hipoteca al que la rentabilidad anualizada con hipoteca iguala a la de comprar\nsin ella. Por encima de ahí, financiar resta en vez de sumar.\n\nQueda muy por encima del tipo que agota la caja: entre las dos rayas la operación no se\npaga sola pero sigue rentando más que pagarla al contado. Ahí ya no decide la\nrentabilidad, decide si puedes aguantar el goteo.',
         rupturaNunca: 'nunca',
         liquidez: 'Liquidez aportada', liquidezTip: 'Lo que pones de tu bolsillo: el coste total menos la hipoteca y el préstamo personal.\nNo se elige, es lo que queda por cubrir.',
         tope: 'máx.',
@@ -705,7 +714,7 @@
         seguroHogar: 'Seguro de hogar', seguroHogarTip: 'Seguro de continente y contenido del piso alquilado.',
         seguroImpagos: 'Seguro de impagos', seguroImpagosTip: 'Seguro de impago de rentas. Se cotiza en mensualidades de alquiler al año.',
         mantenimiento: 'Mantenimiento', mantenimientoTip: 'Reparaciones y conservación. Se estima como un porcentaje del alquiler cobrado:\ncuanto más renta produce el piso, más desgaste tiene.',
-        gastosAnuales: 'Gastos anuales', seComen: 'Se comen', delAlquiler: 'del alquiler', mensual: 'mensual', anual: 'anual',
+        gastosAnuales: 'Gastos anuales', delAlquiler: 'del alquiler', mensual: 'mensual', anual: 'anual',
         resumenTitulo: 'Resumen de la operación', resumenBadge: 'Salida', queCuesta: 'QUÉ TE CUESTA ENTRAR',
         resumenRentabilidad: 'RENTABILIDAD',
         rentBruta: 'Bruta sobre el coste total',
@@ -832,7 +841,7 @@
         cabeceraSub: 'Buy-to-let returns in Spain: mortgage, loan, costs, tax and a year-by-year projection.',
         avisoMovil: 'The tables read better on a computer', guardado: 'Saved',
         btnIdioma: 'Cambiar a español', btnTema: 'Switch theme', btnGuardar: 'Save this scenario to a file',
-        btnCargar: 'Load a saved scenario', btnReset: 'Back to the example scenario', btnAyuda: 'How the model works',
+        btnCargar: 'Load a saved scenario', btnReset: 'Back to the example scenario', btnCompartir: 'Share the calculator or these numbers', compartirTitulo: 'Share', compartirHerramienta: 'The calculator', compartirHerramientaSub: 'Blank, with the example scenario.', compartirCalculos: 'These numbers', compartirCalculosSub: 'Whoever opens the link sees the flat with your figures.', enlaceCopiado: 'Link copied', copiaEnlace: 'Copy the link:', btnAyuda: 'How the model works',
         kpiBruta: 'GROSS YIELD',
         kpiBrutaTip: 'Annual rent divided by the total cost of the deal (price + costs + refurbishment).\nIt ignores running costs, tax and instalments: a quick screen, not the real return.',
         kpiRoce: 'ROCE',
@@ -858,32 +867,28 @@
         kpiSinAportacionTip: 'With no cash of your own there is nothing to recover: the deal is financed entirely with debt.',
         compraTitulo: 'Purchase', compraBadge: 'Input',
         precioAnunciado: 'Asking price', precioAnunciadoTip: 'What the seller is asking. Used as the reference for the discount.',
-        oferta: 'Offer (price paid)', ofertaTip: 'What you actually pay. It drives the purchase taxes and the mortgage.\nLocked, it matches the asking price. Unlock it to offer below.',
-        descuento: 'Discount on the asking price',
+        oferta: 'Offer', ofertaTip: 'What you pay for the flat, in euros or as a discount on the asking price:\nchange one and the other follows. It drives the purchase taxes and the mortgage.',
+        descuentoOfertaTip: 'Discount on the asking price, as a percentage.',
         superficie: 'Floor area', superficieTip: 'Built floor area. Used for the price per m² and to estimate service charge and insurance.',
-        precioM2: 'Price per m²',
         valor: 'Estimated true value', valorTip: 'What you think the flat is really worth. It is where the appreciation starts:\nbuy below value and the gain shows up from year one.\nLocked, it matches the offer, which is the prudent assumption.',
         obraNueva: 'New build', obraNuevaTip: 'Second-hand homes pay ITP transfer tax, set by each autonomous community.\nNew builds pay VAT (IGIC in the Canaries) plus stamp duty (AJD).',
         ccaa: 'Autonomous community', ccaaTip: 'Sets the ITP rate for second-hand homes and the AJD rate for new builds.',
         comision: 'Buying agent fee', comisionTip: 'Estate agent or buying agent fee, where you pay it.',
-        ivaComision: 'VAT on the fee', ivaComisionTip: 'If the fee carries VAT (21%), it adds to the cost of the deal.',
+        ivaComision: 'VAT', ivaComisionTip: 'Tick it if the fee carries VAT (21%): it adds to the cost of the deal.',
         reforma: 'Refurbishment', reformaTip: 'Work needed before letting. It adds to the cost, to the depreciable base and to the value.',
         impuestoCompra: 'Purchase tax', impuestoCompraTip: 'Locked, it follows the rate for the autonomous community you picked and whether\nthe flat is a new build. Unlock it to enter the exact rate for your case.',
         notaria: 'Notary and registry', notariaTip: 'Notary, land registry and conveyancing, estimated as a percentage of the price.',
         gastosCompra: 'Purchase costs', costeTotal: 'Total cost',
         finTitulo: 'Financing', finBadge: 'Debt',
-        finAyuda: 'Switch each source on with its padlock. Whatever they do not cover, you put in.',
         hipoteca: 'Mortgage', prestamo: 'Personal loan',
         pctFinanciado: 'Loan to value', pctFinanciadoTip: "Share of the flat's price covered by the mortgage. Purchase costs are not financed.",
         importePrestamo: 'Amount', importePrestamoTip: 'Capped at whatever of the total cost the mortgage leaves uncovered.',
-        plazo: 'Term', tipoInteres: 'Interest rate', acelerada: 'Accelerated repayment',
-        aceleradaHipTip: 'If yes, each year the accumulated cash pays down mortgage principal instead of\nstaying in your pocket. It clears the debt far sooner.\n\nWith both accelerated, the money goes first to whichever debt carries the higher rate.',
-        aceleradaPreTip: 'If yes, accumulated cash pays down this loan.\n\nWith both accelerated, the money goes first to whichever debt carries the higher\nrate, and only the remainder to the other.',
-        cuotaMensual: 'Monthly instalment', principal: 'Principal', sinHipoteca: 'No mortgage', sinPrestamo: 'No loan',
-        rupturaCaja: 'Cash hits zero at',
+        plazo: 'Term', tipoInteres: 'Interest rate', aceleradaCorta: 'accelerated',
+        aceleradaHipTip: 'Accelerated repayment. If ticked, each year the accumulated cash pays down mortgage principal instead of\nstaying in your pocket. It clears the debt far sooner.\n\nWith both accelerated, the money goes first to whichever debt carries the higher rate.',
+        aceleradaPreTip: 'Accelerated repayment. If ticked, accumulated cash pays down this loan.\n\nWith both accelerated, the money goes first to whichever debt carries the higher\nrate, and only the remainder to the other.',
+        cuotaMensual: 'Monthly instalment', cuota: 'Instalment', principal: 'Principal', sinHipoteca: 'No mortgage', sinPrestamo: 'No loan',
+        rupturaCaja: 'Cash at 0 at',
         rupturaCajaTip: 'The mortgage rate at which first-year cash reaches zero. Above it the flat stops paying\nfor itself and you feed it every month.\n\nIt is your headroom against a rate rise without simulating a variable mortgage: if your\nrate is already past it, the figure turns red.',
-        rupturaTir: 'Stops paying off at',
-        rupturaTirTip: 'The mortgage rate at which the annualised return with a mortgage equals buying without\none. Above it, financing subtracts rather than adds.\n\nIt sits well above the rate that drains the cash: between the two lines the deal does not\npay for itself yet still earns more than paying cash. There the decision is no longer\nabout return, it is about whether you can absorb the drip.',
         rupturaNunca: 'never',
         liquidez: 'Cash you put in', liquidezTip: 'What comes out of your own pocket: total cost less mortgage and personal loan.\nIt is not a choice, it is whatever is left to cover.',
         tope: 'max',
@@ -900,7 +905,7 @@
         seguroHogar: 'Buildings insurance', seguroHogarTip: 'Buildings and contents cover for the let flat.',
         seguroImpagos: 'Rent guarantee insurance', seguroImpagosTip: 'Rent default cover. It is quoted in months of rent per year.',
         mantenimiento: 'Maintenance', mantenimientoTip: 'Repairs and upkeep, estimated as a share of the rent collected:\nthe more a flat earns, the more wear it takes.',
-        gastosAnuales: 'Annual costs', seComen: 'They eat', delAlquiler: 'of the rent', mensual: 'monthly', anual: 'annual',
+        gastosAnuales: 'Annual costs', delAlquiler: 'of the rent', mensual: 'monthly', anual: 'annual',
         resumenTitulo: 'Deal summary', resumenBadge: 'Output', queCuesta: 'WHAT IT COSTS TO GET IN',
         resumenRentabilidad: 'RETURN',
         rentBruta: 'Gross on total cost',
@@ -1247,7 +1252,9 @@
     }
 
     const num = (id) => parseNum(el(id).value);
-    const yes = (id) => el(id).value === 'si';
+    // Sí/no: las casillas (IVA de la comisión, amortización acelerada) por su marca; los
+    // desplegables que quedan (obra nueva), por su valor.
+    const yes = (id) => { const e = el(id); return e.type === 'checkbox' ? e.checked : e.value === 'si'; };
     const esMoneda = (campo) => el(campo).hasAttribute('data-money');
 
     // Los decimales son un máximo salvo que se pidan mínimos: un tipo autonómico del 6% se
@@ -1392,17 +1399,31 @@
       return elegido;
     }
 
-    // La oferta arranca igualada al precio anunciado y se queda donde la dejes: es un valor de
-    // partida, no un enlace permanente, así que no lleva candado. Volver a tocar el anunciado la
-    // vuelve a igualar, que es lo que se quiere al cambiar de piso.
-    function copiarOferta() {
-      fijar('oferta', num('precioAnunciado'));
+    // La oferta se escribe en euros o como descuento sobre el anunciado, y al tocar una se ajusta
+    // la otra. Al cambiar el anunciado se conserva el descuento: con el 0% de partida, la oferta
+    // copia el precio anunciado.
+    //
+    // El descuento se enseña con dos decimales, pero el que sale de una oferta en euros se guarda
+    // entero: si no, al cambiar luego el anunciado la oferta se desviaría unos euros por redondeo.
+    function descuentoExacto() {
+      const caja = el('descuentoOferta');
+      const exacto = parseFloat(caja.dataset.exacto);
+      return isFinite(exacto) && Math.abs(exacto - num('descuentoOferta')) < 0.005 ? exacto : num('descuentoOferta');
+    }
+    function ofertaDesdeDescuento() {
+      fijar('oferta', Math.max(num('precioAnunciado') * (1 - descuentoExacto() / 100), 0));
+    }
+    function descuentoDesdeOferta() {
+      const anunciado = num('precioAnunciado');
+      const exacto = anunciado > 0 ? (1 - num('oferta') / anunciado) * 100 : 0;
+      el('descuentoOferta').dataset.exacto = String(exacto);
+      fijar('descuentoOferta', exacto, 2, 0);
     }
 
     function calcular() {
       const precioAnunciado = num('precioAnunciado');
-      // La oferta no tiene candado: la copia del precio anunciado la hace el propio campo al
-      // teclearlo (ver copiarOferta), y a partir de ahí es tuya para bajarla sin pedir permiso.
+      // La oferta no tiene candado: va enlazada al descuento sobre el anunciado (ver
+      // ofertaDesdeDescuento), y cualquiera de las dos se escribe sin pedir permiso.
       const oferta = num('oferta');
       const valor = estimado('valor', oferta);
       const superficie = num('superficie');
@@ -1737,64 +1758,6 @@
       };
     }
 
-    // Corre el motor con otras entradas y deja los campos como estaban. El motor lee y escribe el
-    // DOM -los campos estimados se rellenan solos y el préstamo se recorta a su tope-, así que no
-    // basta con reponer lo que se toca: se guarda y se repone todo.
-    function conEntradas(cambios, fn) {
-      const antes = leerEstado();
-      try {
-        for (const [id, v] of Object.entries(cambios)) el(id).value = v;
-        return fn();
-      } finally {
-        CAMPOS.forEach(id => { el(id).value = antes[id]; });
-        CASILLAS.forEach(id => { el(id).checked = antes[id]; });
-      }
-    }
-
-    // Tipo de hipoteca al que financiar deja de compensar: aquel al que la rentabilidad anualizada
-    // con la hipoteca iguala a la de comprar sin ella. Éste sí necesita la TIR, y la TIR necesita
-    // la proyección entera, así que hay que correr el motor una vez por paso de la bisección.
-    //
-    // La regla clásica -apalancarse compensa mientras el coste de la deuda, ya deducida, sea menor
-    // que lo que rinde el activo- da en el escenario de ejemplo un 7,80%, y la cifra de verdad es
-    // un 8,86%: un punto largo de diferencia, porque la regla ignora que la deuda se amortiza y el
-    // apalancamiento se va apagando. En un umbral de decisión, un punto importa.
-    function rupturaRentabilidad() {
-      const d = calcular();
-      if (!(d.principalHip > 0)) return undefined;
-      const tirAlTipo = (t) => conEntradas({ tipoHipoteca: String(t * 100) }, () => calcular().ultima.anualizada);
-      const sinHipoteca = conEntradas({ pctFinanciado: '0' }, () => calcular().ultima.anualizada);
-      if (sinHipoteca === null) return undefined;
-      const margen = (t) => { const v = tirAlTipo(t); return v === null ? null : v - sinHipoteca; };
-      if (!(margen(0) > 0)) return null;             // ni al 0% compensa endeudarse
-      if (margen(0.30) > 0) return Infinity;         // compensa a cualquier tipo razonable
-      let bajo = 0, alto = 0.30;
-      // Catorce pasos dejan el resultado dentro de dos milésimas de punto, de sobra para un
-      // umbral que se lee con dos decimales, y son catorce proyecciones en vez de cuarenta.
-      for (let i = 0; i < 14; i++) {
-        const medio = (bajo + alto) / 2;
-        const m = margen(medio);
-        if (m !== null && m > 0) bajo = medio; else alto = medio;
-      }
-      return (bajo + alto) / 2;
-    }
-
-    // Va después del render y con su propio retardo: son catorce proyecciones, y meterlas en el
-    // camino de cada tecleo subiría el render de 61 a 90 ms.
-    let rupturaTimer = null;
-    function pintarRuptura() {
-      clearTimeout(rupturaTimer);
-      rupturaTimer = setTimeout(() => {
-        const destino = el('outRupturaTir');
-        const tipo = rupturaRentabilidad();
-        destino.textContent = tipo === undefined ? '—'
-          : tipo === null ? t('rupturaNunca')
-          : tipo === Infinity ? '> 30%'
-          : fmtPct(tipo, 2);
-        destino.className = 'font-bold num ' + (typeof tipo === 'number' && isFinite(tipo) ? 'val-pos' : 'val-muted');
-      }, 150);
-    }
-
     /* ---------- Pintado ---------- */
 
     const signo = (v) => v > 0 ? 'val-pos' : (v < 0 ? 'val-neg' : 'val-muted');
@@ -1802,7 +1765,8 @@
     function filaResumen(etiqueta, valor, opciones = {}) {
       const clase = opciones.clase || '';
       const titulo = opciones.titulo ? ` class="tooltip-help" title="${opciones.titulo.replace(/"/g, '&quot;')}"` : '';
-      return `<tr>
+      // sinRaya: la fila sigue a la anterior como un escalón de la misma suma, sin línea entre ellas.
+      return `<tr${opciones.sinRaya ? ' style="border-top-width:0"' : ''}>
         <td class="py-1.5 text-brand-textMuted"><span${titulo}>${etiqueta}${opciones.titulo ? ' ⓘ' : ''}</span></td>
         <td class="py-1.5 text-right font-bold num ${clase}">${valor}</td>
       </tr>`;
@@ -1811,7 +1775,6 @@
     function render() {
       const d = calcular();
 
-      el('outDescuento').textContent = fmtPct(d.descuento) + ' · ' + fmt(d.precioAnunciado - d.oferta);
       el('outEurM2').textContent = d.superficie > 0 ? fmt(d.oferta / d.superficie) + '/m²' : '—';
       // Las comunidades con escala por tramos traen en la tabla el tipo del primero: quien compre
       // por encima del corte tiene que abrir el candado y poner el suyo, y conviene decírselo.
@@ -1906,10 +1869,10 @@
         filaResumen(t('rentBruta'), pct(d.rentabilidadBruta, 'text-brand-accent'), { titulo: t('kpiBrutaTip') }),
         filaResumen(t('rentNeta'), pct(d.rentabilidadNeta, ''), { titulo: t('rentNetaTip') }),
         filaResumen(t('rentCaja'), pct(d.roceCaja), { titulo: t('rentCajaTip') }),
-        filaResumen('+ ' + t('rentAmortizacion'), pct(d.roceAmortizacion), { titulo: t('rentAmortizacionTip') }),
-        filaResumen('= ' + t('rentRoceSin'), pct(d.roceSinReval, 'text-brand-accent'), { titulo: t('rentRoceSinTip') }),
+        filaResumen('+ ' + t('rentAmortizacion'), pct(d.roceAmortizacion), { titulo: t('rentAmortizacionTip'), sinRaya: true }),
+        filaResumen('= ' + t('rentRoceSin'), pct(d.roceSinReval, 'text-brand-accent'), { titulo: t('rentRoceSinTip'), sinRaya: true }),
         filaResumen('+ ' + t('rentRevalorizacion'), pct(d.roceRevalorizacion), { titulo: t('rentRevalorizacionTip') }),
-        filaResumen('= ' + t('rentRoceCon'), pct(d.roce, 'text-brand-accent'), { titulo: t('rentRoceConTip') }),
+        filaResumen('= ' + t('rentRoceCon'), pct(d.roce, 'text-brand-accent'), { titulo: t('rentRoceConTip'), sinRaya: true }),
         filaResumen(tf('rentAnualizada', d.anoRef), pct(d.filaRef.anualizada), { titulo: t('kpiAnualizadaTip') }),
         filaResumen(tf('rentTirVenta', d.anoRef), pct(d.filaRef.tirVenta), { titulo: t('rentTirVentaTip') }),
         filaResumen(tf('rentMultiplicador', d.anoRef),
@@ -1925,7 +1888,6 @@
       renderTablas(d);
       renderFaqApalancamiento(d);
       renderCharts(d);
-      pintarRuptura();
       guardar();
     }
 
@@ -2252,7 +2214,7 @@
       // El botón enseña la bandera del idioma al que se va, no la del actual.
       el('langIcon').innerHTML = IDIOMA === 'es' ? BANDERAS.gb : BANDERAS.es;
       [['langBtn', 'btnIdioma'], ['themeToggleBtn', 'btnTema'], ['btnGuardar', 'btnGuardar'],
-       ['btnCargar', 'btnCargar'], ['btnReset', 'btnReset'], ['btnFaq', 'btnFaq'], ['btnAyuda', 'btnAyuda']]
+       ['btnCargar', 'btnCargar'], ['btnCompartir', 'btnCompartir'], ['btnReset', 'btnReset'], ['btnFaq', 'btnFaq'], ['btnAyuda', 'btnAyuda']]
         .forEach(([id, clave]) => { el(id).title = t(clave); });
       rellenarCcaa();
       pintarAyuda();
@@ -2296,16 +2258,17 @@
       render();
     }
 
-    const CAMPOS = ['precioAnunciado', 'oferta', 'valor', 'superficie', 'obraNueva', 'ccaa',
-      'pctImpuestos', 'pctNotaria', 'comision', 'ivaComision', 'reforma',
-      'pctFinanciado', 'plazoHipoteca', 'tipoHipoteca', 'hipotecaAcelerada',
-      'importePrestamo', 'plazoPrestamo', 'tipoPrestamo', 'prestamoAcelerado',
+    const CAMPOS = ['precioAnunciado', 'descuentoOferta', 'oferta', 'valor', 'superficie', 'obraNueva', 'ccaa',
+      'pctImpuestos', 'pctNotaria', 'comision', 'reforma',
+      'pctFinanciado', 'plazoHipoteca', 'tipoHipoteca',
+      'importePrestamo', 'plazoPrestamo', 'tipoPrestamo',
       'alquiler', 'mesesVacios', 'comunidad', 'ibi', 'seguroHogar', 'seguroImpagos', 'mantenimiento',
       'tasaIbi', 'tasaComunidad', 'tasaSeguroHogar', 'tasaImpagos', 'tasaMantenimiento',
       'tipoMarginal', 'baseTributable', 'pctConstruccion', 'tasaAmortizacion',
       'pctGastosVenta', 'pctGananciaVenta',
       'inflacion', 'revalorizacion', 'horizonte', 'indexar', 'anoRef'];
-    const CASILLAS = [...ESTIMABLES.map(c => 'auto' + capitalizar(c)), ...FUENTES.map(f => 'usar' + capitalizar(f))];
+    const CASILLAS = [...ESTIMABLES.map(c => 'auto' + capitalizar(c)), ...FUENTES.map(f => 'usar' + capitalizar(f)),
+      'ivaComision', 'hipotecaAcelerada', 'prestamoAcelerado'];
 
     const DEFECTOS = {};
     const leerEstado = () => {
@@ -2320,7 +2283,10 @@
       // guardado: asignar un value que no está entre las opciones no hace nada.
       if (estado.horizonte !== undefined) rellenarAnoRef(Math.max(Math.round(parseNum(estado.horizonte)), 1));
       CAMPOS.forEach(id => { if (estado[id] !== undefined) el(id).value = estado[id]; });
-      CASILLAS.forEach(id => { if (estado[id] !== undefined) el(id).checked = !!estado[id]; });
+      // Un escenario guardado antes de que IVA y amortización acelerada fueran casillas los trae
+      // como 'si'/'no'; la cadena 'no' no puede contar como marcada.
+      CASILLAS.forEach(id => { if (estado[id] !== undefined) el(id).checked = estado[id] === true || estado[id] === 'si'; });
+      if (estado.descuentoOferta === undefined && estado.oferta !== undefined) descuentoDesdeOferta();
       ESTIMABLES.forEach(pintarCandado);
       FUENTES.forEach(pintarFuente);
       formatearCampos();
@@ -2386,6 +2352,68 @@
       burbuja.style.top = Math.min(r.bottom + 6, window.innerHeight - burbuja.offsetHeight - 8) + 'px';
     });
 
+    // Cifras a partir de las cuales un valor a medio escribir ya es razonable y merece recalcular:
+    // un precio de piso tiene seis, un alquiler tres, un tipo de interés dos («2,2»). Lo que no
+    // está en la lista recalcula desde la primera cifra.
+    const CIFRAS_MINIMAS = {
+      precioAnunciado: 6, oferta: 6, valor: 6, superficie: 2, comision: 3, reforma: 4,
+      pctFinanciado: 2, plazoHipoteca: 2, tipoHipoteca: 2, importePrestamo: 4, tipoPrestamo: 2,
+      alquiler: 3, comunidad: 2, ibi: 3, seguroHogar: 3, seguroImpagos: 3, mantenimiento: 3,
+      inflacion: 2, revalorizacion: 2, tipoMarginal: 2, baseTributable: 2, pctConstruccion: 2,
+      pctGananciaVenta: 2, horizonte: 2
+    };
+    const cifrasMinimas = (id) => CIFRAS_MINIMAS[id] || 1;
+    const cifrasEscritas = (campo) => (campo.value.match(/\d/g) || []).length;
+
+    /* ---------- Compartir ---------- */
+
+    const URL_HERRAMIENTA = 'https://pacolucena.com/calculadora/';
+
+    // Los cálculos viajan en la propia dirección, como parámetros, y solo los que difieren del
+    // escenario de ejemplo: así el enlace es corto y legible. No pasa por ningún servidor.
+    function enlaceConCalculos() {
+      const actual = leerEstado();
+      const params = new URLSearchParams();
+      // Las cifras que se estiman solas (candado cerrado) no viajan: se vuelven a estimar al abrir.
+      const estimada = (id) => ESTIMABLES.includes(id) && actual['auto' + capitalizar(id)];
+      // Se comparan como números: «500.000» y «500000» son el mismo precio.
+      const valor = (v) => /\d/.test(String(v)) ? String(parseNum(v)) : String(v);
+      CAMPOS.forEach(id => { if (valor(actual[id]) !== valor(DEFECTOS[id]) && !estimada(id)) params.set(id, valor(actual[id]).slice(0, 40)); });
+      CASILLAS.forEach(id => { if (actual[id] !== DEFECTOS[id]) params.set(id, actual[id] ? '1' : '0'); });
+      const q = params.toString();
+      return URL_HERRAMIENTA + (q ? '?' + q : '');
+    }
+
+    function leerEscenarioCompartido() {
+      const params = new URLSearchParams(location.search);
+      const estado = {};
+      // Solo las claves conocidas: lo demás de la dirección se ignora.
+      CAMPOS.forEach(id => { if (params.has(id)) estado[id] = params.get(id).slice(0, 40); });
+      CASILLAS.forEach(id => { if (params.has(id)) estado[id] = params.get(id) === '1'; });
+      if (!Object.keys(estado).length) return;
+      aplicarEstado({ ...DEFECTOS, ...estado });
+      // Se limpia la dirección: si no, recargar la página volvería a pisar lo que se cambie después.
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    }
+
+    function compartir(conCalculos) {
+      const url = conCalculos ? enlaceConCalculos() : URL_HERRAMIENTA;
+      closeModal('shareModal');
+      if (navigator.share) {
+        // Cerrar la hoja sin elegir nada también rechaza la promesa: no es un error.
+        navigator.share({ title: t('titulo'), url }).catch(() => {});
+        return;
+      }
+      const avisar = () => {
+        const ind = el('saveIndicator');
+        ind.textContent = t('enlaceCopiado');
+        ind.classList.remove('opacity-0');
+        setTimeout(() => ind.classList.add('opacity-0'), 1800);
+      };
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(avisar, () => window.prompt(t('copiaEnlace'), url));
+      else window.prompt(t('copiaEnlace'), url);
+    }
+
     (function init() {
       let idioma = 'es';
       try { if (localStorage.getItem(LANG_KEY) === 'en') idioma = 'en'; } catch (e) {}
@@ -2404,13 +2432,23 @@
         const guardado = localStorage.getItem(STORAGE_KEY);
         if (guardado) aplicarEstado(JSON.parse(guardado));
       } catch (e) {}
+      // Un enlace con cálculos compartidos manda sobre lo guardado en este navegador.
+      leerEscenarioCompartido();
 
-      // Antes que el render, para que el cálculo vea ya la oferta igualada.
-      el('precioAnunciado').addEventListener('input', copiarOferta);
+      // Oferta y descuento se ajustan entre sí al momento, sin esperar al recálculo.
+      el('precioAnunciado').addEventListener('input', ofertaDesdeDescuento);
+      el('descuentoOferta').addEventListener('input', ofertaDesdeDescuento);
+      el('oferta').addEventListener('input', descuentoDesdeOferta);
+      el('descuentoOferta').addEventListener('blur', () => fijar('descuentoOferta', num('descuentoOferta'), 2, 0));
 
+      // No se recalcula en cada pulsación: con la cifra a medio escribir, los resultados saltan
+      // por valores que nadie ha querido poner (un alquiler de 9 € camino de 950). Se recalcula
+      // al salir del campo, y antes si ya hay cifras suficientes para ser un valor razonable.
       CAMPOS.forEach(id => {
         const campo = el(id);
-        campo.addEventListener(campo.tagName === 'SELECT' ? 'change' : 'input', render);
+        if (campo.tagName === 'SELECT') { campo.addEventListener('change', render); return; }
+        campo.addEventListener('input', () => { if (cifrasEscritas(campo) >= cifrasMinimas(id)) render(); });
+        campo.addEventListener('change', render);
         if (campo.hasAttribute('data-money') || campo.hasAttribute('data-dec')) {
           const d = decimalesFijos(id) ?? 0;
           campo.addEventListener('blur', () => { fijar(id, num(id), d, d); render(); });

@@ -13,7 +13,8 @@ const check = (n, ok, d='') => { if (!ok) fallos++; console.log(`${ok?'ok   ':'F
 
 const escenario = (hipAcel, preAcel) => p.evaluate(([ha, pa]) => {
   localStorage.clear(); resetDefaults();
-  const set = (id, v) => { document.getElementById(id).value = v; };
+  // IVA y amortización acelerada son casillas: 'si'/'no' las marca o desmarca.
+  const set = (id, v) => { const e = document.getElementById(id); if (e.type === 'checkbox') e.checked = (v === 'si' || v === true); else e.value = v; };
   set('oferta', 300000); set('precioAnunciado', 300000); set('valor', 300000);
   set('alquiler', 2500); set('pctFinanciado', 50);
   document.getElementById('usarPrestamo').checked = true; pintarFuente('prestamo');

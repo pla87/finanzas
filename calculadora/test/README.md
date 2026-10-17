@@ -1,6 +1,6 @@
 # Pruebas
 
-Dieciséis suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
+Diecisiete suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
 No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba donde vive.
 
 ## Correrlas
@@ -9,7 +9,7 @@ No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba dond
 cd test
 npm install            # sólo la primera vez
 npx playwright install chromium   # idem, salvo en contenedores que ya lo traen
-npm test               # las dieciséis
+npm test               # las diecisiete
 npm test -- verificar cruzar      # sólo algunas
 ```
 
@@ -64,7 +64,7 @@ exigiendo igualdad exacta al céntimo.
 | `orden` | y el orden lo deciden los tipos, no el tipo de préstamo |
 | `aportaciones` | los años en pérdidas piden dinero, y una TIR los fecha |
 | `venta-y-vacios` | interés real del año, meses sin inquilino, y vender al final de cada año |
-| `rupturas` | los dos tipos a los que la operación cambia de carácter |
+| `rupturas` | el tipo de hipoteca que deja la caja a cero |
 | `deflactado` | euros de hoy, el año de referencia y el ROCE partido en dos |
 | `enlaces` | candados en cadena, y que el círculo del reparto cierre sin residuo |
 | `payback` | el año en que recuperas lo aportado |
@@ -73,6 +73,7 @@ exigiendo igualdad exacta al céntimo.
 | `v2test` | formato de cifras, idioma y persistencia |
 | `v3` | comunidades autónomas y detalles de la interfaz |
 | `repaso` | escenarios viejos que migran, guardado que va y vuelve, móvil y tema oscuro |
+| `compartir` | no recalcula con la cifra a medio escribir, casillas de IVA y amortización, y los cálculos que viajan en el enlace |
 
 ## Escribirlas
 

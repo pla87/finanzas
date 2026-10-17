@@ -15,7 +15,7 @@ const SUITES = [
   ['orden',          'y el orden lo deciden los tipos, no el tipo de préstamo'],
   ['aportaciones',   'los años en pérdidas piden dinero y entran en la TIR'],
   ['venta-y-vacios', 'interés real del año, meses sin inquilino y vender'],
-  ['rupturas',       'los dos tipos a los que la operación cambia de carácter'],
+  ['rupturas',       'el tipo de hipoteca que deja la caja a cero'],
   ['deflactado',     'euros de hoy, el año de referencia y el ROCE partido'],
   ['enlaces',        'candados en cadena y el reparto del alquiler'],
   ['payback',        'el año en que recuperas lo aportado'],
@@ -24,6 +24,7 @@ const SUITES = [
   ['v2test',         'formato, idioma y persistencia'],
   ['v3',             'comunidades autónomas y detalles de la interfaz'],
   ['repaso',         'migración, guardado, móvil y tema oscuro'],
+  ['compartir',      'recálculo al escribir, casillas y enlace con los cálculos'],
 ];
 
 const soloEstas = process.argv.slice(2);

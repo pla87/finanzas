@@ -1841,7 +1841,10 @@
 
 <!-- Modal de Bienvenida (Primera visita o acceso manual) -->
   <div id="welcomeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-brand-card border border-brand-border rounded-2xl p-6 max-w-lg w-full space-y-4 max-h-[90vh] overflow-y-auto scrollbar-thin shadow-2xl">
+    <!-- Ancho 26rem (416 px): es lo más estrecho que mantiene el título en una línea a escritorio.
+         Con text-balance, cada párrafo de tres líneas ocupa así casi todo el ancho; con max-w-lg
+         no pasaba del 75 %. En móvil manda w-full. -->
+    <div class="bg-brand-card border border-brand-border rounded-2xl p-6 max-w-[26rem] w-full space-y-4 max-h-[90vh] overflow-y-auto scrollbar-thin shadow-2xl">
       <div class="flex justify-between items-center border-b border-brand-border pb-3">
         <h3 class="text-base font-bold text-white flex items-center gap-2">
           <span>🚀</span> ¡Bienvenido a Simulador de Retiro FIRE!

@@ -43,6 +43,9 @@ check('y el motor lo lee bien', (await p.evaluate(() => calcular().cuotaHip)) > 
 // 4) desplegables alineados a la derecha
 const al = await p.evaluate(() => getComputedStyle(document.getElementById('ccaa')).textAlign);
 check('desplegables alineados a la derecha', al === 'right', al);
+// La caja cerrada a la derecha, pero la lista desplegada (las options) a la izquierda.
+const alOpt = await p.evaluate(() => [...document.querySelectorAll('select.campo')].map(s => [s.id, getComputedStyle(s).textAlign, getComputedStyle(s.options[0]).textAlign]));
+check('todos los select.campo: caja a la derecha y opciones a la izquierda', alOpt.length > 0 && alOpt.every(([, c, o]) => c === 'right' && o === 'left'), JSON.stringify(alOpt));
 
 // 5) comunidades en castellano
 const opts = await p.evaluate(() => [...document.getElementById('ccaa').options].map(o => o.textContent));
@@ -58,6 +61,34 @@ await p.click('#langBtn'); await p.waitForTimeout(200);
 check('sin errores de consola', errs.length === 0, errs[0] ?? '');
 await p.evaluate(() => { localStorage.clear(); }); await p.reload(); await p.waitForTimeout(700);
 await p.locator('main').screenshot({ path: salida('v3main.png') });
+
+// 6) Métricas plegables en móvil y pestañas en una línea (a 1440 todo como siempre)
+const ids6 = ['kpiBruta', 'kpiRoce', 'kpiCaja', 'kpiDeuda', 'kpiAnualizada', 'kpiAnosAlquiler'];
+const visibles = () => p.evaluate((ids) => ids.map(i => { const r = document.getElementById(i).getBoundingClientRect(); return r.width > 0 && r.height > 0; }), ids6);
+check('1440: los seis indicadores se ven sin plegar', (await visibles()).every(Boolean));
+check('1440: no hay botón de caja plegable ni explicaciones', await p.evaluate(() => getComputedStyle(document.getElementById('kpiToggle')).display === 'none' && [...document.querySelectorAll('[data-i18n$="Desc"]')].every(e => getComputedStyle(e).display === 'none')));
+check('1440: las pestañas enseñan el nombre largo', await p.evaluate(() => document.querySelectorAll('.tab-btn')[1].innerText.trim() === '💵 Flujo de caja'));
+const mov = await b.newPage({ viewport: { width: 390, height: 844 } });
+await mov.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ path: CHARTJS, contentType: 'application/javascript' }));
+const errsM = []; mov.on('pageerror', e => errsM.push(e.message));
+await mov.goto(PAGINA); await mov.waitForTimeout(500);
+await mov.evaluate(() => localStorage.clear()); await mov.reload(); await mov.waitForTimeout(600);
+const visM = () => mov.evaluate((ids) => ids.map(i => { const r = document.getElementById(i).getBoundingClientRect(); return r.width > 0 && r.height > 0; }), ids6);
+check('390: la caja de métricas nace plegada', (await visM()).every(v => !v) && await mov.getAttribute('#kpiToggle', 'aria-expanded') === 'false');
+check('390: la cabecera lleva bruta y caja', await mov.evaluate(() => /\d/.test(document.getElementById('kpiResBruta').textContent) && /\d/.test(document.getElementById('kpiResCaja').textContent)));
+await mov.click('#kpiToggle');
+check('390: al abrirla se ven los seis y sus explicaciones', (await visM()).every(Boolean) && await mov.evaluate(() => [...document.querySelectorAll('[data-i18n$="Desc"]')].filter(e => e.getBoundingClientRect().height > 0 && e.textContent.length > 10).length === 6));
+check('390: cada explicación cabe en una línea', await mov.evaluate(() => [...document.querySelectorAll('[data-i18n$="Desc"]')].every(e => e.getBoundingClientRect().height < 16)));
+await mov.reload(); await mov.waitForTimeout(500);
+check('390: tras recargar vuelve a estar plegada', (await visM()).every(v => !v));
+await mov.setViewportSize({ width: 360, height: 800 }); await mov.waitForTimeout(200);
+const tabs = await mov.evaluate(() => { const c = document.querySelector('.tab-btn').parentElement; return { tops: [...document.querySelectorAll('.tab-btn')].map(e => Math.round(e.getBoundingClientRect().top)), sw: c.scrollWidth, cw: c.clientWidth, txt: [...document.querySelectorAll('.tab-btn')].map(e => e.innerText.trim()) }; });
+check('360: las cuatro pestañas en una línea, sin scroll horizontal', new Set(tabs.tops).size === 1 && tabs.sw <= tabs.cw, JSON.stringify(tabs));
+check('360: con los nombres cortos', tabs.txt.join('|') === 'Proyección|Caja|Rentabilidad|Parámetros', tabs.txt.join('|'));
+await mov.click('#langBtn');
+check('360: y en inglés', (await mov.evaluate(() => [...document.querySelectorAll('.tab-btn')].map(e => e.innerText.trim()).join('|'))) === 'Projection|Cash|Returns|Parameters');
+check('móvil sin errores de consola', errsM.length === 0, errsM[0] ?? '');
+await mov.close();
 await p.setViewportSize({ width: 420, height: 900 });
 await p.waitForTimeout(400);
 await p.locator('main').screenshot({ path: salida('v3movil.png') });

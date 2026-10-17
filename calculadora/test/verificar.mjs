@@ -25,7 +25,8 @@ await page.evaluate((p) => {
 // nuevo financia por porcentaje, así que la entrada de la hoja se traduce a un LTV y el
 // préstamo personal al hueco que dejaba entre desembolso y dinero aportado.
 const montar = (p) => {
-  const set = (id, v) => { const e = document.getElementById(id); e.disabled = false; e.value = v; };
+  // IVA y amortización acelerada son casillas: 'si'/'no' las marca o desmarca.
+  const set = (id, v) => { const e = document.getElementById(id); e.disabled = false; if (e.type === 'checkbox') e.checked = (v === 'si' || v === true); else e.value = v; };
   for (const c of ['autoComunidad','autoIbi','autoSeguroHogar','autoSeguroImpagos','autoMantenimiento','autoPctImpuestos','autoPctNotaria','autoValor','autoRevalorizacion'])
     document.getElementById(c).checked = false;
   set('pctImpuestos', 10);

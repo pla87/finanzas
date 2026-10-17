@@ -36,7 +36,7 @@ const colores = await p.evaluate(() => {
 check('más intenso que el verde de sin deuda', colores.a > colores.b, `${colores.celda} vs ${colores.paid}`);
 
 // El mismo año sin deuda: la celda debe seguir ganando el fondo.
-await p.evaluate(() => { document.getElementById('hipotecaAcelerada').value = 'si'; render(); });
+await p.evaluate(() => { document.getElementById('hipotecaAcelerada').checked = true; render(); });
 await p.waitForTimeout(200);
 const dobles = await p.evaluate(() => {
   const c = document.querySelector('#tblProyeccion td.cell-payback');
@@ -49,7 +49,7 @@ if (dobles && dobles.enFilaVerde) {
   console.log('info  el payback no cae en un año sin deuda en este escenario');
 }
 
-await p.evaluate(() => { document.getElementById('hipotecaAcelerada').value = 'no'; render(); });
+await p.evaluate(() => { document.getElementById('hipotecaAcelerada').checked = false; render(); });
 await p.waitForTimeout(200);
 await p.evaluate(() => document.querySelector('#tblProyeccion td.cell-payback').scrollIntoView({ block: 'center' }));
 await p.waitForTimeout(200);

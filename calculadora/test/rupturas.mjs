@@ -1,4 +1,4 @@
-// Los dos tipos de ruptura: el que agota la caja y el que iguala a no financiar.
+// El tipo de ruptura: el de hipoteca al que la caja del primer año se queda en cero.
 import { chromium } from 'playwright';
 import { PAGINA, CHARTJS, CHROMIUM, salida } from './comun.mjs';
 const b = await chromium.launch({ executablePath: CHROMIUM, args: ['--allow-file-access-from-files'] });
@@ -32,47 +32,11 @@ check('un pelo por debajo es positiva y por encima negativa',
 check('el escenario de ejemplo ya está pasado de raya',
   caja.t < 0.022 && caja.actual < 0, `raya ${pc(caja.t)} · tipo 2,20% · caja ${Math.round(caja.actual)} €`);
 
-// --- la de rentabilidad: a ese tipo, financiar da lo mismo que no financiar ---
-await p.waitForTimeout(400);
-const texto = await p.textContent('#outRupturaTir');
-check('la tarjeta enseña un tipo', /%/.test(texto), texto);
-const tir = await p.evaluate(() => {
-  const t = rupturaRentabilidad();
-  const sin = conEntradas({ pctFinanciado: '0' }, () => calcular().ultima.anualizada);
-  const con = v => conEntradas({ tipoHipoteca: String(v * 100) }, () => calcular().ultima.anualizada);
-  return { t, sin, justo: con(t), antes: con(t - 0.002), despues: con(t + 0.002) };
-});
-check('a ese tipo la TIR iguala a la de comprar sin hipoteca',
-  Math.abs(tir.justo - tir.sin) < 2e-4, `${pc(tir.justo)} vs ${pc(tir.sin)}`);
-check('por debajo compensa y por encima no',
-  tir.antes > tir.sin && tir.despues < tir.sin, `${pc(tir.antes)} / ${pc(tir.despues)}`);
-check('está muy por encima del tipo que agota la caja', tir.t > caja.t * 3,
-  `caja ${pc(caja.t)} · rentabilidad ${pc(tir.t)}`);
-
-// La regla clásica del FAQ se queda corta: por eso esto se calcula, no se aproxima.
-const aprox = await p.evaluate(() => {
-  const d = calcular();
-  const activo = (d.alquilerAnual - d.gastosAnuales) / d.costeTotal + d.revalorizacion;
-  return activo / (1 - d.tipoEfectivo);
-});
-console.log(`   regla clásica: ${pc(aprox)} · medido: ${pc(tir.t)} · diferencia ${((tir.t - aprox) * 100).toFixed(2)} puntos`);
-check('la regla clásica se desvía más de medio punto', Math.abs(tir.t - aprox) > 0.005);
-
-// --- las entradas quedan como estaban después de sondear ---
-const intacto = await p.evaluate(() => {
-  const antes = leerEstado();
-  rupturaRentabilidad();
-  const despues = leerEstado();
-  return Object.keys(antes).filter(k => String(antes[k]) !== String(despues[k]));
-});
-check('sondear no deja ningún campo tocado', intacto.length === 0, intacto.join(', '));
-
 // --- casos límite ---
 const limites = await p.evaluate(() => {
   const r = {};
   document.getElementById('usarHipoteca').checked = false; pintarFuente('hipoteca');
   r.sinHipoteca = calcular().rupturaCaja;
-  r.sinHipotecaTir = rupturaRentabilidad();
   document.getElementById('usarHipoteca').checked = true; pintarFuente('hipoteca');
   // Alquiler ridículo: no se paga sola ni con la hipoteca regalada.
   document.getElementById('alquiler').value = '200';
@@ -85,7 +49,7 @@ const limites = await p.evaluate(() => {
   render();
   return r;
 });
-check('sin hipoteca no hay tipo que romper', limites.sinHipoteca === undefined && limites.sinHipotecaTir === undefined);
+check('sin hipoteca no hay tipo que romper', limites.sinHipoteca === undefined);
 check('con un alquiler ridículo la raya es "nunca"', limites.nunca === null);
 check('con un alquiler enorme aguanta cualquier tipo', limites.siempre === Infinity);
 
@@ -110,7 +74,7 @@ check('y traen el tipo del primer tramo',
 check('Valencia ya está en el 9% de junio de 2026', escalas.valencia.tipo === 9);
 
 await p.waitForTimeout(400);
-await p.evaluate(() => document.getElementById('outRupturaTir').scrollIntoView({ block: 'center' }));
+await p.evaluate(() => document.getElementById('outRupturaCaja').scrollIntoView({ block: 'center' }));
 await p.waitForTimeout(200);
 await p.screenshot({ path: salida('v8-ruptura.png') });
 check('sin errores de consola', errs.length === 0, errs.join(' | '));

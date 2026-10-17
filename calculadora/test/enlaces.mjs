@@ -17,7 +17,7 @@ const bloqueado = async id => p.evaluate(i => document.getElementById(i).disable
 await p.evaluate(() => resetDefaults());
 await p.waitForTimeout(200);
 
-// La oferta no lleva candado: es libre y se iguala al anunciado sólo al teclear ése.
+// La oferta no lleva candado: va enlazada al descuento sobre el anunciado, en los dos sentidos.
 const teclear = (id, v) => p.evaluate(([i, x]) => {
   const e = document.getElementById(i);
   e.value = x; e.dispatchEvent(new Event('input')); render();
@@ -29,23 +29,24 @@ check('el valor nace bloqueado', await bloqueado('valor'));
 check('la revalorización nace bloqueada', await bloqueado('revalorizacion'));
 
 await teclear('precioAnunciado', 420000);
-check('teclear el anunciado iguala la oferta', (await n('oferta')) === 420000, String(await n('oferta')));
+check('con descuento 0, el anunciado iguala la oferta', (await n('oferta')) === 420000, String(await n('oferta')));
 check('el valor sigue a la oferta', (await n('valor')) === 420000, String(await n('valor')));
-check('sin descuento mientras coinciden',
-  (await p.textContent('#outDescuento')).startsWith('0'), await p.textContent('#outDescuento'));
+check('sin descuento mientras coinciden', (await n('descuentoOferta')) === 0, String(await n('descuentoOferta')));
 
 await p.evaluate(() => { document.getElementById('inflacion').value = 4; render(); });
 check('la revalorización sigue a la inflación', (await n('revalorizacion')) === 4, String(await n('revalorizacion')));
 
-// --- bajar la oferta no necesita permiso, y el anunciado no la recupera solo ---
+// --- bajar la oferta no necesita permiso, y el descuento la sigue ---
 await teclear('oferta', 400000);
 check('la oferta se queda donde la pongas', (await n('oferta')) === 400000, String(await n('oferta')));
 check('el valor sigue a la oferta, no al anunciado', (await n('valor')) === 400000, String(await n('valor')));
-check('ahora sí hay descuento',
-  (await p.textContent('#outDescuento')).startsWith('4,8'), await p.textContent('#outDescuento'));
+check('ahora sí hay descuento', (await n('descuentoOferta')) === 4.76, String(await n('descuentoOferta')));
 await teclear('precioAnunciado', 380000);
-check('volver a tocar el anunciado la reengancha', (await n('oferta')) === 380000, String(await n('oferta')));
+check('cambiar el anunciado conserva el descuento', (await n('oferta')) === 361905, String(await n('oferta')));
 await teclear('precioAnunciado', 420000);
+check('y sin desviarse por el redondeo', (await n('oferta')) === 400000, String(await n('oferta')));
+await teclear('descuentoOferta', 10);
+check('escribir el descuento ajusta la oferta', (await n('oferta')) === 378000, String(await n('oferta')));
 
 await p.click('#lockValor');
 await p.evaluate(() => { document.getElementById('valor').value = 460000; render(); });
@@ -90,7 +91,7 @@ await cuadraReparto('por defecto');
 await p.evaluate(() => {
   document.getElementById('usarPrestamo').checked = true; pintarFuente('prestamo');
   document.getElementById('importePrestamo').value = 80000;
-  document.getElementById('hipotecaAcelerada').value = 'si';
+  document.getElementById('hipotecaAcelerada').checked = true;
   render();
 });
 await cuadraReparto('las dos deudas y las dos aceleradas');

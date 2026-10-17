@@ -1,0 +1,71 @@
+name: Balance · cotizaciones
+
+on:
+  schedule:
+    - cron: '0 23 * * 1-5'  # Runs Monday through Friday at 23:00 UTC
+  workflow_dispatch:        # Allows manual trigger from GitHub UI
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: balance
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance
+
+      - name: Execute Updater Script
+        run: python scripts/update_market_data.py
+
+      # Lo que sigue va DESPUÉS del script y ANTES del commit, a propósito: se
+      # comprueba el fichero recién descargado, y si no pasa, el trabajo se cae
+      # sin empujar nada.
+      #
+      # Hace falta aquí y no vale con balance-pruebas.yml: GitHub no dispara workflows
+      # desde un push hecho con el GITHUB_TOKEN por defecto, que es con el que
+      # empuja este trabajo. Así que este empujón —el único que se produce solo,
+      # cinco veces por semana, y el que dispara el despliegue en Cloudflare—
+      # era el que se quedaba sin mirar. Comprobado: tres commits del bot, cero
+      # ejecuciones de balance-pruebas.yml.
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: balance/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Entre las pruebas va la que mira este fichero: que estén todas las divisas,
+      # que ningún precio sea negativo, que el euríbor tenga cara de euríbor.
+      - name: Pasar las pruebas sobre los datos recién descargados
+        run: npm test
+
+      # Y compilar, porque este empujón despliega lo que haya en main en ese
+      # momento, no solo el JSON.
+      - name: Compilar
+        run: npm run build
+
+      - name: Commit and Push Updated Data
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/market_data.json
+          # pull --rebase antes de empujar: en este repo empuja también el bot de retiro/, y
+          # si llegara antes, el push se rechazaría por no estar al día.
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update market data" && git pull --rebase && git push)

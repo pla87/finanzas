@@ -1,0 +1,17 @@
+# Dependencias
+node_modules/
+
+# Salida de compilación: Cloudflare Pages construye desde el código en cada push,
+# así que versionarla solo añadiría ruido y riesgo de que quede desfasada.
+dist/
+
+# Registros y temporales de herramientas
+*.log
+npm-debug.log*
+.DS_Store
+.vite/
+
+# El despliegue usa `npm install`, no `npm ci`, igual que el repositorio balance.
+package-lock.json
+test-results/
+tests/.fuzz-out/

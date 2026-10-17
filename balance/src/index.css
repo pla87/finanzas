@@ -1,0 +1,313 @@
+@import "tailwindcss";
+
+/* --- PALETA DE MARCA ---
+   Los mismos valores que pacolucena.com/retiro, para que las dos secciones del
+   sitio sean la misma familia y no dos aplicaciones que se parecen. Cada color
+   vive en una variable CSS y el tema solo reescribe esas variables: el color no
+   está repetido por el código.
+
+   Están los tokens que la aplicación usa, no la paleta entera de retiro: el
+   rosa, el morado y el azul cielo estaban declarados por simetría y no los
+   pedía ninguna clase, porque para esos tres colores el balance tira de la
+   paleta que ya trae Tailwind (rose-500, purple-500, sky-500). Si alguno hace
+   falta, se añade aquí y en el bloque @theme, dos líneas.
+
+   Reparto de significado, que es lo que aquí más importa:
+   - accent (azul) es NAVEGACIÓN: pestaña activa, enlaces, foco.
+   - emerald (verde) es DINERO A FAVOR, y nada más.
+   Antes el verde hacía las dos cosas a la vez y por eso una pestaña
+   seleccionada y una cifra positiva se leían igual. */
+:root {
+  --brand-bg: 9 13 22;
+  --brand-card: 15 23 42;
+  --brand-cardInner: 20 30 51;
+  --brand-border: 30 41 59;
+  --brand-accent: 59 130 246;
+  --brand-emerald: 16 185 129;
+  --brand-amber: 245 158 11;
+  --brand-textMuted: 148 163 184;
+  --brand-text: 241 245 249;
+}
+
+html[data-theme="light"] {
+  --brand-bg: 241 245 249;
+  --brand-card: 255 255 255;
+  --brand-cardInner: 248 250 252;
+  --brand-border: 203 213 225;
+  --brand-accent: 37 99 235;
+  --brand-emerald: 5 150 105;
+  --brand-amber: 217 119 6;
+  --brand-textMuted: 100 116 139;
+  --brand-text: 15 23 42;
+}
+
+/* Se registran como colores de Tailwind para poder escribir bg-brand-card,
+   text-brand-accent o border-brand-border/60. El modificador de opacidad
+   funciona porque `rgb(var(...))` resuelve a un color de verdad antes de que
+   color-mix lo use; una referencia a variable «pelada» no serviría. */
+@theme {
+  --color-brand-bg: rgb(var(--brand-bg));
+  --color-brand-card: rgb(var(--brand-card));
+  --color-brand-cardInner: rgb(var(--brand-cardInner));
+  --color-brand-border: rgb(var(--brand-border));
+  --color-brand-accent: rgb(var(--brand-accent));
+  --color-brand-emerald: rgb(var(--brand-emerald));
+  --color-brand-amber: rgb(var(--brand-amber));
+  --color-brand-textMuted: rgb(var(--brand-textMuted));
+  --color-brand-text: rgb(var(--brand-text));
+}
+
+/* Tailwind v4 resuelve `dark:` con `prefers-color-scheme` salvo que se le diga
+   otra cosa. La aplicación marca el tema en <html data-theme>, igual que
+   retiro, así que la variante se ata a ese atributo. Sin esto las utilidades
+   `dark:` del código harían caso al sistema operativo y no al interruptor: con
+   el sistema en claro y la aplicación en oscuro, `dark:text-slate-200` no se
+   aplicaba y quedaba el `text-slate-950` de debajo, es decir texto casi negro
+   sobre tarjeta oscura. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+body {
+  background-color: rgb(var(--brand-bg));
+  color: rgb(var(--brand-text));
+}
+
+/* --- FRANJA DEL MANUAL, CENEFA DE MÓVIL Y BOTÓN DEL MANUAL ---
+   Copia literal del bloque de pacolucena.com/retiro (index.html): las dos
+   herramientas tienen que verse iguales, así que va en CSS a mano y no con
+   utilidades, que allí se compilan con otro Tailwind y pasan por los retoques
+   del modo claro. La franja va en el flujo de la página, no fija, así que ya
+   no hace falta reservarle hueco arriba como al aviso de móvil de antes. */
+.manual-banner {
+  display: flex; align-items: center; justify-content: center; gap: .375rem;
+  padding: .3rem .75rem; font-size: 11px; line-height: 1.25; font-weight: 600;
+  color: rgb(var(--brand-accent)); background-color: rgb(var(--brand-accent) / .08);
+  border-bottom: 1px solid rgb(var(--brand-accent) / .3);
+  text-decoration: none; transition: background-color .15s;
+}
+.manual-banner:hover { background-color: rgb(var(--brand-accent) / .16); }
+.manual-banner:hover .manual-banner-text { text-decoration: underline; }
+/* La cenefa cruza la pantalla de esquina a esquina: el ángulo es el de la diagonal de la
+   ventana (atan2 del alto y el ancho), con -60° de reserva para navegadores sin atan2. Es
+   más larga que la diagonal para que sus extremos queden siempre fuera de la pantalla.
+   pointer-events: none deja tocar lo que hay debajo; solo avisa, no bloquea.
+   En el móvil se movía al hacer scroll rápido. La causa: la caja era `inset: 0`, o sea tan
+   alta como la ventana visible, y esa altura cambia cada vez que la barra de direcciones se
+   esconde o reaparece al desplazarse; con ella cambiaban el centro (top: 50%) y el ángulo
+   (atan2 de un alto que cambiaba), y la cenefa daba saltos
+   mientras el navegador repintaba una pieza girada y semitransparente en cada fotograma.
+   Ahora la caja tiene un tamaño fijo en píxeles (--ribbon-w y --ribbon-h, que pone el
+   guion de la cabecera con el alto GRANDE de la ventana y solo vuelve a calcular cuando
+   cambia el ancho, es decir al girar el teléfono) y va en su propia capa de composición,
+   así que el scroll ya no la toca: la tarjeta gráfica la deja donde está. Hasta que corre el
+   guion valen 100vw y 100vh. `contain: strict` impide además que nada de dentro o de fuera
+   obligue a recalcular su maquetación. */
+.mobile-ribbon { display: none; }
+@media (max-width: 639px) {
+  .mobile-ribbon {
+    display: block; position: fixed; top: 0; left: 0; z-index: 9998;
+    width: var(--ribbon-w, 100vw); height: var(--ribbon-h, 100vh);
+    pointer-events: none; overflow: hidden; contain: strict;
+    transform: translateZ(0); will-change: transform;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  }
+  /* Pendiente del 50 % (atan 0,5 = 26,57°): menos inclinada que la diagonal de la pantalla.
+     La franja cruza el centro de lado a lado, así que su largo útil es el ancho entre el coseno
+     del ángulo (×1,118). El texto se parte en dos líneas dentro de ese largo, con 1,5 rem de
+     margen por cada lado para que ninguna letra quede fuera de la pantalla, y el fondo sigue
+     2 rem más por cada punta para que los extremos no dejen un hueco al cortar el borde. */
+  .mobile-ribbon > span {
+    position: absolute; top: 50%; left: 50%; box-sizing: border-box;
+    width: calc(112vw + 4rem); width: calc(var(--ribbon-w, 100vw) * 1.118 + 4rem);
+    transform: translate(-50%, -50%) rotate(-26.565deg);
+    padding: .5rem 3.5rem; text-align: center; white-space: normal; line-height: 1.35;
+    background-color: rgb(225 29 72 / .88); color: #ffffff;
+    border-top: 2px solid rgb(255 255 255 / .6); border-bottom: 2px solid rgb(255 255 255 / .6);
+    font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    box-shadow: 0 4px 18px rgb(0 0 0 / .35);
+  }
+}
+.manual-cta {
+  display: flex; align-items: center; justify-content: center; gap: .5rem; width: 100%;
+  padding: .8rem 1rem; border-radius: .75rem; text-decoration: none;
+  background-color: rgb(var(--brand-accent)); color: #ffffff;
+  font-size: .875rem; line-height: 1.25; font-weight: 800; text-align: center;
+  box-shadow: 0 6px 20px rgb(var(--brand-accent) / .35);
+  transition: filter .15s, transform .15s;
+}
+.manual-cta:hover { filter: brightness(1.1); transform: translateY(-1px); }
+/* Aviso de móvil: sale una vez por visita, al primer toque en cualquier parte, solo por
+   debajo de 640 px (la misma condición que la cenefa). Va con clases propias escritas a
+   mano por lo mismo que el resto del bloque: así es idéntico en las dos herramientas. Por
+   encima de la cenefa (9998) y de la burbuja de ayuda táctil (9999), para que se lea entero. */
+.mobile-modal {
+  position: fixed; inset: 0; z-index: 10000;
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+  background-color: rgb(0 0 0 / .8);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.mobile-modal[hidden] { display: none; }
+.mobile-modal-card {
+  display: flex; flex-direction: column; gap: 1rem;
+  width: 100%; max-width: 28rem; max-height: 90vh; overflow-y: auto;
+  padding: 1.25rem; border-radius: 1rem; text-align: left;
+  border: 1px solid rgb(var(--brand-border)); background-color: rgb(var(--brand-card));
+  color: #cbd5e1; font-size: .8125rem; line-height: 1.55;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / .25);
+}
+.mobile-modal-card p { margin: 0; }
+.mobile-modal-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem;
+  padding-bottom: .75rem; border-bottom: 1px solid rgb(var(--brand-border));
+}
+.mobile-modal-title { margin: 0; font-size: 1rem; line-height: 1.4; font-weight: 700; color: #f1f5f9; }
+.mobile-modal-x {
+  flex-shrink: 0; margin: -.125rem -.25rem 0 0; padding: 0 .25rem; border: 0; background: none;
+  font-size: 1.125rem; line-height: 1.4; color: rgb(var(--brand-textMuted)); cursor: pointer;
+}
+/* El foco entra en ✕ al abrirse (para el teclado y los lectores de pantalla). Sin esto Chrome
+   le pinta su anillo naranja por defecto; este es el azul de navegación de la casa. */
+.mobile-modal-x:focus-visible { outline: 2px solid rgb(var(--brand-accent) / .7); outline-offset: 2px; border-radius: .375rem; }
+.mobile-modal-warning {
+  padding: .75rem .875rem; border-radius: .75rem;
+  border: 1px solid rgb(225 29 72 / .45); background-color: rgb(225 29 72 / .12);
+  font-size: .875rem; line-height: 1.5; font-weight: 700; color: #f1f5f9;
+}
+.mobile-modal-card a.mobile-modal-link { color: rgb(var(--brand-accent)); font-weight: 700; text-decoration: underline; }
+.mobile-modal-manual {
+  display: flex; flex-direction: column; gap: .75rem; padding-top: 1rem;
+  border-top: 1px solid rgb(var(--brand-border));
+}
+.mobile-modal-ok {
+  width: 100%; padding: .625rem 1rem; border: 0; border-radius: .5rem; cursor: pointer;
+  background-color: rgb(var(--brand-emerald)); color: #020617;
+  font-family: inherit; font-size: .75rem; font-weight: 700;
+}
+html[data-theme="light"] .mobile-modal-card { color: #334155; box-shadow: 0 25px 50px -12px rgb(15 23 42 / .35); }
+html[data-theme="light"] .mobile-modal-title,
+html[data-theme="light"] .mobile-modal-warning { color: #0f172a; }
+html[data-theme="light"] .mobile-modal-ok { color: #ffffff; }
+/* Si alguien ensancha la ventana con el aviso abierto, deja de verse: en escritorio no toca. */
+@media (min-width: 640px) { .mobile-modal { display: none !important; } }
+@media print { .manual-banner, .mobile-ribbon, .mobile-modal { display: none !important; } }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+.print-only-report {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 11mm 8mm 11mm;
+  }
+
+  html, body, #root, #root > div {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  header, section, nav, main, .no-print, button, select, .fixed {
+    display: none !important;
+    border: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-only-report {
+    display: block !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 10.25px !important;
+    line-height: 1.32 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+
+  .pdf-section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 9px !important;
+  }
+
+  .pdf-card {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 7px !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    padding: 7px 10px !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    background: #ffffff !important;
+  }
+
+  th {
+    background-color: #f8fafc !important;
+    border-bottom: 1.5px solid #cbd5e1 !important;
+    padding: 3.5px 5px !important;
+    font-size: 9.75px !important;
+  }
+
+  td {
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 3.5px 5px !important;
+    background-color: #ffffff !important;
+    font-size: 9.75px !important;
+  }
+
+  .pdf-green { color: #047857 !important; }
+  .pdf-amber { color: #b45309 !important; }
+  .pdf-rose { color: #be123c !important; }
+  .pdf-sky { color: #0369a1 !important; }
+  .pdf-purple { color: #6b21a8 !important; }
+  .pdf-muted { color: #475569 !important; }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+/* Texto solo para lectores de pantalla: acompaña a los símbolos de estado. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* La barra de pestañas se desplaza en móvil: un degradado al borde derecho
+   avisa de que hay más contenido fuera de la vista. */
+.tab-scroll-hint {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+          mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+}
+@media (min-width: 900px) {
+  .tab-scroll-hint { -webkit-mask-image: none; mask-image: none; }
+}

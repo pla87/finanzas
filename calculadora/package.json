@@ -1,0 +1,18 @@
+{
+  "name": "calc-pisos",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "css": "tailwindcss -c tailwind.config.js -i src/tailwind.css -o tailwind.css --minify",
+    "build": "npm run css && vite build",
+    "preview": "vite preview",
+    "test": "node test/correr.mjs"
+  },
+  "devDependencies": {
+    "chart.js": "^4.5.1",
+    "tailwindcss": "^3.4.19",
+    "vite": "^6.0.0"
+  }
+}

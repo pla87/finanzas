@@ -1,0 +1,55 @@
+# Las pruebas y la compilación, en cada empujón a main y en cada pull request.
+#
+# Hacían falta por una razón concreta: `balance-cotizaciones.yml` empuja a main de lunes
+# a viernes, y cada empujón a main dispara un despliegue en Cloudflare Pages.
+# Sin esto, un commit que rompa la compilación se publica en pacolucena.com sin
+# que nada avise, y las 286 pruebas solo corren cuando alguien se acuerda.
+name: Balance · pruebas
+
+# Solo cuando cambia balance/: en este repo viven también retiro/ y calculadora/, y un cambio
+# en ellas no puede romper esto.
+on:
+  push:
+    branches: [main]
+    paths: ['balance/**', '.github/workflows/balance-pruebas.yml']
+  pull_request:
+    paths: ['balance/**', '.github/workflows/balance-pruebas.yml']
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: balance
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      # Node 22 y no 20: `npm test` es `node --test 'src/lib/*.test.js'`, con el
+      # patrón entrecomillado para que lo expanda Node y no la shell. Esa
+      # expansión no existe hasta Node 21, así que en 20 la primera ejecución
+      # de este workflow murió con «Could not find src/lib/*.test.js» mientras
+      # en local pasaban las 288 pruebas.
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: balance/package-lock.json
+
+      # `npm ci` y no `npm install`: instala exactamente lo que dice el
+      # lockfile, que es justo por lo que el lockfile volvió al repositorio.
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Pasar las pruebas
+        run: npm test
+
+      # Compilar es media prueba más: un error de sintaxis o una importación
+      # que no existe no lo ve `npm test`, porque las pruebas solo tocan
+      # src/lib y la interfaz se queda fuera.
+      - name: Compilar
+        run: npm run build

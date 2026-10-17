@@ -28,6 +28,8 @@ check('la oferta no tiene candado', (await p.$('#lockOferta')) === null);
 check('el valor nace bloqueado', await bloqueado('valor'));
 check('la revalorización nace bloqueada', await bloqueado('revalorizacion'));
 
+// De fábrica la oferta lleva un 5% de descuento: se quita para probar el enlace en su forma pura.
+await teclear('descuentoOferta', 0);
 await teclear('precioAnunciado', 420000);
 check('con descuento 0, el anunciado iguala la oferta', (await n('oferta')) === 420000, String(await n('oferta')));
 check('el valor sigue a la oferta', (await n('valor')) === 420000, String(await n('valor')));
@@ -54,7 +56,7 @@ await p.evaluate(() => { document.getElementById('oferta').value = 390000; rende
 check('el valor suelto no se mueve al cambiar la oferta', (await n('valor')) === 460000, String(await n('valor')));
 
 // El año 0 arranca en la diferencia entre lo que vale y lo que cuesta entero.
-const g0 = await p.evaluate(() => { const d = calcular(); return { g: d.fila0.ganancia, valor: d.valor, coste: d.costeTotal }; });
+const g0 = await p.evaluate(() => { const d = calcular(); return { g: d.fila0.ganancia, valor: d.valor + d.reforma, coste: d.costeTotal }; });
 check('comprar por debajo de valor levanta el año 0',
   Math.abs(g0.g - (g0.valor - g0.coste)) < 0.01, `${Math.round(g0.g)} €`);
 

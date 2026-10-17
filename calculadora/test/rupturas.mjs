@@ -23,14 +23,24 @@ const caja = await p.evaluate(() => {
   const set = v => { document.getElementById('tipoHipoteca').value = String(v).replace('.', ','); };
   const cajaA = v => { set(v * 100); const r = calcular().regimenInicial.caja; return r; };
   const justo = cajaA(t), antes = cajaA(t - 0.0005), despues = cajaA(t + 0.0005);
-  set(2.2);
+  set(2.8);
   return { t, justo, antes, despues, actual: d.regimenInicial.caja };
 });
 check('a ese tipo la caja del primer año es cero', Math.abs(caja.justo) < 1, `${pc(caja.t)} → ${caja.justo.toFixed(2)} €`);
 check('un pelo por debajo es positiva y por encima negativa',
   caja.antes > 0 && caja.despues < 0, `${caja.antes.toFixed(0)} € / ${caja.despues.toFixed(0)} €`);
-check('el escenario de ejemplo ya está pasado de raya',
-  caja.t < 0.022 && caja.actual < 0, `raya ${pc(caja.t)} · tipo 2,20% · caja ${Math.round(caja.actual)} €`);
+// El ejemplo (hipoteca al 70%, 2,80%) deja margen: su caja es positiva y la raya queda por encima
+// del tipo puesto, así que el dato sale en verde. La subida que aguanta es lo que enseña la caja.
+check('el escenario de ejemplo aguanta una subida de tipos',
+  caja.t > 0.028 && caja.actual > 0, `raya ${pc(caja.t)} · tipo 2,80% · caja ${Math.round(caja.actual)} €`);
+check('y la cifra de la raya sale en verde',
+  await p.evaluate(() => document.getElementById('outRupturaCaja').classList.contains('val-pos')));
+check('pasado ese tipo, en rojo', await p.evaluate(() => {
+  document.getElementById('tipoHipoteca').value = '6,00'; render();
+  const rojo = document.getElementById('outRupturaCaja').classList.contains('val-neg');
+  document.getElementById('tipoHipoteca').value = '2,80'; render();
+  return rojo;
+}));
 
 // --- casos límite ---
 const limites = await p.evaluate(() => {

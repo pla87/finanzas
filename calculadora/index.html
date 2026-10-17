@@ -4,9 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f1f5f9" id="theme-color-meta" />
-  <title>Calculadora de Inversión en Pisos — Rentabilidad del Alquiler</title>
-  <meta name="description" content="Calculadora de rentabilidad de un piso en alquiler: hipoteca, préstamo personal, impuestos por comunidad autónoma, gastos y proyección año a año." />
+  <title>Calculadora de compra para alquiler residencial</title>
+  <meta name="description" content="Rentabilidad de un piso en alquiler con proyección año a año: hipoteca, préstamo personal, impuestos por comunidad autónoma y gastos." />
   <link rel="canonical" href="https://pacolucena.com/calculadora/" />
+  <!-- Vista previa al compartir el enlace. La imagen (1200x630) se sirve desde el mismo dominio. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_ES" />
+  <meta property="og:site_name" content="pacolucena.com" />
+  <meta property="og:url" content="https://pacolucena.com/calculadora/" />
+  <meta property="og:title" content="Calculadora de compra para alquiler residencial" />
+  <meta property="og:description" content="Rentabilidad de un piso en alquiler con proyección año a año: hipoteca, préstamo personal, impuestos y gastos." />
+  <meta property="og:image" content="https://pacolucena.com/calculadora/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Calculadora de compra para alquiler residencial" />
+  <meta name="twitter:description" content="Rentabilidad de un piso en alquiler con proyección año a año: hipoteca, préstamo personal, impuestos y gastos." />
+  <meta name="twitter:image" content="https://pacolucena.com/calculadora/og.png" />
   <!-- Emoji Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧮</text></svg>" />
   <link rel="stylesheet" href="tailwind.css">
@@ -81,26 +95,40 @@
        sigue alineada con las demás por su borde derecho. */
     .unidad-campo { display: flex; align-items: center; justify-content: flex-end; gap: 3px; }
     .campo.campo-corto { width: 3.1rem; padding: 5px 6px; }
-    /* Casilla dentro de la etiqueta: «(☐ IVA)», «(☐ amort. acelerada)». */
-    .casilla { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+    /* Cajas de porcentaje que comparten fila con otra (inflación y revalorización). */
+    .campo.campo-pct { width: 3.5rem; padding: 5px 6px; }
+    /* Casilla dentro de la etiqueta: «(☐ IVA)», «(☐ amort. acelerada)». Lleva el mismo cuerpo
+       que el rótulo que la precede: entre paréntesis es un matiz, no una letra más pequeña. */
+    .casilla { display: inline-flex; align-items: center; gap: 2px; font-size: inherit; cursor: pointer; white-space: nowrap; }
     .casilla input { accent-color: rgb(var(--brand-accent)); cursor: pointer; }
-    .fila > .etq-doble { font-size: 12px; font-weight: 500; color: rgb(var(--brand-textMuted)); line-height: 1.3; display: flex; flex-wrap: wrap; align-items: center; column-gap: 5px; }
+    /* Etiqueta con casilla o aviso al lado: siempre en una línea, que una etiqueta partida en
+       dos descuadra la altura de la fila respecto a sus vecinas. */
+    .fila > .etq-doble { font-size: 12px; font-weight: 500; color: rgb(var(--brand-textMuted)); line-height: 1.3; display: flex; flex-wrap: nowrap; white-space: nowrap; align-items: center; column-gap: 4px; min-width: 0; }
+    /* Inflación y revalorización comparten fila: dos pares etiqueta + caja, con el candado en
+       el segundo. */
+    .par { display: flex; align-items: center; gap: 4px; }
+    .par > label { font-size: 12px; font-weight: 500; color: rgb(var(--brand-textMuted)); line-height: 1.3; white-space: nowrap; }
+    .par .sep { font-size: 12px; color: rgb(var(--brand-textMuted)); }
+    .mini { font-size: 11px; color: rgb(var(--brand-textMuted)); white-space: nowrap; }
     .hueco-candado { width: 22px; flex: none; }
     .unidad {
       font-size: 11px; color: rgb(var(--brand-textMuted)); text-align: right;
       width: 4.25rem; flex: none; white-space: nowrap;
     }
     .campo {
-      width: 7rem; flex: none; text-align: right; font-weight: 700;
+      width: 5.25rem; flex: none; text-align: right; font-weight: 700;
       background: rgb(var(--brand-bg)); border: 1px solid rgb(var(--brand-border));
       border-radius: 6px; padding: 5px 8px; font-size: 13px;
       font-variant-numeric: tabular-nums; color: inherit;
     }
     .campo:focus { outline: none; border-color: rgb(var(--brand-accent)); }
+    /* .campo fija color: inherit y, al ir después, le gana a .val-neg: sin esto el tipo alto del
+       préstamo no se pondría rojo. */
+    .campo.val-neg { color: rgb(var(--brand-rose)); }
     .campo:disabled { opacity: .6; }
     select.campo { text-align: right; font-size: 12px; cursor: pointer; }
     /* Los dos selectores largos (comunidad autónoma) necesitan más sitio que una cifra. */
-    select.campo-ancho { width: 11.25rem; }
+    select.campo-ancho { width: 8.4rem; }
     .salida {
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
       font-size: 12px; background: rgb(var(--brand-cardInner));
@@ -152,58 +180,59 @@
   <div class="sm:hidden sticky top-0 z-50 -mx-3 -mt-3 mb-3 h-6 flex items-center justify-center px-3 bg-brand-bg border-b border-brand-accent/40 text-brand-accent text-[10px] font-semibold" data-i18n="avisoMovil">Las tablas se ven mejor en un ordenador</div>
 
   <header class="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row md:items-center justify-between border-b border-brand-border pb-5 gap-4">
-    <div>
+    <div class="min-w-0">
       <h1 class="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
         <span class="bg-brand-accent text-white px-2 py-0.5 rounded text-sm font-black">PISOS</span>
-        <span data-i18n="cabeceraTitulo">Calculadora de Inversión</span>
+        <span data-i18n="cabeceraTitulo">Calculadora de compra para alquiler residencial</span>
       </h1>
       <p class="text-brand-textMuted text-xs sm:text-sm mt-1">
-        <span data-i18n="cabeceraSub">Rentabilidad de un piso en alquiler: hipoteca, préstamo, gastos, impuestos y proyección año a año.</span>
+        <span data-i18n="cabeceraSub">Rentabilidad de un piso en alquiler con proyección año a año.</span>
         <span id="saveIndicator" class="text-[10px] font-semibold text-brand-emerald opacity-0 transition whitespace-nowrap" aria-live="polite"></span>
       </p>
     </div>
     <!-- Mismos botones que pacolucena.com/balance: en móvil se reparten el ancho en una fila; en
          escritorio, cuadrados de 36 px. -->
-    <div class="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-1.5 sm:gap-2 flex-nowrap">
+    <div class="flex items-center justify-between sm:justify-start w-full sm:w-auto sm:shrink-0 gap-1.5 sm:gap-2 flex-nowrap">
       <button onclick="alternarIdioma()" id="langBtn" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span id="langIcon" class="flex items-center"></span></button>
       <button onclick="toggleTheme()" id="themeToggleBtn" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span id="themeToggleIcon">🌙</span></button>
-      <button onclick="exportData()" id="btnGuardar" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-emerald/20 border-brand-emerald/40 text-brand-emerald hover:bg-brand-emerald/30"><span>💾</span></button>
-      <button onclick="document.getElementById('backupInput').click()" id="btnCargar" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span>📂</span></button>
-      <input type="file" id="backupInput" accept=".txt,.json" class="hidden" onchange="importData(event)" />
-      <button onclick="openModal('shareModal')" id="btnCompartir" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span>🔗</span></button>
       <button onclick="resetDefaults()" id="btnReset" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-rose/20 border-brand-rose/50 text-brand-rose hover:bg-brand-rose/30"><span>♻️</span></button>
       <button onclick="openModal('faqModal')" id="btnFaq" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span>🎓</span></button>
       <button onclick="openModal('helpModal')" id="btnAyuda" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span>❓</span></button>
+      <!-- Al final de la fila y con dos iconos: el enlace y el disquete, porque compartir los
+           cálculos es lo que antes hacía el botón de guardar. Por eso es más ancho que los demás. -->
+      <button onclick="openModal('shareModal')" id="btnCompartir" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-auto sm:px-2.5 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-brand-cardInner"><span>🔗💾</span></button>
     </div>
   </header>
 
-  <!-- KPIs -->
-  <section class="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-12 gap-3.5 mb-6">
-    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl p-4 shadow-sm">
+  <!-- KPIs. En escritorio, seis tarjetas de ancho igual en una fila. En móvil ocupan una línea
+       cada una (etiqueta a la izquierda, cifra a la derecha) y sin el detalle: seis tarjetas
+       apiladas con tres renglones cada una dejaban los controles a tres pantallas de distancia. -->
+  <section class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3.5 mb-6">
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiBruta" data-i18n-title="kpiBrutaTip">RENTABILIDAD BRUTA</div>
-      <div class="text-xl font-bold text-brand-accent mt-1.5 num" id="kpiBruta">--</div>
-      <div class="text-[11px] text-brand-textMuted mt-0.5 num" id="kpiBrutaDetalle">--</div>
+      <div class="text-base lg:text-xl font-bold text-brand-accent lg:mt-1.5 num" id="kpiBruta">--</div>
+      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiBrutaDetalle">--</div>
     </div>
-    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl p-4 shadow-sm">
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiRoce" data-i18n-title="kpiRoceTip">ROCE</div>
-      <div class="text-xl font-bold mt-1.5 num" id="kpiRoce">--</div>
+      <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiRoce">--</div>
       <!-- La cifra grande es la que ya ha ocurrido; la plusvalía sobre el papel va debajo, que
            es donde se puede leer como lo que es: una hipótesis, no dinero cobrado. -->
-      <div class="text-[11px] text-brand-textMuted mt-0.5 num" id="kpiRoceConReval">--</div>
-      <div class="text-[11px] text-brand-textMuted num" id="kpiRoceDetalle">--</div>
+      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiRoceConReval">--</div>
+      <div class="hidden lg:block text-[11px] text-brand-textMuted num" id="kpiRoceDetalle">--</div>
     </div>
-    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl p-4 shadow-sm">
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiCaja" data-i18n-title="kpiCajaTip">CAJA ANUAL</div>
-      <div class="text-xl font-bold mt-1.5 num" id="kpiCaja">--</div>
-      <div class="text-[11px] text-brand-textMuted mt-0.5 num" id="kpiCajaMes">--</div>
+      <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiCaja">--</div>
+      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiCajaMes">--</div>
     </div>
-    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl p-4 shadow-sm">
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiDeuda" data-i18n-title="kpiDeudaTip">FIN DE DEUDA</div>
-      <div class="text-xl font-bold text-brand-amber mt-1.5 num" id="kpiDeuda">--</div>
-      <div class="text-[11px] text-brand-textMuted mt-0.5 num" id="kpiDeudaDetalle">--</div>
+      <div class="text-base lg:text-xl font-bold text-brand-amber lg:mt-1.5 num" id="kpiDeuda">--</div>
+      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiDeudaDetalle">--</div>
     </div>
-    <div class="col-span-2 lg:col-span-4 bg-brand-card border-2 border-brand-accent/40 rounded-xl p-4 shadow-sm flex flex-col justify-between">
-      <div>
+    <div class="lg:col-span-2 bg-brand-card border-2 border-brand-accent/40 rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-col justify-between">
+      <div class="flex items-baseline justify-between gap-3 lg:block">
         <div class="text-[11px] font-semibold text-brand-accent uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
           <span class="tooltip-help" data-i18n="kpiAnualizada" data-i18n-title="kpiAnualizadaTip">RENTABILIDAD ANUALIZADA A</span>
           <!-- El año no es sólo una etiqueta: elige de qué fila de la proyección sale la cifra
@@ -211,15 +240,20 @@
           <select id="anoRef" class="bg-brand-bg border border-brand-accent/40 rounded px-1 py-0.5 text-[11px] font-bold text-brand-accent cursor-pointer" data-i18n-title="anoRefTip"></select>
           <span data-i18n="kpiAnualizadaAnos">AÑOS</span>
         </div>
-        <div class="text-xl font-bold num mt-1.5" id="kpiAnualizada">--</div>
+        <div class="text-base lg:text-xl font-bold num lg:mt-1.5" id="kpiAnualizada">--</div>
       </div>
       <!-- Una línea y sólo una: truncate antes que un salto que descuadre la altura de la tarjeta.
            El texto completo, con el matiz que no cabe, va en el título. -->
-      <div class="text-[11px] mt-1 text-brand-textMuted num truncate tooltip-help" id="kpiPayback">--</div>
+      <div class="hidden lg:block text-[11px] mt-1 text-brand-textMuted num truncate tooltip-help" id="kpiPayback">--</div>
+    </div>
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
+      <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiAnosAlquiler" data-i18n-title="kpiAnosAlquilerTip">AÑOS DE ALQUILER</div>
+      <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiAnosAlquiler">--</div>
+      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiAnosAlquilerDetalle">--</div>
     </div>
   </section>
 
-  <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 items-start">
+  <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
     <!-- Compra, financiación y explotación en fila; el resumen debajo, a todo lo ancho -->
     <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
@@ -230,21 +264,21 @@
 
         <div class="fila">
           <label for="precioAnunciado" class="tooltip-help" data-i18n="precioAnunciado" data-i18n-title="precioAnunciadoTip">Precio anunciado</label>
-          <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="precioAnunciado" value="500000" class="campo text-brand-accent"></div>
+          <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="precioAnunciado" value="260000" class="campo text-brand-accent"></div>
         </div>
         <div class="fila">
           <label for="oferta" class="tooltip-help" data-i18n="oferta" data-i18n-title="ofertaTip">Oferta</label>
-          <div class="control"><span class="hueco-candado"></span><span class="unidad unidad-campo"><input type="text" inputmode="decimal" id="descuentoOferta" value="0" class="campo campo-corto" data-i18n-title="descuentoOfertaTip"><span>%</span></span><input type="text" inputmode="decimal" data-money id="oferta" value="500000" class="campo text-brand-accent"></div>
+          <div class="control"><span class="mini">€</span><input type="text" inputmode="decimal" data-money id="oferta" value="247000" class="campo text-brand-accent"><span class="mini">-%</span><input type="text" inputmode="decimal" id="descuentoOferta" value="5" class="campo campo-corto" data-i18n-title="descuentoOfertaTip"></div>
         </div>
 
         <div class="fila">
           <label for="superficie" class="tooltip-help" data-i18n-title="superficieTip"><span data-i18n="superficie">Superficie</span> <span class="opacity-70">(<span id="outEurM2" class="num">--</span>)</span></label>
-          <div class="control"><span class="hueco-candado"></span><span class="unidad">m²</span><input type="text" inputmode="decimal" data-money id="superficie" value="100" class="campo"></div>
+          <div class="control"><span class="hueco-candado"></span><span class="unidad">m²</span><input type="text" inputmode="decimal" data-money id="superficie" value="80" class="campo"></div>
         </div>
 
         <div class="fila">
           <label for="valor" class="tooltip-help" data-i18n="valor" data-i18n-title="valorTip">Valor real estimado</label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('valor')" id="lockValor"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="valor" value="500000" class="campo"></div>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('valor')" id="lockValor"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="valor" value="247000" class="campo"></div>
         </div>
         <input type="checkbox" id="autoValor" checked class="hidden">
 
@@ -258,7 +292,7 @@
         </div>
         <div class="fila">
           <label for="pctImpuestos" class="tooltip-help" data-i18n="impuestoCompra" data-i18n-title="impuestoCompraTip">Impuesto de compra</label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('pctImpuestos')" id="lockPctImpuestos"></button><span class="unidad">%</span><input type="text" inputmode="decimal" id="pctImpuestos" value="10" class="campo"></div>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('pctImpuestos')" id="lockPctImpuestos"></button><span class="unidad">%</span><input type="text" inputmode="decimal" id="pctImpuestos" value="6" class="campo"></div>
         </div>
         <div class="fila">
           <label for="pctNotaria" class="tooltip-help" data-i18n="notaria" data-i18n-title="notariaTip">Notaría y registro</label>
@@ -274,7 +308,7 @@
         </div>
         <div class="fila">
           <label for="reforma" class="tooltip-help" data-i18n="reforma" data-i18n-title="reformaTip">Reforma</label>
-          <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="reforma" value="0" class="campo"></div>
+          <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="reforma" value="8000" class="campo"></div>
         </div>
 
         <div class="salida flex-wrap"><span><span data-i18n="gastosCompra">Gastos de compra</span> <b id="outGastosCompra" class="text-brand-rose num">--</b></span><span><span class="font-normal text-brand-textMuted" data-i18n="costeTotal">Coste total</span> <b id="outCosteTotal" class="text-brand-amber num">--</b></span></div>
@@ -295,7 +329,7 @@
         <div id="bloqueHipoteca" class="space-y-3">
           <div class="fila">
             <label for="pctFinanciado" class="tooltip-help" data-i18n="pctFinanciado" data-i18n-title="pctFinanciadoTip">Porcentaje financiado</label>
-            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="pctFinanciado" value="80" class="campo text-brand-accent"></div>
+            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="pctFinanciado" value="70" class="campo text-brand-accent"></div>
           </div>
           <div class="fila">
             <div class="etq-doble"><label for="plazoHipoteca" data-i18n="plazo">Plazo</label><label class="casilla tooltip-help" data-i18n-title="aceleradaHipTip">(<input type="checkbox" id="hipotecaAcelerada"> <span data-i18n="aceleradaCorta">amort. acelerada</span>)</label></div>
@@ -303,7 +337,7 @@
           </div>
           <div class="fila">
             <label for="tipoHipoteca" data-i18n="tipoInteres">Tipo de interés</label>
-            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoHipoteca" value="2,20" data-dec="2" class="campo"></div>
+            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoHipoteca" value="2,80" data-dec="2" class="campo"></div>
           </div>
           <!-- Principal, cuota y el tipo al que la caja del primer año se queda en cero, en una sola
                caja. Ese tipo es el margen ante una subida: no hace falta simular una hipoteca
@@ -326,12 +360,12 @@
             <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="importePrestamo" value="0" class="campo text-brand-accent"></div>
           </div>
           <div class="fila">
-            <div class="etq-doble"><label for="plazoPrestamo" data-i18n="plazo">Plazo</label><label class="casilla tooltip-help" data-i18n-title="aceleradaPreTip">(<input type="checkbox" id="prestamoAcelerado"> <span data-i18n="aceleradaCorta">amort. acelerada</span>)</label></div>
+            <div class="etq-doble"><label for="plazoPrestamo" data-i18n="plazo">Plazo</label><label class="casilla tooltip-help" data-i18n-title="aceleradaPreTip">(<input type="checkbox" id="prestamoAcelerado" checked> <span data-i18n="aceleradaCorta">amort. acelerada</span>)</label></div>
             <div class="control"><span class="hueco-candado"></span><span class="unidad" data-i18n="kpiAnos">años</span><input type="text" inputmode="decimal" id="plazoPrestamo" value="5" class="campo"></div>
           </div>
           <div class="fila">
-            <label for="tipoPrestamo" data-i18n="tipoInteres">Tipo de interés</label>
-            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoPrestamo" value="11,00" data-dec="2" class="campo"></div>
+            <div class="etq-doble"><label for="tipoPrestamo" id="lblTipoPrestamo" data-i18n="tipoInteres">Tipo de interés</label><span id="altoPrestamo" class="hidden val-neg font-bold">(<span data-i18n="alto">ALTO</span>)</span></div>
+            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoPrestamo" value="9,00" data-dec="2" class="campo"></div>
           </div>
           <div class="salida"><span data-i18n="cuotaMensual">Cuota mensual</span><span id="outCuotaPrestamo">--</span></div>
         </div>
@@ -349,7 +383,7 @@
 
       <div class="fila">
         <label for="alquiler" class="tooltip-help" data-i18n="alquiler" data-i18n-title="alquilerTip">Alquiler mensual</label>
-        <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="alquiler" value="2000" class="campo text-brand-emerald"></div>
+        <div class="control"><span class="hueco-candado"></span><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="alquiler" value="1250" class="campo text-brand-emerald"></div>
       </div>
       <div class="fila">
         <label for="mesesVacios" class="tooltip-help" data-i18n="mesesVacios" data-i18n-title="mesesVaciosTip">Meses sin inquilino</label>
@@ -362,35 +396,34 @@
           <h3 class="text-xs font-bold uppercase tracking-wider text-brand-textMuted" data-i18n="gastosRecurrentes">GASTOS RECURRENTES</h3>
           <button type="button" onclick="reestimarTodo()" class="text-[10px] font-semibold px-2 py-0.5 rounded border border-brand-border hover:border-brand-accent hover:text-brand-accent transition" data-i18n="reestimar">Reestimar todo</button>
         </div>
-        <p class="text-[10px] text-brand-textMuted leading-snug -mt-1" data-i18n="gastosAyuda">Estimados con multiplicadores estándar. Pulsa el candado para escribir tu propia cifra; el candado abierto la deja fija.</p>
 
         <div class="fila">
           <label for="comunidad" class="tooltip-help" data-i18n-title="comunidadTip"><span data-i18n="comunidad">Comunidad</span> <span class="opacity-70">(<span data-i18n="mensual">mensual</span>)</span></label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('comunidad')" id="lockComunidad"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="comunidad" value="100" class="campo"></div>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('comunidad')" id="lockComunidad"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="comunidad" value="96" class="campo"></div>
         </div>
         <input type="checkbox" id="autoComunidad" checked class="hidden">
 
         <div class="fila">
           <label for="ibi" class="tooltip-help" data-i18n-title="ibiTip"><span data-i18n="ibi">IBI</span> <span class="opacity-70">(<span data-i18n="anual">anual</span>)</span></label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('ibi')" id="lockIbi"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="ibi" value="1200" class="campo"></div>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('ibi')" id="lockIbi"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="ibi" value="593" class="campo"></div>
         </div>
         <input type="checkbox" id="autoIbi" checked class="hidden">
 
         <div class="fila">
           <label for="seguroHogar" class="tooltip-help" data-i18n-title="seguroHogarTip"><span data-i18n="seguroHogar">Seguro de hogar</span> <span class="opacity-70">(<span data-i18n="anual">anual</span>)</span></label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('seguroHogar')" id="lockSeguroHogar"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="seguroHogar" value="250" class="campo"></div>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('seguroHogar')" id="lockSeguroHogar"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="seguroHogar" value="200" class="campo"></div>
         </div>
         <input type="checkbox" id="autoSeguroHogar" checked class="hidden">
 
         <div class="fila">
           <label for="seguroImpagos" class="tooltip-help" data-i18n-title="seguroImpagosTip"><span data-i18n="seguroImpagos">Seguro de impagos</span> <span class="opacity-70">(<span data-i18n="anual">anual</span>)</span></label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('seguroImpagos')" id="lockSeguroImpagos"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="seguroImpagos" value="1000" class="campo"></div>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('seguroImpagos')" id="lockSeguroImpagos"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="seguroImpagos" value="625" class="campo"></div>
         </div>
         <input type="checkbox" id="autoSeguroImpagos" checked class="hidden">
 
         <div class="fila">
           <label for="mantenimiento" class="tooltip-help" data-i18n-title="mantenimientoTip"><span data-i18n="mantenimiento">Mantenimiento</span> <span class="opacity-70">(<span data-i18n="anual">anual</span>)</span></label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('mantenimiento')" id="lockMantenimiento"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="mantenimiento" value="1200" class="campo"></div>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('mantenimiento')" id="lockMantenimiento"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="mantenimiento" value="750" class="campo"></div>
         </div>
         <input type="checkbox" id="autoMantenimiento" checked class="hidden">
 
@@ -398,13 +431,12 @@
       </div>
 
       <div class="border-t border-brand-border pt-4 space-y-3">
+        <!-- Inflación y revalorización en una fila: son dos porcentajes y una tarjeta de gastos
+             con seis filas por encima no necesita dos renglones más para ellos. -->
         <div class="fila">
-          <label for="inflacion" class="tooltip-help" data-i18n="inflacion" data-i18n-title="inflacionTip">Inflación</label>
-          <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="inflacion" value="3,00" data-dec="2" class="campo"></div>
-        </div>
-        <div class="fila">
-          <label for="revalorizacion" class="tooltip-help" data-i18n="revalorizacion" data-i18n-title="revalorizacionTip">Revalorización anual</label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('revalorizacion')" id="lockRevalorizacion"></button><span class="unidad">%</span><input type="text" inputmode="decimal" id="revalorizacion" value="3,00" data-dec="2" class="campo"></div>
+          <div class="par"><label for="inflacion" class="tooltip-help" data-i18n="inflacion" data-i18n-title="inflacionTip">Inflación</label><input type="text" inputmode="decimal" id="inflacion" value="2,50" data-dec="2" class="campo campo-pct"><span class="mini">%</span></div>
+          <span class="text-xs text-brand-textMuted">·</span>
+          <div class="par"><label for="revalorizacion" class="tooltip-help" data-i18n="revalorizacion" data-i18n-title="revalorizacionTip">Revalorización</label><button type="button" class="lock-btn" onclick="alternarBloqueo('revalorizacion')" id="lockRevalorizacion"></button><input type="text" inputmode="decimal" id="revalorizacion" value="2,50" data-dec="2" class="campo campo-pct"><span class="mini">%</span></div>
         </div>
         <input type="checkbox" id="autoRevalorizacion" checked class="hidden">
       </div>
@@ -547,7 +579,7 @@
           <h3 class="text-sm font-bold border-b border-brand-border pb-3" data-i18n="paramsMultiplicadores">Multiplicadores de gasto</h3>
           <p class="text-[10px] text-brand-textMuted leading-snug" data-i18n="paramsMultiplicadoresAyuda">Reglas del pulgar para estimar cada gasto recurrente.</p>
           <div class="fila"><label for="tasaIbi" class="tooltip-help" data-i18n="ibi" data-i18n-title="ibiTip">IBI</label><div class="control"><span class="unidad">% precio</span><input type="text" inputmode="decimal" id="tasaIbi" value="0.24" class="campo"></div></div>
-          <div class="fila"><label for="tasaComunidad" class="tooltip-help" data-i18n="comunidad" data-i18n-title="comunidadTip">Comunidad</label><div class="control"><span class="unidad">€/m²·mes</span><input type="text" inputmode="decimal" id="tasaComunidad" value="1" class="campo"></div></div>
+          <div class="fila"><label for="tasaComunidad" class="tooltip-help" data-i18n="comunidad" data-i18n-title="comunidadTip">Comunidad</label><div class="control"><span class="unidad">€/m²·mes</span><input type="text" inputmode="decimal" id="tasaComunidad" value="1.2" class="campo"></div></div>
           <div class="fila"><label for="tasaSeguroHogar" data-i18n="seguroHogar">Seguro de hogar</label><div class="control"><span class="unidad">€/m²·año</span><input type="text" inputmode="decimal" id="tasaSeguroHogar" value="2.5" class="campo"></div></div>
           <div class="fila"><label for="tasaImpagos" class="tooltip-help" data-i18n="seguroImpagos" data-i18n-title="seguroImpagosTip">Seguro de impagos</label><div class="control"><span class="unidad">mensualid.</span><input type="text" inputmode="decimal" id="tasaImpagos" value="0.5" class="campo"></div></div>
           <div class="fila"><label for="tasaMantenimiento" class="tooltip-help" data-i18n="mantenimiento" data-i18n-title="mantenimientoTip">Mantenimiento</label><div class="control"><span class="unidad">% alquiler</span><input type="text" inputmode="decimal" id="tasaMantenimiento" value="5" class="campo"></div></div>
@@ -556,7 +588,7 @@
         <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
           <h3 class="text-sm font-bold border-b border-brand-border pb-3" data-i18n="paramsFiscalidad">Fiscalidad del alquiler</h3>
           <div class="fila"><label for="tipoMarginal" class="tooltip-help" data-i18n="tipoMarginal" data-i18n-title="tipoMarginalTip">Tipo marginal IRPF</label><div class="control"><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoMarginal" value="45" class="campo"></div></div>
-          <div class="fila"><label for="baseTributable" class="tooltip-help" data-i18n="baseTributable" data-i18n-title="baseTributableTip">Parte que tributa</label><div class="control"><span class="unidad">%</span><input type="text" inputmode="decimal" id="baseTributable" value="40" class="campo"></div></div>
+          <div class="fila"><label for="baseTributable" class="tooltip-help" data-i18n="baseTributable" data-i18n-title="baseTributableTip">Parte que tributa</label><div class="control"><span class="unidad">%</span><input type="text" inputmode="decimal" id="baseTributable" value="50" class="campo"></div></div>
           <div class="fila"><label for="pctConstruccion" class="tooltip-help" data-i18n="pctConstruccion" data-i18n-title="pctConstruccionTip">Peso de la construcción</label><div class="control"><span class="unidad">%</span><input type="text" inputmode="decimal" id="pctConstruccion" value="60" class="campo"></div></div>
           <div class="fila"><label for="tasaAmortizacion" class="tooltip-help" data-i18n="tasaAmortizacion" data-i18n-title="tasaAmortizacionTip">Tasa de amortización</label><div class="control"><span class="unidad">%</span><input type="text" inputmode="decimal" id="tasaAmortizacion" value="3" class="campo"></div></div>
           <h4 class="text-xs font-bold uppercase tracking-wider text-brand-textMuted pt-2 border-t border-brand-border" data-i18n="paramsVenta">Al vender</h4>
@@ -587,11 +619,11 @@
         <button onclick="closeModal('shareModal')" class="text-brand-textMuted hover:text-brand-accent text-xl leading-none">✕</button>
       </div>
       <button type="button" onclick="compartir(false)" class="w-full text-left p-3 rounded-lg border border-brand-border hover:border-brand-accent transition">
-        <div class="text-sm font-bold" data-i18n="compartirHerramienta">La calculadora</div>
+        <div class="text-sm font-bold"><span aria-hidden="true">🧮</span> <span data-i18n="compartirHerramienta">La calculadora</span></div>
         <div class="text-xs text-brand-textMuted mt-0.5" data-i18n="compartirHerramientaSub">Vacía, con el escenario de ejemplo.</div>
       </button>
       <button type="button" onclick="compartir(true)" class="w-full text-left p-3 rounded-lg border border-brand-accent/50 bg-brand-accent/10 hover:border-brand-accent transition">
-        <div class="text-sm font-bold text-brand-accent" data-i18n="compartirCalculos">Estos cálculos</div>
+        <div class="text-sm font-bold text-brand-accent"><span aria-hidden="true">💾</span> <span data-i18n="compartirCalculos">Estos cálculos</span></div>
         <div class="text-xs text-brand-textMuted mt-0.5" data-i18n="compartirCalculosSub">Quien abra el enlace verá el piso con tus cifras.</div>
       </button>
     </div>
@@ -645,16 +677,20 @@
     const TEXTOS = {
       es: {
         htmlLang: 'es', locale: 'es-ES',
-        titulo: 'Calculadora de Inversión en Pisos — Rentabilidad del Alquiler',
-        cabeceraTitulo: 'Calculadora de Inversión',
-        cabeceraSub: 'Rentabilidad de un piso en alquiler: hipoteca, préstamo, gastos, impuestos y proyección año a año.',
+        titulo: 'Calculadora de compra para alquiler residencial',
+        cabeceraTitulo: 'Calculadora de compra para alquiler residencial',
+        cabeceraSub: 'Rentabilidad de un piso en alquiler con proyección año a año.',
         avisoMovil: 'Las tablas se ven mejor en un ordenador', guardado: 'Guardado',
-        btnIdioma: 'Switch to English', btnTema: 'Cambiar de tema', btnGuardar: 'Guardar el escenario en un archivo',
-        btnCargar: 'Cargar un escenario guardado', btnReset: 'Volver al escenario de ejemplo', btnCompartir: 'Compartir la calculadora o estos cálculos', compartirTitulo: 'Compartir', compartirHerramienta: 'La calculadora', compartirHerramientaSub: 'Vacía, con el escenario de ejemplo.', compartirCalculos: 'Estos cálculos', compartirCalculosSub: 'Quien abra el enlace verá el piso con tus cifras.', enlaceCopiado: 'Enlace copiado', copiaEnlace: 'Copia el enlace:', btnAyuda: 'Cómo funciona el modelo',
+        btnIdioma: 'Switch to English', btnTema: 'Cambiar de tema', btnReset: 'Volver al escenario de ejemplo', btnCompartir: 'Compartir la calculadora o guardar estos cálculos en un enlace', compartirTitulo: 'Compartir', compartirHerramienta: 'La calculadora', compartirHerramientaSub: 'Vacía, con el escenario de ejemplo.', compartirCalculos: 'Estos cálculos', compartirCalculosSub: 'Quien abra el enlace verá el piso con tus cifras.', enlaceCopiado: 'Enlace copiado', copiaEnlace: 'Copia el enlace:',
+        compartirTexto: 'Piso de {0} alquilado a {1}/mes: rentabilidad bruta {2}, caja {3}/mes, anualizada a {4} años {5}.',
+        compartirTextoHerramienta: 'Calculadora de compra para alquiler residencial: rentabilidad de un piso con proyección año a año.', btnAyuda: 'Cómo funciona el modelo',
+        kpiAnosAlquiler: 'AÑOS DE ALQUILER',
+        kpiAnosAlquilerTip: 'Cuántos años de alquiler íntegro (los doce meses, sin descontar vacíos ni gastos) cuesta el piso:\nel precio pagado dividido entre el alquiler anual bruto. Cuanto menos, mejor. En España\nsuele ir de 15 a 25.',
+        alto: 'ALTO',
         kpiBruta: 'RENTABILIDAD BRUTA',
         kpiBrutaTip: 'Alquiler anual dividido entre el coste total de la operación (precio + gastos + reforma).\nNo descuenta gastos, impuestos ni cuotas: es la referencia rápida que se usa para descartar.',
         kpiRoce: 'ROCE',
-        kpiRoceTip: 'Rentabilidad del primer año sobre el dinero que has puesto. Va en dos cifras porque no\ntodo lo que ganas es de la misma clase.\n\nLa grande es lo realizado: la caja que queda tras cuotas, gastos e impuestos, más el\nprincipal que amortizan esas cuotas. Lo primero está en tu banco y lo segundo es deuda\nque ya no debes; ninguna de las dos depende de ninguna hipótesis.\n\nLa de debajo añade la revalorización del piso entero, que es plusvalía latente sobre el\npapel: sale de la revalorización que hayas puesto y no se cobra hasta vender. Suele ser\nla mitad larga del total, así que conviene mirarla aparte.',
+        kpiRoceTip: 'ROCE = Return on Capital Employed: rentabilidad sobre el capital empleado, es decir,\nsobre lo que pones de tu bolsillo (la liquidez aportada), no sobre el precio del piso.\n\nRentabilidad del primer año sobre ese dinero. Va en dos cifras porque no\ntodo lo que ganas es de la misma clase.\n\nLa grande es lo realizado: la caja que queda tras cuotas, gastos e impuestos, más el\nprincipal que amortizan esas cuotas. Lo primero está en tu banco y lo segundo es deuda\nque ya no debes; ninguna de las dos depende de ninguna hipótesis.\n\nLa de debajo añade la revalorización del piso entero, que es plusvalía latente sobre el\npapel: sale de la revalorización que hayas puesto y no se cobra hasta vender. Suele ser\nla mitad larga del total, así que conviene mirarla aparte.',
         kpiRoceConReval: '{0} con la revalorización',
         kpiCaja: 'CAJA ANUAL',
         kpiCajaTip: 'Lo que queda en el bolsillo cada año una vez pagados el alquiler recibido menos gastos,\nimpuestos y las cuotas de hipoteca y préstamo que estén vivas.',
@@ -708,7 +744,6 @@
         mesesVaciosTip: 'Meses al año que el piso pasa vacío entre un inquilino y el siguiente: pintura, visitas\ny papeleo. Medio mes al año es un inquilino nuevo cada dos años.\n\nSólo recorta el ingreso. Los gastos, las cuotas y el IBI siguen corriendo enteros, que es\nlo que hace daño de verdad.',
         ingresoAnual: 'Ingreso anual',
         ingresoAnualTip: 'Alquiler que llegas a cobrar, ya descontados los meses vacíos, y el porcentaje del año\nque el piso está ocupado.', gastosRecurrentes: 'GASTOS RECURRENTES', reestimar: 'Reestimar todo',
-        gastosAyuda: 'Estimados con multiplicadores estándar. Pulsa el candado para escribir tu propia cifra; el candado abierto la deja fija.',
         comunidad: 'Comunidad', comunidadTip: 'Cuota de la comunidad de propietarios.',
         ibi: 'IBI', ibiTip: 'Impuesto sobre bienes inmuebles. Se grava el valor catastral, no el de mercado,\nasí que la estimación va sobre el precio pagado y sale más baja que el tipo municipal.',
         seguroHogar: 'Seguro de hogar', seguroHogarTip: 'Seguro de continente y contenido del piso alquilado.',
@@ -725,16 +760,14 @@
         rentAmortizacion: 'Amortización de principal',
         rentAmortizacionTip: 'La parte de las cuotas del primer año que reduce la deuda. Sale de tu bolsillo pero no\nse pierde: se convierte en patrimonio.',
         rentRoceSin: 'ROCE sin revalorización',
-        rentRoceSinTip: 'Lo que has ganado de verdad el primer año: caja en el banco más deuda amortizada, sobre\nel dinero que pusiste. No depende de ninguna hipótesis sobre el mercado.',
+        rentRoceSinTip: 'ROCE = Return on Capital Employed: rentabilidad sobre el capital empleado, o sea, sobre lo\nque pones de tu bolsillo.\n\nLo que has ganado de verdad el primer año: caja en el banco más deuda amortizada, sobre\nese dinero. No depende de ninguna hipótesis sobre el mercado.',
         rentRoceCon: 'ROCE con revalorización',
         rentRoceConTip: 'Lo anterior más la plusvalía latente del año. Es el rendimiento económico completo, pero\nla parte que añade está sobre el papel hasta que vendas, y depende por entero de que el\npiso suba lo que has supuesto.',
-        rentRevalorizacion: 'Revalorización del piso',
-        rentRevalorizacionTip: 'Lo que gana de valor el piso entero en el primer año, sobre lo que pusiste tú. Es la\npalanca: la revalorización es del piso completo, no sólo de tu parte.',
         rentAnualizada: 'Anualizada al año {0}',
+        rentHorquilla: 'Anualizada al año {0} según revalorización',
+        rentHorquillaTip: 'La misma rentabilidad anualizada al año {0}, repetida con tres hipótesis de revalorización del\npiso: pesimista (no se revaloriza: 0 %), base (sube como la inflación: {1}) y optimista\n(inflación + 2 puntos: {2}).\n\nSe ve así cuánto de la rentabilidad depende de que el piso suba, que es lo único del modelo\nque nadie puede prometer. Lo demás (alquiler, gastos, deuda) se queda como lo tengas puesto.',
         rentTirVenta: 'Anualizada vendiendo al año {0}',
         rentTirVentaTip: 'La rentabilidad que te llevas de verdad si vendes ese año, ya descontados los gastos de\nventa y el IRPF de la ganancia.',
-        rentMultiplicador: 'Multiplicador al año {0}',
-        rentMultiplicadorTip: 'Cuántas veces recuperas lo aportado: patrimonio más caja acumulada, dividido entre todo\nel dinero que has puesto.',
         precioPagado: 'Precio pagado', cajaPrimerAno: 'CAJA DEL PRIMER AÑO COMPLETO',
         alquilerCobrado: 'Alquiler cobrado', gastosDelPiso: 'Gastos del piso', cuotasDeuda: 'Cuotas de deuda',
         irpf: 'IRPF del alquiler', cajaNetaAnual: 'Caja neta anual', cajaNetaMensual: 'Caja neta mensual',
@@ -789,14 +822,14 @@
         tipoGanancia: 'Tipo sobre la ganancia',
         tipoGananciaTip: 'IRPF de la ganancia patrimonial. Con el candado cerrado se aplica la escala del ahorro\n-19% hasta 6.000 €, 21% hasta 50.000, 23% hasta 200.000, 27% hasta 300.000 y 28% por\nencima- y el campo enseña el tipo efectivo que sale para el año elegido.\n\nSon los tramos vigentes hasta donde alcanza este modelo, no una fuente fiscal: ábrelo y\npon el tuyo si tu caso es otro.',
         tipoMarginal: 'Tipo marginal IRPF', tipoMarginalTip: 'Tu tipo marginal de IRPF: el que se aplica al último euro que ganas.',
-        baseTributable: 'Parte que tributa', baseTributableTip: 'Porcentaje del rendimiento neto que llega a tributar. Con la reducción por\nalquiler de vivienda habitual sólo tributa una parte.',
+        baseTributable: 'Parte que tributa', baseTributableTip: 'Porcentaje del rendimiento neto que llega a tributar. De fábrica el 50 %: la reducción general\npor alquilar una vivienda como residencia habitual es del 50 % (contratos firmados desde el\n26 de mayo de 2023). Puede ser del 60, 70 o 90 %; mira «Cómo funciona el modelo».',
         pctConstruccion: 'Peso de la construcción', pctConstruccionTip: 'Parte del precio que corresponde a la construcción y no al suelo.\nSólo la construcción se amortiza.',
         tasaAmortizacion: 'Tasa de amortización', tasaAmortizacionTip: 'Amortización anual deducible sobre la base amortizable\n(construcción + reforma + gastos de compra).',
-        revalorizacion: 'Revalorización anual', revalorizacionTip: 'Lo que sube el valor del piso cada año. Con el candado cerrado va a la par de la\ninflación, que es el supuesto neutro. Ábrelo si esperas que la zona corra por su cuenta.',
+        revalorizacion: 'Revalorización', revalorizacionTip: 'Lo que sube el valor del piso cada año. Con el candado cerrado va a la par de la\ninflación, que es el supuesto neutro. Ábrelo si esperas que la zona corra por su cuenta.',
         horizonte: 'Años proyectados', indexar: 'Indexar alquiler y gastos',
         indexarTip: 'Sube el alquiler y los gastos cada año al ritmo de la inflación.\n\nLas cuotas de hipoteca y préstamo se quedan en euros nominales: son a tipo fijo,\ny que la inflación las licúe es la ventaja de endeudarse. La amortización fiscal\ntampoco se indexa, porque se calcula sobre el coste histórico de compra.',
         paramsHorizonteAyuda: 'La inflación y la revalorización del piso se ajustan en la tarjeta de explotación del alquiler.',
-        paramsNota: 'La compra y la financiación arrancan con los valores de la hoja de cálculo original; los gastos recurrentes, con multiplicadores estándar. Todo se recalcula al instante y se guarda en este navegador.',
+        paramsNota: 'La compra y la financiación arrancan con un escenario de ejemplo; los gastos recurrentes, con multiplicadores estándar. Todo se recalcula al instante y se guarda en este navegador.',
         avisoEscala: '⚠︎ {0} no tiene un tipo único: {1}. La tabla trae el del primer tramo; si tu precio pasa del corte, abre el candado y pon el que te toque.',
         avisoImpuestos: 'Los tipos de ITP y AJD que trae la herramienta son orientativos, revisados en septiembre de 2026 contra agregadores fiscales y no contra los boletines autonómicos. Cambian con cada presupuesto, varios los cobran por tramos de valor, y hay tipos reducidos por edad, renta, familia numerosa o zona despoblada que esto no recoge. Comprueba el tipo vigente en tu comunidad y ajústalo abriendo el candado del impuesto de compra.',
         ayudaTitulo: 'Cómo funciona el modelo',
@@ -804,6 +837,7 @@
         ayuda2t: 'Las cuotas.', ayuda2: 'Hipoteca y préstamo son de cuota constante (sistema francés) y se amortizan mes a mes. El saldo que ves cada año es el que queda tras las doce cuotas.',
         ayuda3t: 'La amortización acelerada.', ayuda3: 'Si la activas, la caja acumulada no se queda en tu bolsillo: cada año se descuenta del principal pendiente y el contador de caja vuelve a cero. Cuando están activas las dos, cobra primero la deuda con el tipo más alto, que suele ser el préstamo personal pero no tiene por qué: el orden lo deciden los tipos que hayas puesto.',
         ayuda4t: 'Los impuestos.', ayuda4: 'Del alquiler anual se restan los gastos, el interés medio de los préstamos y la amortización fiscal. Sobre lo que queda se aplica tu tipo marginal, pero sólo a la parte que tributa. El interés se aproxima por su media a lo largo de la vida del préstamo, no año a año.',
+        ayudaIrpft: 'La reducción del alquiler.', ayudaIrpf: 'La «parte que tributa» arranca en el 50 %. Desde la Ley 12/2023, para los contratos firmados desde el 26 de mayo de 2023, la reducción general por alquilar una vivienda como residencia habitual es del 50 % del rendimiento neto. Puede ser del 60 % (si hiciste obras de rehabilitación en los dos años anteriores), del 70 % (inquilino de 18 a 35 años en zona tensionada, o vivienda social) o del 90 % (nuevo contrato en zona tensionada con una rebaja de más del 5 % sobre la renta anterior). Si te corresponde otra, cámbiala en Parámetros: con un 60 % de reducción tributa el 40 %, con un 70 % el 30 % y con un 90 % el 10 %.',
         ayuda5t: 'El año 0 y el primer año.', ayuda5: 'El año 0 es el momento de la compra: acabas de pagar los impuestos y los gastos, así que la ganancia sobre lo invertido arranca en negativo justo por ese importe. El año 1 cuenta la caja a medias, suponiendo la compra a mitad de año.',
         ayuda6t: 'La ganancia sobre lo invertido', ayuda6: 'compara lo que tendrías al final de cada año (valor del piso menos deuda viva, más la caja acumulada) con la liquidez que pusiste. La rentabilidad anualizada convierte esa misma comparación en un tipo anual compuesto.',
         ayuda7t: 'Esto no es asesoramiento financiero.', ayuda7: 'Es un modelo simplificado: los meses sin inquilino son una media repartida por igual, y no incluye derramas ni cambios de tipo en hipotecas variables. La venta sí está, en sus dos columnas, con los gastos y el IRPF de la ganancia.',
@@ -811,7 +845,6 @@
         pieAviso: 'Esta herramienta tiene fines exclusivamente informativos y de simulación cuantitativa. No constituye asesoramiento financiero, fiscal ni legal.',
         pieCreado: 'Creado por',
         pieDatos: 'Los datos se guardan sólo en tu navegador.',
-        errorFichero: 'No se ha podido leer el archivo: no parece un escenario guardado.',
         lockAuto: 'Estimado con el multiplicador estándar. Pulsa para escribir tu propia cifra.',
         lockManual: 'Cifra tuya. Pulsa para volver a estimarlo.',
         lockEscala: 'Sale de la escala de tramos del IRPF. Pulsa para poner un tipo plano tuyo.',
@@ -836,16 +869,20 @@
       },
       en: {
         htmlLang: 'en', locale: 'en-GB',
-        titulo: 'Rental Property Calculator — Buy-to-Let Returns',
-        cabeceraTitulo: 'Property Investment Calculator',
-        cabeceraSub: 'Buy-to-let returns in Spain: mortgage, loan, costs, tax and a year-by-year projection.',
+        titulo: 'Residential buy-to-let calculator',
+        cabeceraTitulo: 'Residential buy-to-let calculator',
+        cabeceraSub: 'Return on a rental flat, projected year by year.',
         avisoMovil: 'The tables read better on a computer', guardado: 'Saved',
-        btnIdioma: 'Cambiar a español', btnTema: 'Switch theme', btnGuardar: 'Save this scenario to a file',
-        btnCargar: 'Load a saved scenario', btnReset: 'Back to the example scenario', btnCompartir: 'Share the calculator or these numbers', compartirTitulo: 'Share', compartirHerramienta: 'The calculator', compartirHerramientaSub: 'Blank, with the example scenario.', compartirCalculos: 'These numbers', compartirCalculosSub: 'Whoever opens the link sees the flat with your figures.', enlaceCopiado: 'Link copied', copiaEnlace: 'Copy the link:', btnAyuda: 'How the model works',
+        btnIdioma: 'Cambiar a español', btnTema: 'Switch theme', btnReset: 'Back to the example scenario', btnCompartir: 'Share the calculator or save these numbers in a link', compartirTitulo: 'Share', compartirHerramienta: 'The calculator', compartirHerramientaSub: 'Blank, with the example scenario.', compartirCalculos: 'These numbers', compartirCalculosSub: 'Whoever opens the link sees the flat with your figures.', enlaceCopiado: 'Link copied', copiaEnlace: 'Copy the link:',
+        compartirTexto: '{0} flat rented at {1}/month: gross yield {2}, cash flow {3}/month, annualised over {4} years {5}.',
+        compartirTextoHerramienta: 'Residential buy-to-let calculator: the return on a rental flat, projected year by year.', btnAyuda: 'How the model works',
+        kpiAnosAlquiler: 'YEARS OF RENT',
+        kpiAnosAlquilerTip: 'How many years of full rent (all twelve months, before vacancy or costs) the flat costs:\nthe price paid divided by the gross annual rent. The lower, the better. In Spain it\nusually runs from 15 to 25.',
+        alto: 'HIGH',
         kpiBruta: 'GROSS YIELD',
         kpiBrutaTip: 'Annual rent divided by the total cost of the deal (price + costs + refurbishment).\nIt ignores running costs, tax and instalments: a quick screen, not the real return.',
         kpiRoce: 'ROCE',
-        kpiRoceTip: 'First-year return on the money you put in. Two figures, because not everything you earn\nis of the same kind.\n\nThe large one is what has actually happened: the cash left after instalments, costs and\ntax, plus the principal those instalments repay. The first is in your bank, the second is\ndebt you no longer owe; neither rests on an assumption.\n\nThe one below adds the appreciation of the whole flat, which is a paper gain: it follows\nthe appreciation rate you set and is not collected until you sell. It is usually more\nthan half the total, so it is worth reading separately.',
+        kpiRoceTip: 'ROCE = Return on Capital Employed: the return on the capital you employ, that is,\non what you put in from your own pocket (the cash invested), not on the price of the flat.\n\nFirst-year return on that money. Two figures, because not everything you earn\nis of the same kind.\n\nThe large one is what has actually happened: the cash left after instalments, costs and\ntax, plus the principal those instalments repay. The first is in your bank, the second is\ndebt you no longer owe; neither rests on an assumption.\n\nThe one below adds the appreciation of the whole flat, which is a paper gain: it follows\nthe appreciation rate you set and is not collected until you sell. It is usually more\nthan half the total, so it is worth reading separately.',
         kpiRoceConReval: '{0} including appreciation',
         kpiCaja: 'ANNUAL CASH',
         kpiCajaTip: 'What is left each year after rent received less running costs, tax and whichever\nmortgage and loan instalments are still being paid.',
@@ -899,7 +936,6 @@
         mesesVaciosTip: 'Months a year the flat sits empty between tenants: painting, viewings and paperwork.\nHalf a month a year is a new tenant every two years.\n\nIt only cuts the income. Running costs, instalments and council tax carry on in full, which\nis what really hurts.',
         ingresoAnual: 'Annual income',
         ingresoAnualTip: 'Rent you actually collect, with the void months taken out, and the share of the year the\nflat is occupied.', gastosRecurrentes: 'RUNNING COSTS', reestimar: 'Re-estimate all',
-        gastosAyuda: 'Estimated with standard multipliers. Click a padlock to enter your own figure; unlocked, it stays put.',
         comunidad: 'Service charge', comunidadTip: "Owners' association fee.",
         ibi: 'Council tax (IBI)', ibiTip: 'Property tax. It is levied on the cadastral value, well below market value,\nso this estimate runs on the price paid and comes out below the municipal rate.',
         seguroHogar: 'Buildings insurance', seguroHogarTip: 'Buildings and contents cover for the let flat.',
@@ -916,16 +952,14 @@
         rentAmortizacion: 'Principal repaid',
         rentAmortizacionTip: 'The share of the first-year instalments that reduces the debt. It leaves your pocket but is\nnot lost: it turns into equity.',
         rentRoceSin: 'ROCE excluding appreciation',
-        rentRoceSinTip: 'What you have really earned in year one: cash in the bank plus debt repaid, over the money\nyou put in. It rests on no assumption about the market.',
+        rentRoceSinTip: 'ROCE = Return on Capital Employed: the return on the capital you employ, i.e. on what you\nput in from your own pocket.\n\nWhat you have really earned in year one: cash in the bank plus debt repaid, over that\nmoney. It rests on no assumption about the market.',
         rentRoceCon: 'ROCE including appreciation',
         rentRoceConTip: 'The above plus the paper gain of the year. It is the full economic return, but the part it\nadds stays on paper until you sell, and depends entirely on the flat rising by what you\nassumed.',
-        rentRevalorizacion: 'Appreciation of the flat',
-        rentRevalorizacionTip: 'What the whole flat gains in value in the first year, over what you put in. This is the\nleverage: the appreciation is on the whole flat, not just your share.',
         rentAnualizada: 'Annualised to year {0}',
+        rentHorquilla: 'Annualised to year {0} by appreciation',
+        rentHorquillaTip: 'The same annualised return to year {0}, repeated under three appreciation assumptions for the\nflat: pessimistic (it does not appreciate: 0%), base (it rises with inflation: {1}) and\noptimistic (inflation + 2 points: {2}).\n\nIt shows how much of the return depends on the flat rising, the one thing in the model that\nnobody can promise. Everything else (rent, costs, debt) stays as you have set it.',
         rentTirVenta: 'Annualised selling in year {0}',
         rentTirVentaTip: 'The return you actually take home if you sell that year, after selling costs and capital\ngains tax.',
-        rentMultiplicador: 'Multiple by year {0}',
-        rentMultiplicadorTip: 'How many times over you get your money back: net worth plus accumulated cash, divided by\neverything you have put in.',
         precioPagado: 'Price paid', cajaPrimerAno: 'CASH IN THE FIRST FULL YEAR',
         alquilerCobrado: 'Rent collected', gastosDelPiso: 'Running costs', cuotasDeuda: 'Debt instalments',
         irpf: 'Income tax on rent', cajaNetaAnual: 'Net annual cash', cajaNetaMensual: 'Net monthly cash',
@@ -980,10 +1014,10 @@
         tipoGanancia: 'Rate on the gain',
         tipoGananciaTip: 'Capital gains tax. Locked, it applies the Spanish savings scale — 19% up to €6,000, 21% to\n€50,000, 23% to €200,000, 27% to €300,000 and 28% above — and the field shows the effective\nrate that comes out for the chosen year.\n\nThese are the bands in force as far as this model knows, not a tax source: unlock it and\nenter your own if your case differs.',
         tipoMarginal: 'Marginal income tax rate', tipoMarginalTip: 'Your marginal rate: the one applied to the last euro you earn.',
-        baseTributable: 'Share actually taxed', baseTributableTip: 'Share of net rental income that ends up taxed. The long-term letting relief\nmeans only part of it is.',
+        baseTributable: 'Share actually taxed', baseTributableTip: 'Share of net rental income that ends up taxed. Set to 50% out of the box: the general\nrelief for letting a home as a main residence is 50% (contracts signed from 26 May 2023).\nIt can be 60, 70 or 90%; see "How the model works".',
         pctConstruccion: 'Building share of price', pctConstruccionTip: 'The share of the price that is building rather than land.\nOnly the building is depreciated.',
         tasaAmortizacion: 'Depreciation rate', tasaAmortizacionTip: 'Annual deductible depreciation on the depreciable base\n(building + refurbishment + purchase costs).',
-        revalorizacion: 'Annual appreciation', revalorizacionTip: 'How much the flat gains in value each year. Locked, it tracks inflation, which is\nthe neutral assumption. Unlock it if you expect the area to run on its own.',
+        revalorizacion: 'Appreciation', revalorizacionTip: 'How much the flat gains in value each year. Locked, it tracks inflation, which is\nthe neutral assumption. Unlock it if you expect the area to run on its own.',
         horizonte: 'Years projected', indexar: 'Index rent and costs',
         indexarTip: 'Raises rent and running costs each year at the rate of inflation.\n\nMortgage and loan instalments stay in nominal euros: they are fixed rate, and\ninflation eroding them is the point of borrowing. Depreciation is not indexed\neither, being computed on historic purchase cost.',
         paramsHorizonteAyuda: 'Inflation and the appreciation of the flat are set on the letting card.',
@@ -995,6 +1029,7 @@
         ayuda2t: 'The instalments.', ayuda2: 'Mortgage and loan are constant-instalment (French amortisation) and repay monthly. The balance shown each year is what remains after the twelve instalments.',
         ayuda3t: 'Accelerated repayment.', ayuda3: 'Switch it on and accumulated cash does not stay in your pocket: each year it comes off the outstanding principal and the cash counter resets. With both on, whichever debt carries the higher rate is paid first — usually the personal loan, but not necessarily: the rates you enter decide the order.',
         ayuda4t: 'The tax.', ayuda4: 'Costs, average loan interest and depreciation come off the annual rent. Your marginal rate applies to what is left, but only to the share that is actually taxed. Interest is approximated by its average over the life of the loan, not year by year.',
+        ayudaIrpft: 'The letting relief.', ayudaIrpf: 'The "share actually taxed" starts at 50%. Since Law 12/2023, for contracts signed from 26 May 2023, the general relief for letting a home as a main residence is 50% of net rental income. It can be 60% (if you carried out refurbishment works in the previous two years), 70% (tenant aged 18 to 35 in a stressed area, or social housing) or 90% (a new contract in a stressed area with a rent cut of more than 5% on the previous one). If another applies to you, change it in Parameters: with a 60% relief 40% is taxed, with 70% it is 30% and with 90% it is 10%.',
         ayuda5t: 'Year 0 and year one.', ayuda5: 'Year 0 is the moment of purchase: you have just paid the taxes and costs, so the gain on capital invested starts negative by exactly that amount. Year one counts cash at half, assuming a mid-year purchase.',
         ayuda6t: 'The gain on capital invested', ayuda6: 'compares what you would hold at the end of each year (property value less debt outstanding, plus accumulated cash) with the cash you put in. The annualised return turns that same comparison into a compound annual rate.',
         ayuda7t: 'This is not financial advice.', ayuda7: 'It is a simplified model: void months are an average spread evenly, and it excludes special levies and rate changes on variable mortgages. Selling is covered, in its two columns, with the costs and the tax on the gain.',
@@ -1002,7 +1037,6 @@
         pieAviso: 'This tool is for information and quantitative simulation only. It is not financial, tax or legal advice.',
         pieCreado: 'Built by',
         pieDatos: 'Your data stays in this browser.',
-        errorFichero: 'Could not read the file: it does not look like a saved scenario.',
         lockAuto: 'Estimated with the standard multiplier. Click to enter your own figure.',
         lockManual: 'Your own figure. Click to go back to the estimate.',
         lockEscala: 'Comes from the income-tax bands. Click to set a flat rate of your own.',
@@ -1070,7 +1104,7 @@
           <p>Son dos fuerzas empujando en sentidos contrarios, y ganan en momentos distintos.</p>
           <p><strong>Al principio manda el peso de los gastos de compra.</strong> Los impuestos, la notaría y la comisión se pagan enteros el primer día y no vuelven. En el año 1 esa pérdida se reparte entre un solo año y hunde la cifra. Según pasan los años la misma pérdida se reparte entre más años y pesa cada vez menos, así que la curva sube deprisa.</p>
           <p><strong>Después manda el apalancamiento, que se va apagando.</strong> Con la hipoteca recién firmada tu dinero controla un piso que vale varias veces lo que pusiste, y toda la revalorización del piso entero es tuya. A medida que amortizas, tus fondos propios crecen hasta igualar el valor del piso, y esa misma revalorización se reparte sobre una base cada vez mayor.</p>
-          <p>En el escenario de ejemplo el apalancamiento pasa de <strong>4,1 veces</strong> el primer año a <strong>1,0</strong> el último, y el pico cae sobre el <strong>año 6 o 7</strong>: el punto en que los gastos de compra ya están digeridos pero la hipoteca sigue siendo grande.</p>` },
+          <p>En el escenario de ejemplo el apalancamiento pasa de <strong>2,8 veces</strong> el primer año a <strong>1,0</strong> el último, y el pico cae sobre el <strong>año 8</strong>: el punto en que los gastos de compra ya están digeridos pero la hipoteca sigue siendo grande.</p>` },
 
         { q: '¿Por qué el año 0 empieza en negativo?', a: `
           <p>Porque acabas de pagar impuestos, notaría y comisión por un piso que sigue valiendo lo que valía. Si compras a precio de mercado, en el instante de la compra has perdido exactamente los gastos de compra.</p>
@@ -1080,7 +1114,7 @@
           <p>Porque miden cosas distintas y las dos tienen razón.</p>
           <p>La <strong>caja anual</strong> es lo que queda en el bolsillo una vez pagadas las cuotas. Más hipoteca son más cuotas, así que baja, y pasado cierto punto se vuelve negativa: el piso deja de pagarse solo y te pide dinero todos los meses.</p>
           <p>El <strong>ROCE</strong> y la <strong>rentabilidad anualizada</strong> miran además dos cosas que la caja ignora: la parte de cada cuota que amortiza principal, que es ahorro y no gasto, y la revalorización del piso entero, que es tuya aunque esté hipotecado. Y las dividen entre un dinero aportado que se hace cada vez más pequeño.</p>
-          <p>En el escenario de ejemplo, pasar del 0% al 80% de hipoteca hunde la caja de <strong>17.512 € a 167 €</strong> al año mientras el ROCE sin revalorización sube del <strong>3,3% al 7,2%</strong> y la anualizada del <strong>4,5% al 8,3%</strong>. Al 100% la caja ya son <strong>−4.169 €</strong> anuales y la anualizada marca un <strong>12%</strong>.</p>
+          <p>En el escenario de ejemplo, pasar del 0% al 70% de hipoteca hunde la caja de <strong>9.739 € a 2.292 €</strong> al año mientras el ROCE sin revalorización sube del <strong>3,6% al 6,1%</strong> y la anualizada del <strong>4,2% al 6,8%</strong>. Al 100% la caja ya son <strong>−1.124 €</strong> anuales y la anualizada marca un <strong>10,9%</strong>.</p>
           <p>Las dos cifras hay que leerlas juntas: la anualizada te dice cuánto ganas con el dinero que pusiste, y la caja, si puedes aguantar hasta cobrarlo.</p>` },
 
         { q: '¿Cuánta hipoteca conviene? ¿Se puede calcular la mezcla óptima?', a: `
@@ -1089,7 +1123,7 @@
           <p>Cuando se cumple, el óptimo matemático no está en el medio: <strong>está en el extremo</strong>. Cuanta más deuda barata, mejor sale la rentabilidad sobre lo que pones, hasta el 100%. Por eso la pregunta útil no es cuál es el óptimo, sino dónde está el límite. Y el límite lo ponen tres cosas que esta herramienta no decide por ti:</p>
           <ul>
             <li><strong>Lo que el banco preste.</strong> Rara vez pasa del 80% del precio, y nunca cubre los gastos de compra.</li>
-            <li><strong>La caja.</strong> Pasado cierto punto el alquiler no cubre las cuotas y tienes que poner dinero todos los meses. En el escenario de ejemplo eso ocurre justo por encima del 80%.</li>
+            <li><strong>La caja.</strong> Pasado cierto punto el alquiler no cubre las cuotas y tienes que poner dinero todos los meses. En el escenario de ejemplo eso ocurre justo por encima del 90%.</li>
             <li><strong>El riesgo, que aquí no aparece por ningún lado.</strong> Un 100% de hipoteca maximiza la rentabilidad y también la probabilidad de arruinarte si el piso se queda vacío medio año o los tipos suben.</li>
           </ul>
           <p>Mueve el porcentaje financiado y mira las tres cifras a la vez: caja anual, ROCE y rentabilidad anualizada. El punto en que la caja anual cruza el cero es el límite práctico.</p>` },
@@ -1099,7 +1133,7 @@
           <p>Sirve para llegar a una operación que no podrías hacer de otro modo, no para mejorarla. Si lo activas, mira cómo la rentabilidad anualizada baja mientras la deuda dura, y cómo se recupera en cuanto se cancela.</p>` },
 
         { q: '¿Por qué amortizar anticipadamente puede bajar la rentabilidad?', a: `
-          <p>Porque amortizar es invertir al tipo de tu hipoteca. Si la tienes al 2,2% y el piso rinde más que eso, cada euro que metes en amortizar renta un 2,2% en vez de lo que rentaría en cualquier otro sitio.</p>
+          <p>Porque amortizar es invertir al tipo de tu hipoteca. Si la tienes al 2,8% y el piso rinde más que eso, cada euro que metes en amortizar renta un 2,2% en vez de lo que rentaría en cualquier otro sitio.</p>
           <p>A cambio bajas la deuda y duermes mejor: es una decisión de riesgo, no de rentabilidad. Activa la amortización acelerada y verás las dos caras a la vez, la deuda cancelándose años antes y la rentabilidad anualizada cediendo.</p>` },
 
         { q: '¿Por qué se dice que la deuda a tipo fijo protege de la inflación?', a: `
@@ -1115,10 +1149,10 @@
 
         { q: '¿Cuándo compensa vender?', a: `
           <p>La tabla trae dos columnas que contestan a eso: lo que te quedaría en la cuenta si vendieras al acabar cada año, y la rentabilidad anualizada que habrías conseguido de verdad en ese caso.</p>
-          <p><strong>Vender pronto es ruinoso.</strong> En el escenario de ejemplo, vender el primer año deja una anualizada del <strong>−26,9%</strong>: has pagado los gastos de compra y encima pagas los de venta, sobre un piso que apenas ha subido. La cifra no se pone en positivo hasta el <strong>año 3</strong>, y hasta ahí lo que has hecho es financiar una mudanza cara.</p>
-          <p><strong>Y hay un óptimo, que no es el final.</strong> La anualizada vendiendo llega a su máximo sobre el <strong>año 10</strong> con un <strong>8,9%</strong>, y a partir de ahí baja despacio: es la misma curva de siempre, con los gastos de compra ya digeridos y el apalancamiento apagándose, sólo que además carga los gastos de venta.</p>
-          <p><strong>La diferencia con la columna de al lado es lo que se lleva vender.</strong> Empieza en 19 puntos el primer año y se va estrechando hasta menos de uno a los treinta, porque un coste fijo pesa cada vez menos repartido entre más años.</p>
-          <p>Lo que más sorprende del cálculo es la amortización: cada año te has deducido una parte del valor del inmueble, y esa deducción <strong>resta del valor de adquisición</strong> al vender. Al cabo de treinta años la base de la que partes ha bajado de 535.000 € a 233.500 €, y la ganancia que tributa es esos 300.000 € mayor. No es un impuesto nuevo: es el que fuiste aplazando.</p>` },
+          <p><strong>Vender pronto es ruinoso.</strong> En el escenario de ejemplo, vender el primer año deja una anualizada del <strong>−19,2%</strong>: has pagado los gastos de compra y encima pagas los de venta, sobre un piso que apenas ha subido. La cifra no se pone en positivo hasta el <strong>año 3</strong>, y hasta ahí lo que has hecho es financiar una mudanza cara.</p>
+          <p><strong>Y hay un óptimo, que no es el final.</strong> La anualizada vendiendo llega a su máximo sobre el <strong>año 13</strong> con un <strong>6,8%</strong>, y a partir de ahí baja despacio: es la misma curva de siempre, con los gastos de compra ya digeridos y el apalancamiento apagándose, sólo que además carga los gastos de venta.</p>
+          <p><strong>La diferencia con la columna de al lado es lo que se lleva vender.</strong> Empieza en 13 puntos el primer año y se va estrechando hasta menos de uno a los treinta, porque un coste fijo pesa cada vez menos repartido entre más años.</p>
+          <p>Lo que más sorprende del cálculo es la amortización: cada año te has deducido una parte del valor del inmueble, y esa deducción <strong>resta del valor de adquisición</strong> al vender. Al cabo de treinta años la base de la que partes ha bajado de 272.290 € a 116.149 €, y la ganancia que tributa es esos 156.000 € mayor. No es un impuesto nuevo: es el que fuiste aplazando.</p>` },
 
         { q: '¿Qué se está dejando fuera?', a: `
           <p>Es un modelo simplificado y conviene saber por dónde falla:</p>
@@ -1136,7 +1170,7 @@
           <p>Two forces pull in opposite directions, and each wins at a different time.</p>
           <p><strong>Early on, the purchase costs dominate.</strong> Tax, notary and agent fees are paid in full on day one and never come back. In year 1 that loss is spread over a single year and sinks the figure. As years pass the same loss is spread over more of them and weighs less each time, so the curve climbs steeply.</p>
           <p><strong>Later, decaying leverage dominates.</strong> With a fresh mortgage your cash controls a flat worth several times what you put in, and the whole property's appreciation is yours. As you repay, your equity grows until it matches the property's value, and that same appreciation is spread over an ever larger base.</p>
-          <p>In the example scenario leverage falls from <strong>4.1×</strong> in year one to <strong>1.0</strong> in the last, and the peak lands around <strong>year 6 or 7</strong>: the point where the purchase costs are digested but the mortgage is still large.</p>` },
+          <p>In the example scenario leverage falls from <strong>2.8×</strong> in year one to <strong>1.0</strong> in the last, and the peak lands around <strong>year 8</strong>: the point where the purchase costs are digested but the mortgage is still large.</p>` },
 
         { q: 'Why does year 0 start negative?', a: `
           <p>Because you have just paid tax, notary and agent fees on a flat that is still worth what it was worth. Buy at market price and, at the moment of purchase, you are down by exactly the purchase costs.</p>
@@ -1146,7 +1180,7 @@
           <p>Because they measure different things, and both are right.</p>
           <p><strong>Annual cash</strong> is what is left in your pocket once the instalments are paid. More mortgage means more instalments, so it falls, and past a point it turns negative: the flat stops paying for itself and starts asking you for money every month.</p>
           <p><strong>ROCE</strong> and the <strong>annualised return</strong> also count two things cash ignores: the share of each instalment that repays principal, which is saving rather than spending, and the appreciation of the whole flat, which is yours even though it is mortgaged. And they divide those by a stake that keeps getting smaller.</p>
-          <p>In the example scenario, going from 0% to 80% mortgage sinks cash from <strong>€17,512 to €167</strong> a year while ROCE excluding appreciation climbs from <strong>3.3% to 7.2%</strong> and the annualised return from <strong>4.5% to 8.3%</strong>. At 100% cash is already <strong>−€4,169</strong> a year and the annualised return reads <strong>12%</strong>.</p>
+          <p>In the example scenario, going from 0% to 70% mortgage sinks cash from <strong>€9,739 to €2,292</strong> a year while ROCE excluding appreciation climbs from <strong>3.6% to 6.1%</strong> and the annualised return from <strong>4.2% to 6.8%</strong>. At 100% cash is already <strong>−€1,124</strong> a year and the annualised return reads <strong>10.9%</strong>.</p>
           <p>The two have to be read together: the annualised return tells you how much you make on the cash you put in, and the cash tells you whether you can hold on long enough to collect it.</p>` },
 
         { q: 'How much mortgage is right? Can the optimal mix be calculated?', a: `
@@ -1155,7 +1189,7 @@
           <p>When it holds, the mathematical optimum is not in the middle: <strong>it is at the extreme</strong>. The more cheap debt, the better the return on what you put in, all the way to 100%. So the useful question is not what the optimum is, but where the limit is. Three things set it, none of which this tool decides for you:</p>
           <ul>
             <li><strong>What the bank will lend.</strong> Rarely above 80% of the price, and never covering the purchase costs.</li>
-            <li><strong>Cash flow.</strong> Past a point the rent stops covering the instalments and you feed the asset every month. In the example scenario that happens just above 80%.</li>
+            <li><strong>Cash flow.</strong> Past a point the rent stops covering the instalments and you feed the asset every month. In the example scenario that happens just above 90%.</li>
             <li><strong>Risk, which appears nowhere here.</strong> A 100% mortgage maximises the return and also the odds of ruin if the flat sits empty for six months or rates rise.</li>
           </ul>
           <p>Move the loan-to-value and watch three figures at once: annual cash, ROCE and annualised return. Where annual cash crosses zero is the practical limit.</p>` },
@@ -1165,7 +1199,7 @@
           <p>It is there to make a deal possible that otherwise would not be, not to improve one. Switch it on and watch the annualised return sag while the loan lasts, then recover once it clears.</p>` },
 
         { q: 'Why can early repayment lower the return?', a: `
-          <p>Because repaying early is investing at your mortgage rate. If it is at 2.2% and the flat earns more than that, every euro you put into repayment earns 2.2% instead of what it would have earned anywhere else.</p>
+          <p>Because repaying early is investing at your mortgage rate. If it is at 2.8% and the flat earns more than that, every euro you put into repayment earns 2.2% instead of what it would have earned anywhere else.</p>
           <p>In exchange you carry less debt and sleep better: it is a risk decision, not a return one. Switch on accelerated repayment and you see both sides at once — the debt clearing years earlier, and the annualised return giving way.</p>` },
 
         { q: 'Why is fixed-rate debt said to protect against inflation?', a: `
@@ -1181,10 +1215,10 @@
 
         { q: 'When is it worth selling?', a: `
           <p>The table carries two columns that answer this: what would land in your account if you sold at the end of each year, and the annualised return you would actually have achieved that way.</p>
-          <p><strong>Selling early is ruinous.</strong> In the example scenario, selling in year one gives an annualised <strong>−26.9%</strong>: you have paid the buying costs and now the selling costs too, on a flat that has barely moved. The figure does not turn positive until <strong>year 3</strong>; before that all you have financed is an expensive house move.</p>
-          <p><strong>And there is an optimum, which is not the end.</strong> The annualised return on sale peaks around <strong>year 10</strong> at <strong>8.9%</strong> and drifts down after that: the same curve as always, with the purchase costs digested and leverage decaying, only now carrying the selling costs as well.</p>
-          <p><strong>The gap with the column next door is what selling takes.</strong> It starts at 19 points in year one and narrows to under one by year thirty, because a fixed cost weighs less the more years it is spread over.</p>
-          <p>The surprising part of the calculation is depreciation: each year you deducted a slice of the building's value, and that deduction <strong>comes off the acquisition value</strong> when you sell. After thirty years the base you start from has fallen from €535,000 to €233,500, and the taxable gain is €300,000 larger. It is not a new tax: it is the one you were deferring.</p>` },
+          <p><strong>Selling early is ruinous.</strong> In the example scenario, selling in year one gives an annualised <strong>−19.2%</strong>: you have paid the buying costs and now the selling costs too, on a flat that has barely moved. The figure does not turn positive until <strong>year 3</strong>; before that all you have financed is an expensive house move.</p>
+          <p><strong>And there is an optimum, which is not the end.</strong> The annualised return on sale peaks around <strong>year 13</strong> at <strong>6.8%</strong> and drifts down after that: the same curve as always, with the purchase costs digested and leverage decaying, only now carrying the selling costs as well.</p>
+          <p><strong>The gap with the column next door is what selling takes.</strong> It starts at 13 points in year one and narrows to under one by year thirty, because a fixed cost weighs less the more years it is spread over.</p>
+          <p>The surprising part of the calculation is depreciation: each year you deducted a slice of the building's value, and that deduction <strong>comes off the acquisition value</strong> when you sell. After thirty years the base you start from has fallen from €272,290 to €116,149, and the taxable gain is €156,000 larger. It is not a new tax: it is the one you were deferring.</p>` },
 
         { q: 'What is being left out?', a: `
           <p>It is a simplified model, and it is worth knowing where it breaks:</p>
@@ -1420,7 +1454,12 @@
       fijar('descuentoOferta', exacto, 2, 0);
     }
 
-    function calcular() {
+    // forzarReval: una revalorización (en tanto por uno) que sustituye a la del campo. Es lo que
+    // permite proyectar el mismo escenario con otras hipótesis sin tocar ni un campo ni una
+    // casilla: ni se restaura nada después, porque no se ha cambiado nada. A cambio, en ese modo
+    // no se escribe en el campo del tipo de la ganancia, que sí depende de la revalorización.
+    function calcular(forzarReval = null) {
+      const sonda = forzarReval !== null;
       const precioAnunciado = num('precioAnunciado');
       // La oferta no tiene candado: va enlazada al descuento sobre el anunciado (ver
       // ofertaDesdeDescuento), y cualquiera de las dos se escribe sin pedir permiso.
@@ -1495,7 +1534,7 @@
 
       const inflacion = num('inflacion') / 100;
       // El piso puede correr a un ritmo distinto del de los precios. Cerrado, va a la par.
-      const revalorizacion = estimado('revalorizacion', num('inflacion'), 2) / 100;
+      const revalorizacion = sonda ? forzarReval : estimado('revalorizacion', num('inflacion'), 2) / 100;
       const horizonte = Math.max(Math.round(num('horizonte')), 1);
       const indexar = yes('indexar');
       const indice = (n) => indexar ? Math.pow(1 + inflacion, n - 1) : 1;
@@ -1710,7 +1749,7 @@
       const filaRef = filas[anoRef - 1];
       // Con el candado cerrado el campo enseña el tipo efectivo que sale de la escala para la
       // ganancia del año elegido: una cifra que se puede leer y comparar, no sólo un resultado.
-      if (!tipoVentaManual) {
+      if (!tipoVentaManual && !sonda) {
         fijar('pctGananciaVenta', filaRef.gananciaFiscal > 0
           ? filaRef.impuestoVenta / filaRef.gananciaFiscal * 100 : 0, 2);
       }
@@ -1752,7 +1791,7 @@
         roceCaja: sobre(regimenInicial.caja), roceAmortizacion: sobre(amortizadoAno1),
         roceSinReval: sobre(retornoRealizado),
         roceRevalorizacion: sobre(revalorizadoAno1), roce: sobre(retornoAno1),
-        multiplicador: aportado > 0 ? (filaRef.patrimonio + filaRef.cajaAcum) / filaRef.aportadoAcum : null,
+        anosAlquiler: alquilerAnualBruto > 0 ? oferta / alquilerAnualBruto : null,
         descuento: precioAnunciado > 0 ? (precioAnunciado - oferta) / precioAnunciado : 0,
         filas, fila0, sinDeuda, payback, ultima
       };
@@ -1806,14 +1845,25 @@
       el('outPesoGastos').textContent = peso === null ? '—' : fmtPct(peso) + ' ' + t('delAlquiler');
       el('outPesoGastos').className = 'font-bold num ' + (peso === null ? 'val-muted' : peso > 0.35 ? 'val-neg' : peso > 0.2 ? 'text-brand-amber' : 'val-pos');
 
+      // Años que hay que alquilar el piso, íntegro y sin descontar nada, para pagarlo.
+      el('kpiAnosAlquiler').textContent = d.anosAlquiler === null ? '—' : fmtNum(d.anosAlquiler, 1);
+      el('kpiAnosAlquilerDetalle').textContent = `${fmt(d.oferta)} / ${fmt(d.alquilerAnualBruto)}`;
+
+      // Un préstamo personal por encima del 10 % merece un aviso: la etiqueta, la caja y el texto
+      // se ponen en rojo y aparece «(ALTO)». Al bajar de ahí todo vuelve a su sitio.
+      const tipoPrestamoAlto = num('tipoPrestamo') > 10;
+      el('lblTipoPrestamo').classList.toggle('val-neg', tipoPrestamoAlto);
+      el('tipoPrestamo').classList.toggle('val-neg', tipoPrestamoAlto);
+      el('altoPrestamo').classList.toggle('hidden', !tipoPrestamoAlto);
+
       el('kpiBruta').textContent = fmtPct(d.rentabilidadBruta);
       el('kpiBrutaDetalle').textContent = `${fmt(d.alquilerAnual)} / ${fmt(d.costeTotal)}`;
       el('kpiRoce').textContent = fmtPct(d.roceSinReval);
-      el('kpiRoce').className = 'text-xl font-bold mt-1.5 num ' + (d.roceSinReval === null ? 'val-muted' : signo(d.roceSinReval));
+      el('kpiRoce').className = 'text-base lg:text-xl font-bold lg:mt-1.5 num ' + (d.roceSinReval === null ? 'val-muted' : signo(d.roceSinReval));
       el('kpiRoceConReval').textContent = tf('kpiRoceConReval', fmtPct(d.roce));
       el('kpiRoceDetalle').textContent = d.aportado > 0 ? `${t('kpiSobre')} ${fmt(d.aportado)} ${t('kpiAportados')}` : t('kpiSinLiquidez');
       el('kpiCaja').textContent = fmt(d.regimenInicial.caja);
-      el('kpiCaja').className = 'text-xl font-bold mt-1.5 num ' + signo(d.regimenInicial.caja);
+      el('kpiCaja').className = 'text-base lg:text-xl font-bold lg:mt-1.5 num ' + signo(d.regimenInicial.caja);
       const hayDeuda = d.principalHip > 0 || d.principalPre > 0;
       el('kpiCajaMes').textContent = fmt(d.regimenInicial.caja / 12) + (hayDeuda ? t('kpiMesConDeuda') : t('kpiMesSinDeuda'));
 
@@ -1823,7 +1873,7 @@
         : `${t('kpiQuedan')} ${fmt(d.ultima.hipFin + d.ultima.preFin)} ${t('kpiAlAno')} ${d.horizonte}`;
 
       el('kpiAnualizada').textContent = fmtPct(d.filaRef.anualizada);
-      el('kpiAnualizada').className = 'text-xl font-bold num mt-1.5 ' + (d.filaRef.anualizada === null ? 'val-muted' : signo(d.filaRef.anualizada));
+      el('kpiAnualizada').className = 'text-base lg:text-xl font-bold num lg:mt-1.5 ' + (d.filaRef.anualizada === null ? 'val-muted' : signo(d.filaRef.anualizada));
       el('kpiRoceDetalle').textContent = d.aportacionesExtra > 0
         ? tf('kpiMasAportaciones', fmt(d.aportado), fmt(d.aportacionesExtra))
         : (d.aportado > 0 ? `${t('kpiSobre')} ${fmt(d.aportado)} ${t('kpiAportados')}` : t('kpiSinLiquidez'));
@@ -1865,19 +1915,23 @@
       // Se sube en tres escalones desde la caja hasta el ROCE, que es la suma de los tres: sin
       // verlos separados, un ROCE del 19% con la caja a cero no se entiende de dónde sale.
       const pct = (v, clase) => `<span class="${clase || (v === null ? 'val-muted' : signo(v))}">${fmtPct(v, 1)}</span>`;
+      // La misma anualizada con tres hipótesis de revalorización: el piso no sube, sube como la
+      // inflación, o la supera en dos puntos. Es lo único del modelo que nadie puede prometer, y
+      // la horquilla enseña cuánto de la cifra depende de ello. Con inflación negativa la base
+      // es 0, que es lo que haría el candado cerrado.
+      const inflBase = Math.max(d.inflacion, 0);
+      const horquilla = [0, inflBase, inflBase + 0.02].map(r => calcular(r).filaRef.anualizada);
       el('tblRentabilidad').innerHTML = [
         filaResumen(t('rentBruta'), pct(d.rentabilidadBruta, 'text-brand-accent'), { titulo: t('kpiBrutaTip') }),
         filaResumen(t('rentNeta'), pct(d.rentabilidadNeta, ''), { titulo: t('rentNetaTip') }),
         filaResumen(t('rentCaja'), pct(d.roceCaja), { titulo: t('rentCajaTip') }),
         filaResumen('+ ' + t('rentAmortizacion'), pct(d.roceAmortizacion), { titulo: t('rentAmortizacionTip'), sinRaya: true }),
         filaResumen('= ' + t('rentRoceSin'), pct(d.roceSinReval, 'text-brand-accent'), { titulo: t('rentRoceSinTip'), sinRaya: true }),
-        filaResumen('+ ' + t('rentRevalorizacion'), pct(d.roceRevalorizacion), { titulo: t('rentRevalorizacionTip') }),
-        filaResumen('= ' + t('rentRoceCon'), pct(d.roce, 'text-brand-accent'), { titulo: t('rentRoceConTip'), sinRaya: true }),
+        filaResumen('= ' + t('rentRoceCon') + ` (+ ${fmtPct(d.revalorizacion, 2)})`, pct(d.roce, 'text-brand-accent'), { titulo: t('rentRoceConTip'), sinRaya: true }),
         filaResumen(tf('rentAnualizada', d.anoRef), pct(d.filaRef.anualizada), { titulo: t('kpiAnualizadaTip') }),
-        filaResumen(tf('rentTirVenta', d.anoRef), pct(d.filaRef.tirVenta), { titulo: t('rentTirVentaTip') }),
-        filaResumen(tf('rentMultiplicador', d.anoRef),
-          d.multiplicador === null ? '<span class="val-muted">—</span>' : fmtNum(d.multiplicador, 1) + '×',
-          { titulo: t('rentMultiplicadorTip') })
+        filaResumen(tf('rentHorquilla', d.anoRef), horquilla.map(v => pct(v)).join(' · '),
+          { titulo: tf('rentHorquillaTip', d.anoRef, fmtPct(inflBase, 2), fmtPct(inflBase + 0.02, 2)) }),
+        filaResumen(tf('rentTirVenta', d.anoRef), pct(d.filaRef.tirVenta), { titulo: t('rentTirVentaTip') })
       ].join('');
 
       el('notaFiscal').textContent = tf('notaFiscal', fmt(reg.ingresos), fmt(reg.gastos), fmt(reg.interes),
@@ -2200,7 +2254,7 @@
     }
 
     function pintarAyuda() {
-      el('ayudaCuerpo').innerHTML = [1, 2, 3, 4, 5, 6, 7].map(i =>
+      el('ayudaCuerpo').innerHTML = [1, 2, 3, 4, 'Irpf', 5, 6, 7].map(i =>
         `<p><strong class="${i === 7 ? 'text-brand-amber' : 'text-brand-accent'}">${t('ayuda' + i + 't')}</strong> ${t('ayuda' + i)}</p>`
       ).join('');
     }
@@ -2213,8 +2267,7 @@
       document.querySelectorAll('[data-i18n-title]').forEach(e => { e.title = t(e.dataset.i18nTitle); });
       // El botón enseña la bandera del idioma al que se va, no la del actual.
       el('langIcon').innerHTML = IDIOMA === 'es' ? BANDERAS.gb : BANDERAS.es;
-      [['langBtn', 'btnIdioma'], ['themeToggleBtn', 'btnTema'], ['btnGuardar', 'btnGuardar'],
-       ['btnCargar', 'btnCargar'], ['btnCompartir', 'btnCompartir'], ['btnReset', 'btnReset'], ['btnFaq', 'btnFaq'], ['btnAyuda', 'btnAyuda']]
+      [['langBtn', 'btnIdioma'], ['themeToggleBtn', 'btnTema'], ['btnCompartir', 'btnCompartir'], ['btnReset', 'btnReset'], ['btnFaq', 'btnFaq'], ['btnAyuda', 'btnAyuda']]
         .forEach(([id, clave]) => { el(id).title = t(clave); });
       rellenarCcaa();
       pintarAyuda();
@@ -2306,27 +2359,6 @@
       }, 600);
     }
 
-    function exportData() {
-      const blob = new Blob([JSON.stringify(leerEstado(), null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'calculadora-pisos.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    function importData(evento) {
-      const fichero = evento.target.files[0];
-      if (!fichero) return;
-      const lector = new FileReader();
-      lector.onload = () => {
-        try { aplicarEstado(JSON.parse(lector.result)); render(); }
-        catch (e) { alert(t('errorFichero')); }
-      };
-      lector.readAsText(fichero);
-      evento.target.value = '';
-    }
-
     function resetDefaults() { aplicarEstado(DEFECTOS); render(); }
     function openModal(id) {
       // Los dos únicos ids que se pasan aquí están escritos en el HTML: helpModal y faqModal.
@@ -2369,6 +2401,29 @@
 
     const URL_HERRAMIENTA = 'https://pacolucena.com/calculadora/';
 
+    // Claves cortas para la dirección: «?pr=260000&de=5» en vez de «?precioAnunciado=260000&
+    // descuentoOferta=5». Van de una a tres letras y no hay dos iguales (una prueba lo vigila);
+    // ninguna coincide con el nombre largo de otro campo, para que aceptar los dos nombres no
+    // pueda confundir uno con otro. Primero los campos y luego las casillas.
+    const CLAVES_CORTAS = {
+      precioAnunciado: 'pr', descuentoOferta: 'de', oferta: 'of', valor: 'va', superficie: 'su',
+      obraNueva: 'on', ccaa: 'cc', pctImpuestos: 'pi', pctNotaria: 'pn', comision: 'co', reforma: 'rf',
+      pctFinanciado: 'pf', plazoHipoteca: 'ph', tipoHipoteca: 'th',
+      importePrestamo: 'ip', plazoPrestamo: 'pp', tipoPrestamo: 'tp',
+      alquiler: 'al', mesesVacios: 'mv',
+      comunidad: 'cm', ibi: 'ib', seguroHogar: 'sh', seguroImpagos: 'sg', mantenimiento: 'mt',
+      tasaIbi: 'ti', tasaComunidad: 'tc', tasaSeguroHogar: 'ts', tasaImpagos: 'tg', tasaMantenimiento: 'tm',
+      tipoMarginal: 'tx', baseTributable: 'bt', pctConstruccion: 'pc', tasaAmortizacion: 'ta',
+      pctGastosVenta: 'gv', pctGananciaVenta: 'gg',
+      inflacion: 'in', revalorizacion: 'rv', horizonte: 'ho', indexar: 'ix', anoRef: 'ay',
+      // Casillas: los candados («a…»), las fuentes de deuda («u…»), el IVA y las aceleradas.
+      autoValor: 'av', autoPctImpuestos: 'ai', autoPctNotaria: 'an', autoPctGananciaVenta: 'ag',
+      autoRevalorizacion: 'ar', autoComunidad: 'ac', autoIbi: 'ab', autoSeguroHogar: 'ah',
+      autoSeguroImpagos: 'aq', autoMantenimiento: 'am',
+      usarHipoteca: 'uh', usarPrestamo: 'up', ivaComision: 'iv', hipotecaAcelerada: 'ha', prestamoAcelerado: 'pa'
+    };
+    const claveCorta = (id) => CLAVES_CORTAS[id] ?? id;
+
     // Los cálculos viajan en la propia dirección, como parámetros, y solo los que difieren del
     // escenario de ejemplo: así el enlace es corto y legible. No pasa por ningún servidor.
     function enlaceConCalculos() {
@@ -2378,8 +2433,8 @@
       const estimada = (id) => ESTIMABLES.includes(id) && actual['auto' + capitalizar(id)];
       // Se comparan como números: «500.000» y «500000» son el mismo precio.
       const valor = (v) => /\d/.test(String(v)) ? String(parseNum(v)) : String(v);
-      CAMPOS.forEach(id => { if (valor(actual[id]) !== valor(DEFECTOS[id]) && !estimada(id)) params.set(id, valor(actual[id]).slice(0, 40)); });
-      CASILLAS.forEach(id => { if (actual[id] !== DEFECTOS[id]) params.set(id, actual[id] ? '1' : '0'); });
+      CAMPOS.forEach(id => { if (valor(actual[id]) !== valor(DEFECTOS[id]) && !estimada(id)) params.set(claveCorta(id), valor(actual[id]).slice(0, 40)); });
+      CASILLAS.forEach(id => { if (actual[id] !== DEFECTOS[id]) params.set(claveCorta(id), actual[id] ? '1' : '0'); });
       const q = params.toString();
       return URL_HERRAMIENTA + (q ? '?' + q : '');
     }
@@ -2387,31 +2442,45 @@
     function leerEscenarioCompartido() {
       const params = new URLSearchParams(location.search);
       const estado = {};
-      // Solo las claves conocidas: lo demás de la dirección se ignora.
-      CAMPOS.forEach(id => { if (params.has(id)) estado[id] = params.get(id).slice(0, 40); });
-      CASILLAS.forEach(id => { if (params.has(id)) estado[id] = params.get(id) === '1'; });
+      // Solo las claves conocidas: lo demás de la dirección se ignora. Valen las cortas y también
+      // los nombres largos, que son los de los enlaces que ya se compartieron antes.
+      const clave = (id) => params.has(claveCorta(id)) ? claveCorta(id) : params.has(id) ? id : null;
+      CAMPOS.forEach(id => { const k = clave(id); if (k) estado[id] = params.get(k).slice(0, 40); });
+      CASILLAS.forEach(id => { const k = clave(id); if (k) estado[id] = params.get(k) === '1'; });
       if (!Object.keys(estado).length) return;
       aplicarEstado({ ...DEFECTOS, ...estado });
       // Se limpia la dirección: si no, recargar la página volvería a pisar lo que se cambie después.
       try { history.replaceState(null, '', location.pathname); } catch (e) {}
     }
 
+    // El mensaje que acompaña al enlace. Con los cálculos lleva las cifras que resumen la
+    // operación, en el idioma activo; la herramienta sola lleva una frase genérica.
+    function textoCompartido(conCalculos) {
+      if (!conCalculos) return t('compartirTextoHerramienta');
+      const d = calcular();
+      return tf('compartirTexto', fmt(d.oferta), fmt(d.alquiler), fmtPct(d.rentabilidadBruta),
+        fmt(d.regimenInicial.caja / 12), d.anoRef, fmtPct(d.filaRef.anualizada));
+    }
+
     function compartir(conCalculos) {
       const url = conCalculos ? enlaceConCalculos() : URL_HERRAMIENTA;
+      const text = textoCompartido(conCalculos);
       closeModal('shareModal');
       if (navigator.share) {
         // Cerrar la hoja sin elegir nada también rechaza la promesa: no es un error.
-        navigator.share({ title: t('titulo'), url }).catch(() => {});
+        navigator.share({ title: t('titulo'), text, url }).catch(() => {});
         return;
       }
+      // Sin hoja de compartir se copia el mensaje y el enlace juntos, que es lo que se pegaría.
+      const completo = text + '\n' + url;
       const avisar = () => {
         const ind = el('saveIndicator');
         ind.textContent = t('enlaceCopiado');
         ind.classList.remove('opacity-0');
         setTimeout(() => ind.classList.add('opacity-0'), 1800);
       };
-      if (navigator.clipboard) navigator.clipboard.writeText(url).then(avisar, () => window.prompt(t('copiaEnlace'), url));
-      else window.prompt(t('copiaEnlace'), url);
+      if (navigator.clipboard) navigator.clipboard.writeText(completo).then(avisar, () => window.prompt(t('copiaEnlace'), completo));
+      else window.prompt(t('copiaEnlace'), completo);
     }
 
     (function init() {

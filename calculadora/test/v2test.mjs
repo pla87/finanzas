@@ -15,7 +15,7 @@ const txt = s => p.textContent(s);
 // 1) separadores de miles siempre, también en cuatro cifras
 await p.evaluate(() => { document.getElementById('alquiler').value = '2000'; render(); });
 check('separador en 4 cifras (caja anual)', /\d\.\d{3}/.test(await txt('#outAlquilerAnual')) , await txt('#outAlquilerAnual'));
-check('separador en los campos', (await val('oferta')) === '500.000', await val('oferta'));
+check('separador en los campos', (await val('oferta')) === '247.000', await val('oferta'));
 
 // 2) impuesto por comunidad y obra nueva
 const itp = async (ccaa, nueva) => p.evaluate(([c,n]) => {
@@ -58,7 +58,7 @@ await p.click('#lockHipoteca');
 // 7) LTV limitado a 0..100
 await p.evaluate(() => { document.getElementById('pctFinanciado').value = '150'; render(); });
 check('LTV limitado al 100%', (await p.evaluate(() => calcular().pctFinanciado)) === 100);
-await p.evaluate(() => { document.getElementById('pctFinanciado').value = '80'; render(); });
+await p.evaluate(() => { document.getElementById('pctFinanciado').value = '70'; render(); });
 
 // 8) año 0 negativo por los gastos de compra
 const a0 = await p.evaluate(() => { const r = calcular(); return { g0: r.fila0.ganancia, gastos: r.gastosCompra, etiquetas: charts.patrimonio.data.labels.slice(0,3) }; });
@@ -71,7 +71,7 @@ check('cambia a inglés', (await txt('[data-i18n="compraTitulo"]')) === 'Purchas
 // El icono es una bandera dibujada, no un emoji: se comprueba el SVG que hay dentro.
 check('el icono pasa a la bandera española',
   /#c60b1e/.test(await p.innerHTML('#langIcon')), (await p.innerHTML('#langIcon')).slice(0, 40));
-check('formato numérico inglés', (await val('oferta')) === '500,000', await val('oferta'));
+check('formato numérico inglés', (await val('oferta')) === '247,000', await val('oferta'));
 await p.reload(); await p.waitForTimeout(600);
 check('el idioma se recuerda', (await txt('[data-i18n="compraTitulo"]')) === 'Purchase');
 await p.click('#langBtn'); await p.waitForTimeout(200);

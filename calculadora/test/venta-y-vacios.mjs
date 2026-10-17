@@ -84,7 +84,7 @@ check('vender siempre deja menos que el patrimonio de la columna de al lado',
 check('y por tanto la TIR vendiendo es menor',
   v.filas.every(f => f.tir === null || f.tir < f.tirSin),
   `año 30: ${(u.tir * 100).toFixed(1)}% vs ${(u.tirSin * 100).toFixed(1)}%`);
-check('vender el primer año es ruinoso', v.filas[0].tir < -0.2,
+check('vender el primer año es ruinoso', v.filas[0].tir < -0.15,
   `${(v.filas[0].tir * 100).toFixed(1)}% · neto ${eur(v.filas[0].neto)} sobre lo aportado`);
 check('el primer año no hay ganancia que tributar', v.filas[0].gan === 0 && v.filas[0].imp === 0);
 

@@ -24,17 +24,17 @@ console.log(preguntas.map((q,i) => `        ${i+1}. ${q}`).join('\n'));
 await p.evaluate(() => document.querySelectorAll('#faqCuerpo details').forEach(d => d.open = true));
 const tabla = await p.evaluate(() => [...document.querySelectorAll('#faqApalancamiento tr')].map(r => [...r.cells].map(c => c.textContent.trim())));
 console.log('\n   tabla en vivo:'); tabla.forEach(f => console.log('     ', f.join(' | ')));
-check('rinde el piso 6,39%', tabla[0][1] === '6,39%', tabla[0][1]);
-check('hipoteca al 1,80% tras deducir', tabla[1][1] === '1,80%', tabla[1][1]);
+check('rinde el piso 6,56%', tabla[0][1] === '6,56%', tabla[0][1]);
+check('hipoteca al 2,17% tras deducir', tabla[1][1] === '2,17%', tabla[1][1]);
 check('la hipoteca suma', tabla[1][2].includes('suma'), tabla[1][2]);
-check('préstamo al 9,02% tras deducir', tabla[2][1] === '9,02%', tabla[2][1]);
+check('préstamo al 6,98% tras deducir', tabla[2][1] === '6,98%', tabla[2][1]);
 check('el préstamo resta', tabla[2][2].includes('resta'), tabla[2][2]);
 
 // Debe seguir al escenario: con la hipoteca al 9% pasa a restar
 await p.evaluate(() => { document.getElementById('tipoHipoteca').value = '9'; render(); });
 const t2 = await p.evaluate(() => [...document.querySelectorAll('#faqApalancamiento tr')][1].cells[2].textContent);
 check('con la hipoteca al 9% pasa a restar', t2.includes('resta'), t2.trim());
-await p.evaluate(() => { document.getElementById('tipoHipoteca').value = '2,20'; render(); });
+await p.evaluate(() => { document.getElementById('tipoHipoteca').value = '2,80'; render(); });
 
 // Idioma. El modal tapa la cabecera, así que se cierra antes, igual que haría cualquiera.
 await p.evaluate(() => closeModal('faqModal'));

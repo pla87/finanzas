@@ -9,69 +9,6 @@
   <link rel="canonical" href="https://pacolucena.com/calculadora/" />
   <!-- Emoji Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧮</text></svg>" />
-  <!-- Google tag (gtag.js). Se comparte el mismo ID de medición en todo pacolucena.com y sus
-       subdirectorios (/balance, /retiro, /pisos, ...): son el mismo origen, así que GA4 mantiene
-       una única sesión y una única atribución de origen de tráfico al navegar entre secciones. -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-
-    // Consent Mode v2: por defecto se deniega todo hasta que el usuario acepta, de modo que no
-    // se escribe ninguna cookie de analítica antes del consentimiento (RGPD y LSSI-CE).
-    gtag('consent', 'default', {
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      analytics_storage: 'denied',
-      wait_for_update: 500
-    });
-
-    // A quien ya decidió se le restituye su elección aquí, antes de que `config` dispare el
-    // page_view: `wait_for_update` solo concede 500 ms, y un `consent update` que llegue más
-    // tarde deja esa primera página vista contada en modo denegado. La clave vive en
-    // localStorage y el origen es pacolucena.com para las cuatro secciones, así que quien
-    // aceptó en /balance o en /retiro llega aquí con su decisión puesta.
-    try {
-      var decisionConsentimiento = localStorage.getItem('pacolucena_consent_analytics');
-      if (decisionConsentimiento === 'granted' || decisionConsentimiento === 'denied') {
-        gtag('consent', 'update', {
-          ad_storage: 'denied',
-          ad_user_data: 'denied',
-          ad_personalization: 'denied',
-          analytics_storage: decisionConsentimiento
-        });
-      }
-    } catch (err) {}
-
-    // Nada de publicidad: `ads_data_redaction` borra los identificadores de clic mientras
-    // `ad_storage` esté denegado, que aquí lo está siempre.
-    gtag('set', 'ads_data_redaction', true);
-
-    gtag('js', new Date());
-    // `set` antes de `config`: la cola se procesa en orden y `config` dispara el page_view
-    // inicial, así que lo que se declare después de él no llega a ese evento. Va también
-    // dentro de `config` para que el page_view lo lleve pase lo que pase.
-    gtag('set', { site_section: 'pisos' });
-    gtag('config', 'G-30DHGP3G3B', {
-      site_section: 'pisos',
-      // Sin señales de Google no hay demografía, ni intereses, ni seguimiento entre
-      // dispositivos de quien tiene la sesión de Google abierta.
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false
-    });
-
-    // Solo se carga la etiqueta en el dominio de producción. Cloudflare Pages publica una vista
-    // previa por rama y por commit en <hash>.<proyecto>.pages.dev, y todas cargaban gtag.js: las
-    // pruebas de cualquier rama se contaban como visitas reales. Sin gtag.js no sale ni una
-    // petición ni se escribe ninguna cookie, y las órdenes de arriba se quedan encoladas en
-    // dataLayer sin que nadie las procese. Deja fuera también localhost, o sea `npm run dev`.
-    if (location.hostname === 'pacolucena.com' || location.hostname === 'www.pacolucena.com') {
-      var etiquetaGoogle = document.createElement('script');
-      etiquetaGoogle.async = true;
-      etiquetaGoogle.src = 'https://www.googletagmanager.com/gtag/js?id=G-30DHGP3G3B';
-      document.head.appendChild(etiquetaGoogle);
-    }
-  </script>
   <link rel="stylesheet" href="tailwind.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
   <style>
@@ -689,14 +626,6 @@
     const THEME_KEY = 'calc_pisos_theme';
     const LANG_KEY = 'calc_pisos_lang';
 
-    // Analítica de uso. La regla es que solo viaje QUÉ se hizo: el nombre de la acción y, si
-    // hace falta para distinguirla, una constante escrita aquí mismo en el propio código.
-    // Nunca nada leído de los campos ni de las preferencias: ni precios, ni alquileres, ni
-    // comunidad autónoma, ni tipo marginal, ni el tema, ni el idioma.
-    function trackEvent(nombre, params) {
-      if (typeof gtag !== 'function') return;
-      gtag('event', nombre, params || {});
-    }
 
     /* ---------- Textos ---------- */
 
@@ -1424,7 +1353,6 @@
     // Sólo los gastos y los tipos de compra: el botón vive en la tarjeta de gastos y volver a
     // pegar la oferta al precio anunciado sin avisar sería tirar el escenario del usuario.
     function reestimarTodo() {
-      trackEvent('reestimate_all');
       [...GASTOS_ESTIMADOS, ...TIPOS_COMPRA].forEach(c => { el('auto' + capitalizar(c)).checked = true; pintarCandado(c); });
       render();
     }
@@ -2337,7 +2265,6 @@
 
     function alternarIdioma() {
       // Se cuenta el clic, no el idioma: el idioma elegido es una preferencia del visitante.
-      trackEvent('language_toggle');
       aplicarIdioma(IDIOMA === 'es' ? 'en' : 'es');
       render();
     }
@@ -2345,7 +2272,6 @@
     function switchTab(tabId, btn) {
       // El identificador de la pestaña es una constante del propio HTML, no un dato de quien
       // la abre: dice qué parte de la herramienta se mira.
-      trackEvent('tab_view', { item_id: tabId });
       document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(e => {
         e.classList.remove('text-brand-accent', 'border-b-2', 'border-brand-accent');
@@ -2365,7 +2291,6 @@
 
     function toggleTheme() {
       // Igual que con el idioma: se cuenta el clic, no el tema al que se cambia.
-      trackEvent('theme_toggle');
       const actual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
       applyTheme(actual === 'dark' ? 'light' : 'dark');
       render();
@@ -2416,7 +2341,6 @@
     }
 
     function exportData() {
-      trackEvent('data_export');
       const blob = new Blob([JSON.stringify(leerEstado(), null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -2437,10 +2361,9 @@
       evento.target.value = '';
     }
 
-    function resetDefaults() { trackEvent('reset_defaults'); aplicarEstado(DEFECTOS); render(); }
+    function resetDefaults() { aplicarEstado(DEFECTOS); render(); }
     function openModal(id) {
       // Los dos únicos ids que se pasan aquí están escritos en el HTML: helpModal y faqModal.
-      trackEvent(id === 'faqModal' ? 'faq_open' : 'help_open');
       el(id).classList.remove('hidden');
       el(id).classList.add('flex');
     }
@@ -2499,106 +2422,6 @@
       FUENTES.forEach(pintarFuente);
       formatearCampos();
       render();
-    })();
-  </script>
-  <!-- Consentimiento de analítica. Faltaba: el `consent default` deniega y, sin nadie que
-       mandase el `consent update`, esta sección solo emitía pings sin cookie y no apareció
-       nunca en los informes. Comparte clave de localStorage con el resto de pacolucena.com:
-       mismo origen, una sola decisión para todo el dominio.
-       Sin role="dialog": el atrapador de foco de los modales busca el primero del documento. -->
-  <div id="cookieBanner" role="region" hidden
-       style="position:fixed;left:0;right:0;bottom:0;z-index:60;padding:12px;">
-    <div id="cookieBannerCard"
-         style="max-width:52rem;margin:0 auto;border-radius:12px;padding:16px;
-                box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:12px;
-                font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;">
-      <p id="cookieBannerText" style="margin:0;flex:1;font-size:12px;line-height:1.55;"></p>
-      <div style="display:flex;gap:8px;flex-shrink:0;">
-        <button id="cookieReject" type="button"
-                style="height:36px;padding:0 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;"></button>
-        <button id="cookieAccept" type="button"
-                style="height:36px;padding:0 18px;border-radius:8px;border:0;font-size:12px;font-weight:700;cursor:pointer;"></button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    (function () {
-      // Compartida con el resto de pacolucena.com: mismo origen, misma decisión.
-      var CONSENT_KEY = 'pacolucena_consent_analytics';
-
-      function leer(clave) {
-        try { return localStorage.getItem(clave); } catch (err) { return null; }
-      }
-
-      // El bloque de gtag de la cabecera ya restituyó la decisión de quien la tenía guardada,
-      // y a tiempo de que la contase el page_view inicial. Aquí solo queda preguntar a quien
-      // todavía no ha decidido.
-      var guardado = leer(CONSENT_KEY);
-      if (guardado === 'granted' || guardado === 'denied') return;
-
-      var banner = document.getElementById('cookieBanner');
-      if (!banner) return;
-
-      var TEXTOS = {
-        es: {
-          aviso: 'Usamos analítica de uso anónima y agregada (páginas vistas y uso de funciones) para mejorar la herramienta. Ningún dato que introduzcas sale de este navegador. Puedes rechazarla y seguir usándolo todo con normalidad.',
-          aceptar: 'Aceptar',
-          rechazar: 'Rechazar',
-          region: 'Consentimiento de cookies'
-        },
-        en: {
-          aviso: 'We use anonymous, aggregated usage analytics (page views and feature use) to improve the tool. Nothing you type leaves this browser. You can decline and keep using everything as normal.',
-          aceptar: 'Accept',
-          rechazar: 'Decline',
-          region: 'Cookie consent'
-        }
-      };
-
-      var t = TEXTOS[leer('calc_pisos_lang') === 'en' ? 'en' : 'es'];
-      banner.setAttribute('aria-label', t.region);
-      document.getElementById('cookieBannerText').textContent = t.aviso;
-      document.getElementById('cookieAccept').textContent = t.aceptar;
-      document.getElementById('cookieReject').textContent = t.rechazar;
-
-      // El tema se lleva en un atributo del <html>, no en una clase, así que el banner se
-      // pinta a mano con la paleta que toque.
-      var oscuro = document.documentElement.getAttribute('data-theme') === 'dark';
-      var tarjeta = document.getElementById('cookieBannerCard');
-      var texto = document.getElementById('cookieBannerText');
-      var rechazar = document.getElementById('cookieReject');
-      var aceptar = document.getElementById('cookieAccept');
-      tarjeta.style.background = oscuro ? '#0f172a' : '#ffffff';
-      tarjeta.style.border = oscuro ? '1px solid #1e293b' : '1px solid #cbd5e1';
-      texto.style.color = oscuro ? '#cbd5e1' : '#334155';
-      rechazar.style.background = oscuro ? '#090d16' : '#f8fafc';
-      rechazar.style.border = oscuro ? '1px solid #1e293b' : '1px solid #cbd5e1';
-      rechazar.style.color = oscuro ? '#f1f5f9' : '#0f172a';
-      aceptar.style.background = oscuro ? '#10b981' : '#047857';
-      aceptar.style.color = oscuro ? '#090d16' : '#ffffff';
-
-      // A partir de 640 px el texto y los botones caben en una fila.
-      if (window.matchMedia('(min-width: 640px)').matches) {
-        tarjeta.style.flexDirection = 'row';
-        tarjeta.style.alignItems = 'center';
-      }
-
-      function decidir(concedido) {
-        try { localStorage.setItem(CONSENT_KEY, concedido ? 'granted' : 'denied'); } catch (err) {}
-        if (typeof gtag === 'function') {
-          gtag('consent', 'update', {
-            ad_storage: 'denied',
-            ad_user_data: 'denied',
-            ad_personalization: 'denied',
-            analytics_storage: concedido ? 'granted' : 'denied'
-          });
-        }
-        banner.hidden = true;
-      }
-
-      aceptar.addEventListener('click', function () { decidir(true); });
-      rechazar.addEventListener('click', function () { decidir(false); });
-      banner.hidden = false;
     })();
   </script>
 </body>

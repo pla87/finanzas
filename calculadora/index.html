@@ -127,6 +127,10 @@
     .campo.val-neg { color: rgb(var(--brand-rose)); }
     .campo:disabled { opacity: .6; }
     select.campo { text-align: right; font-size: 12px; cursor: pointer; }
+    /* La caja cerrada lleva el valor a la derecha, como el resto de cifras; pero en Chrome la lista
+       desplegada hereda el text-align del select y los nombres de comunidad quedaban pegados a la
+       derecha, ilegibles. Las opciones se leen mejor alineadas a la izquierda. */
+    select.campo option { text-align: left; }
     /* Los dos selectores largos (comunidad autónoma) necesitan más sitio que una cifra. */
     select.campo-ancho { width: 8.4rem; }
     .salida {
@@ -207,28 +211,46 @@
   <!-- KPIs. En escritorio, seis tarjetas de ancho igual en una fila. En móvil ocupan una línea
        cada una (etiqueta a la izquierda, cifra a la derecha) y sin el detalle: seis tarjetas
        apiladas con tres renglones cada una dejaban los controles a tres pantallas de distancia. -->
-  <section class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3.5 mb-6">
-    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
+  <section class="max-w-7xl mx-auto mb-6">
+  <!-- En móvil los seis indicadores van en una caja plegable, plegada al abrir: lo primero que se
+       necesita es rellenar los datos del piso, no leer seis cifras que aún no significan nada.
+       No es un <details> porque en escritorio no debe haber caja alguna, y un <details> cerrado
+       oculta su contenido por mucho CSS que se le ponga. El estado no se guarda a propósito:
+       siempre arranca plegada. -->
+  <button type="button" id="kpiToggle" class="lg:hidden w-full flex items-center justify-between gap-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 shadow-sm text-left" aria-expanded="false" aria-controls="kpiGrid" onclick="alternarKpis()">
+    <span class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider whitespace-nowrap" data-i18n="kpiTitulo">PRINCIPALES MÉTRICAS</span>
+    <span class="flex items-center gap-2 min-w-0 text-xs font-bold num">
+      <span class="truncate"><span class="font-semibold text-brand-textMuted" data-i18n="kpiResBruta">Bruta</span> <span id="kpiResBruta">--</span></span>
+      <span class="truncate"><span class="font-semibold text-brand-textMuted" data-i18n="kpiResCaja">Caja</span> <span id="kpiResCaja">--</span></span>
+      <span id="kpiFlecha" class="text-brand-textMuted transition-transform" aria-hidden="true">▾</span>
+    </span>
+  </button>
+  <div id="kpiGrid" class="hidden lg:grid grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3.5 mt-2 lg:mt-0">
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiBruta" data-i18n-title="kpiBrutaTip">RENTABILIDAD BRUTA</div>
       <div class="text-base lg:text-xl font-bold text-brand-accent lg:mt-1.5 num" id="kpiBruta">--</div>
+      <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiBrutaDesc"></div>
       <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiBrutaDetalle">--</div>
     </div>
-    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiRoce" data-i18n-title="kpiRoceTip">ROCE</div>
       <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiRoce">--</div>
+      <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiRoceDesc"></div>
       <!-- La cifra grande es la que ya ha ocurrido; la plusvalía sobre el papel va debajo, que
            es donde se puede leer como lo que es: una hipótesis, no dinero cobrado. -->
       <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiRoceConReval">--</div>
       <div class="hidden lg:block text-[11px] text-brand-textMuted num" id="kpiRoceDetalle">--</div>
     </div>
-    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiCaja" data-i18n-title="kpiCajaTip">CAJA ANUAL</div>
       <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiCaja">--</div>
+      <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiCajaDesc"></div>
       <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiCajaMes">--</div>
     </div>
-    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiDeuda" data-i18n-title="kpiDeudaTip">FIN DE DEUDA</div>
       <div class="text-base lg:text-xl font-bold text-brand-amber lg:mt-1.5 num" id="kpiDeuda">--</div>
+      <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiDeudaDesc"></div>
       <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiDeudaDetalle">--</div>
     </div>
     <div class="lg:col-span-2 bg-brand-card border-2 border-brand-accent/40 rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-col justify-between">
@@ -242,15 +264,18 @@
         </div>
         <div class="text-base lg:text-xl font-bold num lg:mt-1.5" id="kpiAnualizada">--</div>
       </div>
+      <div class="lg:hidden text-[10px] leading-tight text-brand-textMuted mt-0.5" data-i18n="kpiAnualizadaDesc"></div>
       <!-- Una línea y sólo una: truncate antes que un salto que descuadre la altura de la tarjeta.
            El texto completo, con el matiz que no cabe, va en el título. -->
       <div class="hidden lg:block text-[11px] mt-1 text-brand-textMuted num truncate tooltip-help" id="kpiPayback">--</div>
     </div>
-    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex lg:block items-center justify-between gap-3">
+    <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiAnosAlquiler" data-i18n-title="kpiAnosAlquilerTip">AÑOS DE ALQUILER</div>
       <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiAnosAlquiler">--</div>
+      <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiAnosAlquilerDesc"></div>
       <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiAnosAlquilerDetalle">--</div>
     </div>
+  </div>
   </section>
 
   <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -468,11 +493,11 @@
 
   <!-- Pestañas -->
   <section class="max-w-7xl mx-auto">
-    <div class="flex gap-5 border-b border-brand-border mb-5 overflow-x-auto scrollbar-thin text-sm font-semibold">
-      <button class="tab-btn text-brand-accent border-b-2 border-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('proyeccionTab', this)" data-i18n="tabProyeccion">📈 Proyección</button>
-      <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('cajaTab', this)" data-i18n="tabCaja">💵 Flujo de caja</button>
-      <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('tablasTab', this)" data-i18n="tabTablas">🔥 Tablas de rentabilidad</button>
-      <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('paramsTab', this)" data-i18n="tabParams">⚙️ Parámetros</button>
+    <div class="flex gap-3 sm:gap-5 border-b border-brand-border mb-5 overflow-x-auto scrollbar-thin text-xs sm:text-sm font-semibold">
+      <button class="tab-btn text-brand-accent border-b-2 border-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('proyeccionTab', this)"><span class="sm:hidden" data-i18n="tabProyeccionCorto"></span><span class="hidden sm:inline" data-i18n="tabProyeccion"></span></button>
+      <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('cajaTab', this)"><span class="sm:hidden" data-i18n="tabCajaCorto"></span><span class="hidden sm:inline" data-i18n="tabCaja"></span></button>
+      <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('tablasTab', this)"><span class="sm:hidden" data-i18n="tabTablasCorto"></span><span class="hidden sm:inline" data-i18n="tabTablas"></span></button>
+      <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('paramsTab', this)"><span class="sm:hidden" data-i18n="tabParamsCorto"></span><span class="hidden sm:inline" data-i18n="tabParams"></span></button>
     </div>
 
     <div id="proyeccionTab" class="tab-content space-y-6">
@@ -680,7 +705,15 @@
         titulo: 'Calculadora de compra para alquiler residencial',
         cabeceraTitulo: 'Calculadora de compra para alquiler residencial',
         cabeceraSub: 'Rentabilidad de un piso en alquiler con proyección año a año.',
-        avisoMovil: 'Las tablas se ven mejor en un ordenador', guardado: 'Guardado',
+        avisoMovil: 'Las tablas se ven mejor en un ordenador', guardado: 'Guardado', datosReseteados: 'Datos reseteados',
+        kpiTitulo: 'PRINCIPALES MÉTRICAS', kpiResBruta: 'Bruta', kpiResCaja: 'Caja',
+        kpiBrutaDesc: 'alquiler del año sobre el coste total',
+        kpiRoceDesc: 'rentabilidad sobre lo que pones de tu bolsillo',
+        kpiCajaDesc: 'lo que te queda tras gastos, cuotas e IRPF',
+        kpiDeudaDesc: 'años hasta pagar hipoteca y préstamo',
+        kpiAnualizadaDesc: 'lo que rinde cada año tu dinero hasta ese año',
+        kpiAnosAlquilerDesc: 'años de alquiler íntegro que cuesta el piso',
+        tabProyeccionCorto: 'Proyección', tabCajaCorto: 'Caja', tabTablasCorto: 'Rentabilidad', tabParamsCorto: 'Parámetros',
         btnIdioma: 'Switch to English', btnTema: 'Cambiar de tema', btnReset: 'Volver al escenario de ejemplo', btnCompartir: 'Compartir la calculadora o guardar estos cálculos en un enlace', compartirTitulo: 'Compartir', compartirHerramienta: 'La calculadora', compartirHerramientaSub: 'Vacía, con el escenario de ejemplo.', compartirCalculos: 'Estos cálculos', compartirCalculosSub: 'Quien abra el enlace verá el piso con tus cifras.', enlaceCopiado: 'Enlace copiado', copiaEnlace: 'Copia el enlace:',
         compartirTexto: 'Piso de {0} alquilado a {1}/mes: rentabilidad bruta {2}, caja {3}/mes, anualizada a {4} años {5}.',
         compartirTextoHerramienta: 'Calculadora de compra para alquiler residencial: rentabilidad de un piso con proyección año a año.', btnAyuda: 'Cómo funciona el modelo',
@@ -872,7 +905,15 @@
         titulo: 'Residential buy-to-let calculator',
         cabeceraTitulo: 'Residential buy-to-let calculator',
         cabeceraSub: 'Return on a rental flat, projected year by year.',
-        avisoMovil: 'The tables read better on a computer', guardado: 'Saved',
+        avisoMovil: 'The tables read better on a computer', guardado: 'Saved', datosReseteados: 'Data reset',
+        kpiTitulo: 'KEY METRICS', kpiResBruta: 'Gross', kpiResCaja: 'Cash',
+        kpiBrutaDesc: 'year of rent over the total cost',
+        kpiRoceDesc: 'return on what you put in from your own pocket',
+        kpiCajaDesc: 'what is left after costs, instalments and income tax',
+        kpiDeudaDesc: 'years until mortgage and loan are paid off',
+        kpiAnualizadaDesc: 'what your money earns each year up to that year',
+        kpiAnosAlquilerDesc: 'years of full rent the flat costs',
+        tabProyeccionCorto: 'Projection', tabCajaCorto: 'Cash', tabTablasCorto: 'Returns', tabParamsCorto: 'Parameters',
         btnIdioma: 'Cambiar a español', btnTema: 'Switch theme', btnReset: 'Back to the example scenario', btnCompartir: 'Share the calculator or save these numbers in a link', compartirTitulo: 'Share', compartirHerramienta: 'The calculator', compartirHerramientaSub: 'Blank, with the example scenario.', compartirCalculos: 'These numbers', compartirCalculosSub: 'Whoever opens the link sees the flat with your figures.', enlaceCopiado: 'Link copied', copiaEnlace: 'Copy the link:',
         compartirTexto: '{0} flat rented at {1}/month: gross yield {2}, cash flow {3}/month, annualised over {4} years {5}.',
         compartirTextoHerramienta: 'Residential buy-to-let calculator: the return on a rental flat, projected year by year.', btnAyuda: 'How the model works',
@@ -1849,14 +1890,18 @@
       el('kpiAnosAlquiler').textContent = d.anosAlquiler === null ? '—' : fmtNum(d.anosAlquiler, 1);
       el('kpiAnosAlquilerDetalle').textContent = `${fmt(d.oferta)} / ${fmt(d.alquilerAnualBruto)}`;
 
-      // Un préstamo personal por encima del 10 % merece un aviso: la etiqueta, la caja y el texto
-      // se ponen en rojo y aparece «(ALTO)». Al bajar de ahí todo vuelve a su sitio.
-      const tipoPrestamoAlto = num('tipoPrestamo') > 10;
+      // Un préstamo personal del 10 % o más merece un aviso: la etiqueta, la caja y el texto
+      // se ponen en rojo y aparece «(ALTO)». Al bajar de ahí todo vuelve a su sitio. El umbral es
+      // «por encima de 9,99»: con 9.995 se absorbe el redondeo a dos decimales de la caja, para
+      // que un 10,00 escrito a mano no se quede justo por debajo.
+      const tipoPrestamoAlto = num('tipoPrestamo') > 9.995;
       el('lblTipoPrestamo').classList.toggle('val-neg', tipoPrestamoAlto);
       el('tipoPrestamo').classList.toggle('val-neg', tipoPrestamoAlto);
       el('altoPrestamo').classList.toggle('hidden', !tipoPrestamoAlto);
 
       el('kpiBruta').textContent = fmtPct(d.rentabilidadBruta);
+      // La cabecera de la caja plegable (solo móvil) repite dos cifras para no obligar a abrirla.
+      el('kpiResBruta').textContent = fmtPct(d.rentabilidadBruta);
       el('kpiBrutaDetalle').textContent = `${fmt(d.alquilerAnual)} / ${fmt(d.costeTotal)}`;
       el('kpiRoce').textContent = fmtPct(d.roceSinReval);
       el('kpiRoce').className = 'text-base lg:text-xl font-bold lg:mt-1.5 num ' + (d.roceSinReval === null ? 'val-muted' : signo(d.roceSinReval));
@@ -1864,6 +1909,8 @@
       el('kpiRoceDetalle').textContent = d.aportado > 0 ? `${t('kpiSobre')} ${fmt(d.aportado)} ${t('kpiAportados')}` : t('kpiSinLiquidez');
       el('kpiCaja').textContent = fmt(d.regimenInicial.caja);
       el('kpiCaja').className = 'text-base lg:text-xl font-bold lg:mt-1.5 num ' + signo(d.regimenInicial.caja);
+      el('kpiResCaja').textContent = fmt(d.regimenInicial.caja);
+      el('kpiResCaja').className = signo(d.regimenInicial.caja);
       const hayDeuda = d.principalHip > 0 || d.principalPre > 0;
       el('kpiCajaMes').textContent = fmt(d.regimenInicial.caja / 12) + (hayDeuda ? t('kpiMesConDeuda') : t('kpiMesSinDeuda'));
 
@@ -2345,6 +2392,10 @@
       formatearCampos();
     }
 
+    // Qué dice el indicador la próxima vez que se guarde. Lo normal es «Guardado»; tras ♻️ debe
+    // decir que los datos se han reseteado, porque ahí el usuario no ha guardado nada, lo ha
+    // borrado. Se gasta al usarse: el guardado siguiente vuelve a decir «Guardado».
+    let avisoGuardado = 'guardado';
     let guardarTimer = null;
     function guardar() {
       clearTimeout(guardarTimer);
@@ -2352,14 +2403,24 @@
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(leerEstado()));
           const ind = el('saveIndicator');
-          ind.textContent = t('guardado');
+          ind.textContent = t(avisoGuardado);
+          avisoGuardado = 'guardado';
           ind.classList.remove('opacity-0');
           setTimeout(() => ind.classList.add('opacity-0'), 1200);
         } catch (e) {}
       }, 600);
     }
 
-    function resetDefaults() { aplicarEstado(DEFECTOS); render(); }
+    function resetDefaults() { avisoGuardado = 'datosReseteados'; aplicarEstado(DEFECTOS); render(); }
+
+    // Caja plegable de métricas (solo móvil; en escritorio el botón está oculto y la rejilla siempre
+    // visible por CSS). No recuerda estado: se vuelve a plegar en cada visita.
+    function alternarKpis() {
+      const abrir = el('kpiGrid').classList.contains('hidden');
+      el('kpiGrid').classList.toggle('hidden', !abrir);
+      el('kpiToggle').setAttribute('aria-expanded', String(abrir));
+      el('kpiFlecha').style.transform = abrir ? 'rotate(180deg)' : '';
+    }
     function openModal(id) {
       // Los dos únicos ids que se pasan aquí están escritos en el HTML: helpModal y faqModal.
       el(id).classList.remove('hidden');
@@ -2401,11 +2462,31 @@
 
     const URL_HERRAMIENTA = 'https://pacolucena.com/calculadora/';
 
-    // Claves cortas para la dirección: «?pr=260000&de=5» en vez de «?precioAnunciado=260000&
-    // descuentoOferta=5». Van de una a tres letras y no hay dos iguales (una prueba lo vigila);
-    // ninguna coincide con el nombre largo de otro campo, para que aceptar los dos nombres no
-    // pueda confundir uno con otro. Primero los campos y luego las casillas.
+    // Claves cortas para la dirección: «?p=260000&d=5» en vez de «?precioAnunciado=260000&
+    // descuentoOferta=5». Una letra para los campos que casi todo el mundo toca y dos para el resto
+    // (las 26 letras no dan para los 55 ids); no hay dos iguales y ninguna coincide con el nombre
+    // largo de otro campo ni con una clave antigua de otro (una prueba lo vigila). Primero los
+    // campos y luego las casillas.
     const CLAVES_CORTAS = {
+      precioAnunciado: 'p', descuentoOferta: 'd', oferta: 'o', valor: 'v', superficie: 's',
+      obraNueva: 'nu', ccaa: 'c', pctImpuestos: 'im', pctNotaria: 'no', comision: 'k', reforma: 'r',
+      pctFinanciado: 'f', plazoHipoteca: 'h', tipoHipoteca: 't',
+      importePrestamo: 'i', plazoPrestamo: 'l', tipoPrestamo: 'e',
+      alquiler: 'a', mesesVacios: 'm',
+      comunidad: 'u', ibi: 'b', seguroHogar: 'g', seguroImpagos: 'sm', mantenimiento: 'mn',
+      tasaIbi: 'xb', tasaComunidad: 'xu', tasaSeguroHogar: 'xg', tasaImpagos: 'xi', tasaMantenimiento: 'xm',
+      tipoMarginal: 'x', baseTributable: 'bs', pctConstruccion: 'cn', tasaAmortizacion: 'xa',
+      pctGastosVenta: 'gs', pctGananciaVenta: 'gn',
+      inflacion: 'n', revalorizacion: 'y', horizonte: 'z', indexar: 'ia', anoRef: 'j',
+      // Casillas: los candados («z…»), las fuentes de deuda, el IVA y las aceleradas.
+      autoValor: 'zv', autoPctImpuestos: 'zi', autoPctNotaria: 'zn', autoPctGananciaVenta: 'zg',
+      autoRevalorizacion: 'zr', autoComunidad: 'zu', autoIbi: 'zb', autoSeguroHogar: 'zh',
+      autoSeguroImpagos: 'zs', autoMantenimiento: 'zm',
+      usarHipoteca: 'w', usarPrestamo: 'q', ivaComision: 'wi', hipotecaAcelerada: 'wh', prestamoAcelerado: 'wp'
+    };
+    // Las claves de dos y tres letras de la primera versión: los enlaces con ellas ya se pudieron
+    // compartir, así que se siguen leyendo (solo al leer; al compartir se usan las nuevas).
+    const CLAVES_ANTIGUAS = {
       precioAnunciado: 'pr', descuentoOferta: 'de', oferta: 'of', valor: 'va', superficie: 'su',
       obraNueva: 'on', ccaa: 'cc', pctImpuestos: 'pi', pctNotaria: 'pn', comision: 'co', reforma: 'rf',
       pctFinanciado: 'pf', plazoHipoteca: 'ph', tipoHipoteca: 'th',
@@ -2416,7 +2497,6 @@
       tipoMarginal: 'tx', baseTributable: 'bt', pctConstruccion: 'pc', tasaAmortizacion: 'ta',
       pctGastosVenta: 'gv', pctGananciaVenta: 'gg',
       inflacion: 'in', revalorizacion: 'rv', horizonte: 'ho', indexar: 'ix', anoRef: 'ay',
-      // Casillas: los candados («a…»), las fuentes de deuda («u…»), el IVA y las aceleradas.
       autoValor: 'av', autoPctImpuestos: 'ai', autoPctNotaria: 'an', autoPctGananciaVenta: 'ag',
       autoRevalorizacion: 'ar', autoComunidad: 'ac', autoIbi: 'ab', autoSeguroHogar: 'ah',
       autoSeguroImpagos: 'aq', autoMantenimiento: 'am',
@@ -2443,8 +2523,8 @@
       const params = new URLSearchParams(location.search);
       const estado = {};
       // Solo las claves conocidas: lo demás de la dirección se ignora. Valen las cortas y también
-      // los nombres largos, que son los de los enlaces que ya se compartieron antes.
-      const clave = (id) => params.has(claveCorta(id)) ? claveCorta(id) : params.has(id) ? id : null;
+      // los nombres largos y las claves de la primera versión, que son las de los enlaces ya compartidos.
+      const clave = (id) => [claveCorta(id), CLAVES_ANTIGUAS[id], id].find(k => k && params.has(k)) ?? null;
       CAMPOS.forEach(id => { const k = clave(id); if (k) estado[id] = params.get(k).slice(0, 40); });
       CASILLAS.forEach(id => { const k = clave(id); if (k) estado[id] = params.get(k) === '1'; });
       if (!Object.keys(estado).length) return;

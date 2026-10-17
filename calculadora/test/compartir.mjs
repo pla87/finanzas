@@ -46,13 +46,21 @@ await p.fill('#descuentoOferta', '8'); await p.dispatchEvent('#descuentoOferta',
 await p.fill('#alquiler', '1.750'); await p.press('#alquiler', 'Tab');
 const url = await p.evaluate(() => enlaceConCalculos());
 check('el enlace lleva solo lo que cambia, con claves cortas',
-  url.includes('al=1750') && url.includes('iv=1') && url.includes('de=8') && !url.includes('alquiler=') && !url.includes('ivaComision=') && !/[?&]ib=/.test(url), url);
+  /[?&]a=1750/.test(url) && /[?&]wi=1/.test(url) && /[?&]d=8/.test(url) && !url.includes('alquiler=') && !url.includes('ivaComision=') && !/[?&]b=/.test(url), url);
 // La tabla de equivalencias: cada campo y casilla tiene la suya, de 1 a 3 letras, sin repetirse
 // ni coincidir con el nombre largo de otro (que también se acepta al leer).
 const tabla = await p.evaluate(() => ({ t: CLAVES_CORTAS, ids: [...CAMPOS, ...CASILLAS] }));
 const cortas = Object.values(tabla.t);
-check('toda entrada tiene clave corta de 1 a 3 letras', tabla.ids.every(id => /^[a-z]{1,3}$/.test(tabla.t[id] ?? '')),
-  tabla.ids.filter(id => !/^[a-z]{1,3}$/.test(tabla.t[id] ?? '')).join());
+check('toda entrada tiene clave corta de 1 o 2 letras', tabla.ids.every(id => /^[a-z]{1,2}$/.test(tabla.t[id] ?? '')),
+  tabla.ids.filter(id => !/^[a-z]{1,2}$/.test(tabla.t[id] ?? '')).join());
+// Una letra siempre que quepa: las 26 letras se reparten entre los campos más tocados.
+check('hay 26 claves de una letra (todas las que caben)', cortas.filter(k => k.length === 1).length === 26, String(cortas.filter(k => k.length === 1).length));
+const antiguas = await p.evaluate(() => CLAVES_ANTIGUAS);
+check('las claves antiguas cubren todos los ids', tabla.ids.every(id => antiguas[id]));
+const todasAnt = Object.values(antiguas);
+check('las antiguas no se repiten entre sí', new Set(todasAnt).size === todasAnt.length);
+check('ninguna nueva coincide con una antigua de otro campo', tabla.ids.every(id => !todasAnt.includes(tabla.t[id]) || antiguas[id] === tabla.t[id]));
+check('ninguna antigua coincide con un nombre largo', todasAnt.every(k => !tabla.ids.includes(k)));
 check('y no hay dos iguales', new Set(cortas).size === cortas.length);
 check('ninguna coincide con un nombre largo', cortas.every(k => !tabla.ids.includes(k)));
 const q = url.slice(url.indexOf('?'));
@@ -66,6 +74,11 @@ check('y la dirección queda limpia', !p2.url().includes('?'), p2.url());
 const largo = await abrir('?descuentoOferta=8&oferta=239200&alquiler=1750&comision=10000&ivaComision=1');
 const [cl, cc] = await Promise.all([p2, largo].map(x => x.evaluate(() => { const d = calcular(); return [d.oferta, d.gastosCompra, d.alquilerAnual].map(v => Math.round(v * 1e6)); })));
 check('los nombres largos de los enlaces antiguos también valen', JSON.stringify(cl) === JSON.stringify(cc), `${cl} / ${cc}`);
+// Y los de claves cortas de la primera versión (2 o 3 letras), que ya se pudieron compartir.
+const viejo = await abrir('?de=8&of=239200&al=1750&co=10000&iv=1&tp=7&uh=0');
+const [cv] = await Promise.all([viejo].map(x => x.evaluate(() => { const d = calcular(); return [d.oferta, d.gastosCompra, d.alquilerAnual].map(v => Math.round(v * 1e6)); })));
+check('las claves cortas antiguas también valen', JSON.stringify(cv) === JSON.stringify(cl), `${cv} / ${cl}`);
+check('y las de varias letras antiguas llegan a su campo', await viejo.evaluate(() => document.getElementById('tipoPrestamo').value.startsWith('7') && !document.getElementById('usarHipoteca').checked));
 const p3 = await abrir('?alquiler=900&inventado=1&ccaa=%3Cimg%3E');
 check('las claves que no existen se ignoran', await p3.evaluate(() => parseNum(document.getElementById('alquiler').value)) === 900);
 
@@ -95,6 +108,18 @@ const enTexto = await p.evaluate(() => textoCompartido(true));
 check('el mensaje sale en el idioma activo', /flat rented at .*\/month: gross yield/.test(enTexto), enTexto);
 await p.evaluate(() => { document.getElementById('langBtn').click(); });
 
+// --- el indicador: ♻️ dice «Datos reseteados» y un guardado normal sigue diciendo «Guardado» ---
+await p.evaluate(() => { document.getElementById('saveIndicator').textContent = ''; resetDefaults(); });
+await p.waitForTimeout(900);
+check('tras ♻️ el indicador dice «Datos reseteados»', (await p.textContent('#saveIndicator')) === 'Datos reseteados', await p.textContent('#saveIndicator'));
+await p.fill('#alquiler', '1.300'); await p.press('#alquiler', 'Tab'); await p.waitForTimeout(900);
+check('el guardado siguiente vuelve a decir «Guardado»', (await p.textContent('#saveIndicator')) === 'Guardado', await p.textContent('#saveIndicator'));
+await p.evaluate(() => { document.getElementById('langBtn').click(); resetDefaults(); });
+await p.waitForTimeout(900);
+check('en inglés, «Data reset»', (await p.textContent('#saveIndicator')) === 'Data reset', await p.textContent('#saveIndicator'));
+await p.evaluate(() => document.getElementById('langBtn').click());
+await p.waitForTimeout(100);
+
 // --- el tipo alto del préstamo se pone en rojo por encima del 10% ---
 const alto = async (tipo) => p.evaluate((x) => {
   document.getElementById('tipoPrestamo').value = x; render();
@@ -106,9 +131,11 @@ const alto = async (tipo) => p.evaluate((x) => {
     texto: document.getElementById('altoPrestamo').textContent.trim() };
 }, tipo);
 const a9 = await alto('9,00'), a10 = await alto('10,00'), a11 = await alto('11,00');
-check('al 9% y al 10% no hay aviso', !a9.visible && !a10.visible && !a9.etiqueta && !a10.caja);
-check('por encima del 10% aparece (ALTO) y etiqueta y caja se ponen en rojo',
-  a11.visible && a11.etiqueta && a11.caja && a11.texto === '(ALTO)', JSON.stringify(a11));
+const a999 = await alto('9,99');
+check('al 9% y al 9,99% no hay aviso', !a9.visible && !a999.visible && !a9.etiqueta && !a999.caja);
+check('con 10,00% ya aparece (ALTO) y etiqueta y caja se ponen en rojo',
+  a10.visible && a10.etiqueta && a10.caja && a10.texto === '(ALTO)', JSON.stringify(a10));
+check('por encima del 10% también', a11.visible && a11.etiqueta && a11.caja && a11.texto === '(ALTO)', JSON.stringify(a11));
 check('el texto de la caja es de verdad rojo', a11.color === `rgb(${a11.rosa.split(' ').join(', ')})`, `${a11.color} / ${a11.rosa}`);
 check('al volver a 9% desaparece', !(await alto('9,00')).visible);
 await p.evaluate(() => document.getElementById('langBtn').click());
@@ -153,9 +180,9 @@ const anos = await p.evaluate(() => ({
   valor: document.getElementById('kpiAnosAlquiler').textContent.trim(),
   detalle: document.getElementById('kpiAnosAlquilerDetalle').textContent.replace(/\s/g, ' '),
   titulo: document.querySelector('[data-i18n="kpiAnosAlquiler"]').title, etiqueta: document.querySelector('[data-i18n="kpiAnosAlquiler"]').textContent,
-  tarjetas: document.querySelectorAll('section.grid > div').length,
-  anchos: [...document.querySelectorAll('section.grid > div')].map(d => Math.round(d.getBoundingClientRect().width)),
-  tops: [...document.querySelectorAll('section.grid > div')].map(d => Math.round(d.getBoundingClientRect().top)) }));
+  tarjetas: document.querySelectorAll('#kpiGrid > div').length,
+  anchos: [...document.querySelectorAll('#kpiGrid > div')].map(d => Math.round(d.getBoundingClientRect().width)),
+  tops: [...document.querySelectorAll('#kpiGrid > div')].map(d => Math.round(d.getBoundingClientRect().top)) }));
 check('seis indicadores en una sola fila y del mismo ancho', anos.tarjetas === 6 && new Set(anos.tops).size === 1 && new Set(anos.anchos).size === 1, `${anos.anchos} · ${anos.tops}`);
 check('AÑOS DE ALQUILER = oferta / alquiler anual bruto, con un decimal', anos.etiqueta === 'AÑOS DE ALQUILER' && anos.valor === '16,5', anos.valor);
 check('con su detalle y su explicación', /247\.000 € \/ 15\.000 €/.test(anos.detalle) && /15 a 25/.test(anos.titulo), anos.detalle);

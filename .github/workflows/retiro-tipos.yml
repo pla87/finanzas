@@ -1,0 +1,64 @@
+name: Retiro · tipos de cambio, oro y euríbor
+
+# Refresca los valores de partida que lleva retiro/index.html dentro del bloque <tipos-automaticos>:
+# tipos de cambio, precio del oro y euríbor a 12 meses.
+# La página los usa para convertir a euros cualquier posición en divisa, para valorar el oro que
+# esté declarado en gramos y para el tipo de las hipotecas variables, así que envejecen:
+# congelados en el fichero y sin fecha, nadie sabía de cuándo eran. Al pasar por aquí, Cloudflare Pages reconstruye solo con el commit.
+#
+# El script no escribe nada si algo no cuadra -formato inesperado, valor imposible, salto grande
+# frente a lo comprometido-: falla y deja el workflow en rojo, que es lo que se quiere. Un tipo
+# malo en main corrompe en silencio las posiciones en divisa de todo el que abra la página.
+
+on:
+  schedule:
+    # Lunes a las 06:15 UTC. Fuera de la hora en punto a propósito, que es cuando se amontonan
+    # todos los cron de GitHub y las ejecuciones se retrasan.
+    - cron: '15 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tipos
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: retiro
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Leer los servicios y reescribir el bloque
+        run: node scripts/update-rates.mjs
+
+      - name: Comprobar las barreras del actualizador
+        run: node scripts/test-update-rates.mjs
+
+      - name: Comprobar que index.html sigue siendo válido
+        run: node scripts/check-rates-block.mjs
+
+      - name: Comprometer si ha cambiado algo
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "Sin cambios que comprometer."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Tipos de cambio, oro y euríbor al $(date -u +%Y-%m-%d)
+
+          Actualización automática del bloque <tipos-automaticos> de index.html.
+          Ver retiro/scripts/update-rates.mjs y .github/workflows/retiro-tipos.yml."
+          # En este repo empuja también el bot de balance/: ponerse al día antes de empujar.
+          git pull --rebase
+          git push

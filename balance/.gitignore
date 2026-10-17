@@ -1,0 +1,26 @@
+# Dependencias
+node_modules/
+
+# Salida de compilación. Cloudflare Pages construye desde el código en cada
+# push (el commit 637d6b9 se desplegó sin dist/ en el repositorio), así que
+# versionarla solo añadiría ruido y riesgo de que quede desfasada.
+dist/
+
+# Registros y temporales de herramientas
+*.log
+npm-debug.log*
+.DS_Store
+.vite/
+
+# AQUÍ NO ESTÁ package-lock.json, Y ES A PROPÓSITO.
+# Esta nota está para que nadie lo añada «por limpieza». Sin lockfile,
+# Cloudflare resolvía versiones nuevas en cada despliegue: todas las
+# dependencias van con `^`, y tailwind, vite y el plugin de react ya habían
+# subido varias menores por su cuenta. Con los datos de mercado subiendo a main
+# de lunes a viernes son cuatro o cinco despliegues por semana, cada uno con
+# dependencias potencialmente distintas de las que se probaron. El arreglo de
+# la variante `dark:` depende del comportamiento de Tailwind 4, y nada lo
+# sujetaba.
+
+# Cache de Python del script de datos de mercado
+__pycache__/

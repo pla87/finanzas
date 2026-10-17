@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+  <head>
+    <!-- Primero de todo: la norma exige que la declaracion del juego de caracteres
+         quepa en los primeros 1024 bytes del documento, y el favicon en linea que viene
+         despues ocupa mucho. -->
+    <meta charset="UTF-8" />
+    <!-- Emoji Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💎</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#090d16" id="theme-color-meta" />
+    <script>
+      // El tema se aplica antes de pintar. Si esperásemos a que React monte,
+      // quien tiene guardado el modo claro vería un parpadeo oscuro primero.
+      (function () {
+        try {
+          var t = (localStorage.getItem('fire_v26_theme') || localStorage.getItem('fire_theme_v14')) === 'light' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', t);
+          var m = document.getElementById('theme-color-meta');
+          if (m) m.setAttribute('content', t === 'light' ? '#f1f5f9' : '#090d16');
+        } catch (e) {}
+      })();
+    </script>
+    <script>
+      // Tamaño fijo para la cenefa de móvil (.mobile-ribbon). Si siguiera a la ventana visible, se
+      // movería cada vez que la barra de direcciones del navegador se esconde o reaparece al hacer
+      // scroll, que es justo lo que se veía. Se toma el alto GRANDE de la ventana (100lvh: con la
+      // barra escondida), para que la cenefa llegue al borde de abajo en los dos estados, y solo
+      // se vuelve a calcular si cambia el ancho, que en un teléfono quiere decir que se ha girado.
+      // Los cambios que solo tocan el alto —la barra, el teclado— no la mueven. Va en una variable
+      // CSS de <html> y no en el elemento, para valer antes de que exista la cenefa.
+      (function () {
+        var raiz = document.documentElement;
+        var anchoFijado = -1;
+        function altoGrande() {
+          var sonda = document.createElement('div');
+          sonda.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none';
+          raiz.appendChild(sonda);
+          var alto = sonda.offsetHeight;
+          raiz.removeChild(sonda);
+          return Math.max(alto, window.innerHeight || 0, raiz.clientHeight || 0);
+        }
+        function fijarCenefa() {
+          var ancho = raiz.clientWidth || window.innerWidth;
+          if (!ancho || ancho === anchoFijado) return;
+          anchoFijado = ancho;
+          raiz.style.setProperty('--ribbon-w', ancho + 'px');
+          raiz.style.setProperty('--ribbon-h', altoGrande() + 'px');
+        }
+        fijarCenefa();
+        window.addEventListener('resize', fijarCenefa);
+      })();
+    </script>
+    <title>Balance Personal — Calcula tu patrimonio neto y tu nivel FIRE</title>
+    <meta name="description" content="Calculadora gratuita de patrimonio neto: activos, deudas, impuesto sobre el patrimonio y qué parte de tu vida pagan tus activos. Sin registro." />
+    <link rel="canonical" href="https://pacolucena.com/balance/" />
+    <!-- Lo que enseñan las redes y los mensajeros al compartir el enlace. La imagen va con la
+         dirección entera: estas etiquetas no resuelven rutas relativas. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="pacolucena.com" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:url" content="https://pacolucena.com/balance/" />
+    <meta property="og:title" content="Balance Personal — Tu patrimonio neto y tu nivel FIRE" />
+    <meta property="og:description" content="Qué tienes, qué debes y qué parte de tu vida pagan tus activos por sí solos. Gratis y sin registro: tus datos no salen del navegador." />
+    <meta property="og:image" content="https://pacolucena.com/balance/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- Datos estructurados: le dicen al buscador que esto es una aplicación web gratuita de
+         finanzas, no un artículo. -->
+    <script type="application/ld+json">
+    {"@context": "https://schema.org", "@type": "WebApplication", "name": "Balance Personal", "url": "https://pacolucena.com/balance/", "description": "Calculadora gratuita de patrimonio neto: activos, deudas, impuesto sobre el patrimonio y qué parte de tu vida pagan tus activos. Sin registro.", "applicationCategory": "FinanceApplication", "operatingSystem": "Web", "inLanguage": ["es", "en"], "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Paco Lucena Alcalde", "url": "https://pacolucena.com/"}}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Para quien llega sin JavaScript (algunos rastreadores y vistas previas): la aplicación
+         entera se pinta con React, y sin esto la página estaría vacía. -->
+    <noscript>
+      <h1>Balance Personal</h1>
+      <p>Calculadora gratuita de patrimonio neto: activos, deudas, impuesto sobre el patrimonio y qué parte de tu vida pagan tus activos por sí solos. Necesita JavaScript.</p>
+    </noscript>
+
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

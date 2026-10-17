@@ -1,0 +1,12 @@
+{
+  "name": "calc-pisos-test",
+  "private": true,
+  "type": "module",
+  "description": "Dependencias sólo de las pruebas. Van aparte de las del proyecto para que el despliegue de Cloudflare, que corre npm install en la raíz, no se baje Playwright ni su navegador en cada build.",
+  "scripts": {
+    "test": "node correr.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

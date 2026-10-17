@@ -73,7 +73,7 @@ exigiendo igualdad exacta al céntimo.
 | `v2test` | formato de cifras, idioma y persistencia |
 | `v3` | comunidades autónomas y detalles de la interfaz |
 | `repaso` | escenarios viejos que migran, guardado que va y vuelve, móvil y tema oscuro |
-| `compartir` | no recalcula con la cifra a medio escribir, casillas de IVA y amortización, y los cálculos que viajan en el enlace |
+| `compartir` | no recalcula con la cifra a medio escribir, casillas de IVA y amortización, el enlace de claves cortas y el texto que lo acompaña, el aviso de tipo alto, la horquilla de revalorización y el sexto indicador |
 
 ## Escribirlas
 

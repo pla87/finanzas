@@ -26,7 +26,7 @@ check('el patrimonio de hoy descuenta la inflación acumulada', malos.length ===
 const malosCaja = filas.filter(f => Math.abs(f.cajaReal - f.caja / Math.pow(1 + infl, f.n)) > 0.01);
 check('la caja de hoy, igual', malosCaja.length === 0, `${malosCaja.length} años mal`);
 const u = filas[filas.length - 1];
-check('a 30 años y al 3% queda por debajo de la mitad', u.real < u.nom * 0.45,
+check('a 30 años y al 2,5% queda por debajo de la mitad', u.real < u.nom * 0.5,
   `${Math.round(u.nom / 1000)}k → ${Math.round(u.real / 1000)}k`);
 
 // 2) Con inflación cero las dos columnas coinciden.

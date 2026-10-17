@@ -20,6 +20,9 @@ const fin = await caja('main > div:nth-child(2)');
 const expl = await caja('main > div:nth-child(3)');
 const res = await caja('main > div:nth-child(4)');
 check('las tres primeras tarjetas comparten fila', compra.t === fin.t && fin.t === expl.t, `${compra.t}/${fin.t}/${expl.t}`);
+// Las tres tarjetas estiran por igual: la fila no deja una más corta que las otras.
+const alturas = await p.evaluate(() => [1, 2, 3].map(i => Math.round(document.querySelector(`main > div:nth-child(${i})`).getBoundingClientRect().height)));
+check('las tres tarjetas tienen la misma altura', alturas[0] === alturas[1] && alturas[1] === alturas[2], alturas.join('/'));
 check('van en columnas distintas', compra.l < fin.l && fin.l < expl.l, `${compra.l}/${fin.l}/${expl.l}`);
 check('el resumen va debajo', res.t > compra.t, `${res.t} > ${compra.t}`);
 check('el resumen ocupa las tres columnas', res.w > expl.l + expl.w - compra.l - 5, `${res.w} vs ${expl.l + expl.w - compra.l}`);
@@ -27,15 +30,15 @@ check('el resumen ocupa las tres columnas', res.w > expl.l + expl.w - compra.l -
 // 2) el máximo del préstamo va en la etiqueta, no en su propia fila
 check('no hay fila suelta de máximo', await p.evaluate(() => !document.querySelector('.salida #outTopePrestamo')));
 const etq = await p.textContent('label[for="importePrestamo"]');
-check('el máximo va en la etiqueta', /Importe.*máx.*135\.000/.test(etq.replace(/\s+/g,' ')), etq.replace(/\s+/g,' ').trim());
+check('el máximo va en la etiqueta', /Importe.*máx.*99\.390/.test(etq.replace(/\s+/g,' ')), etq.replace(/\s+/g,' ').trim());
 
 // 3) dos decimales en los tipos de interés
-check('tipo de hipoteca con dos decimales', (await val('tipoHipoteca')) === '2,20', await val('tipoHipoteca'));
-check('tipo de préstamo con dos decimales', (await val('tipoPrestamo')) === '11,00', await val('tipoPrestamo'));
+check('tipo de hipoteca con dos decimales', (await val('tipoHipoteca')) === '2,80', await val('tipoHipoteca'));
+check('tipo de préstamo con dos decimales', (await val('tipoPrestamo')) === '9,00', await val('tipoPrestamo'));
 await p.evaluate(() => { const e = document.getElementById('tipoHipoteca'); e.focus(); e.value = '3,5'; e.dispatchEvent(new Event('input')); e.blur(); });
 await p.waitForTimeout(100);
 check('al salir del campo se completa a dos decimales', (await val('tipoHipoteca')) === '3,50', await val('tipoHipoteca'));
-check('y el motor lo lee bien', (await p.evaluate(() => calcular().cuotaHip)) > 1700, String(Math.round(await p.evaluate(() => calcular().cuotaHip))));
+check('y el motor lo lee bien', (await p.evaluate(() => calcular().cuotaHip)) > 750, String(Math.round(await p.evaluate(() => calcular().cuotaHip))));
 
 // 4) desplegables alineados a la derecha
 const al = await p.evaluate(() => getComputedStyle(document.getElementById('ccaa')).textAlign);

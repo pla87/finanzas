@@ -84,9 +84,9 @@ check('390: tras recargar vuelve a estar plegada', (await visM()).every(v => !v)
 await mov.setViewportSize({ width: 360, height: 800 }); await mov.waitForTimeout(200);
 const tabs = await mov.evaluate(() => { const c = document.querySelector('.tab-btn').parentElement; return { tops: [...document.querySelectorAll('.tab-btn')].map(e => Math.round(e.getBoundingClientRect().top)), sw: c.scrollWidth, cw: c.clientWidth, txt: [...document.querySelectorAll('.tab-btn')].map(e => e.innerText.trim()) }; });
 check('360: las cuatro pestañas en una línea, sin scroll horizontal', new Set(tabs.tops).size === 1 && tabs.sw <= tabs.cw, JSON.stringify(tabs));
-check('360: con los nombres cortos', tabs.txt.join('|') === 'Proyección|Caja|Rentabilidad|Parámetros', tabs.txt.join('|'));
+check('360: con emoji y nombres cortos', tabs.txt.join('|') === '📈 Proyección|💵 Caja|🔥 Rentabilidad|⚙️ Parámetros', tabs.txt.join('|'));
 await mov.click('#langBtn');
-check('360: y en inglés', (await mov.evaluate(() => [...document.querySelectorAll('.tab-btn')].map(e => e.innerText.trim()).join('|'))) === 'Projection|Cash|Returns|Parameters');
+check('360: y en inglés', (await mov.evaluate(() => [...document.querySelectorAll('.tab-btn')].map(e => e.innerText.trim()).join('|'))) === '📈 Projection|💵 Cash|🔥 Returns|⚙️ Parameters');
 check('móvil sin errores de consola', errsM.length === 0, errsM[0] ?? '');
 await mov.close();
 await p.setViewportSize({ width: 420, height: 900 });

@@ -25,6 +25,7 @@ const SUITES = [
   ['v3',             'comunidades autónomas y detalles de la interfaz'],
   ['repaso',         'migración, guardado, móvil y tema oscuro'],
   ['compartir',      'recálculo al escribir, casillas y enlace con los cálculos'],
+  ['comparar',        'caja con amortización acelerada, comparar financiaciones y la tarjeta anualizada'],
 ];
 
 const soloEstas = process.argv.slice(2);

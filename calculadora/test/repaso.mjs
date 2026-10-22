@@ -101,7 +101,7 @@ for (const [nombre, w] of [['móvil', 390], ['tableta', 768], ['escritorio', 144
     check('tema oscuro se aplica', contraste.oscuro === 'dark', `${contraste.fondo} / ${contraste.texto}`);
     await p.click('text=💵 Flujo de caja'); await p.waitForTimeout(400);
     await p.click('text=🔥 Tablas'); await p.waitForTimeout(300);
-    await p.click('text=⚙️ Parámetros'); await p.waitForTimeout(300);
+    await p.click('.tab-btn >> text=⚙️ Parámetros >> visible=true'); await p.waitForTimeout(300);
     await p.click('#btnFaq'); await p.waitForTimeout(300);
     await p.click('#faqModal button'); await p.waitForTimeout(200);
     await p.click('#btnAyuda'); await p.waitForTimeout(300);

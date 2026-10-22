@@ -173,6 +173,28 @@
     .faq-cuerpo ul { margin: 0 0 9px 0; padding-left: 16px; list-style: disc; }
     .faq-cuerpo li { margin-bottom: 5px; }
     .faq-cuerpo strong { color: rgb(var(--brand-text)); }
+    /* Comparación de financiaciones. La tabla vive en su propia caja con scroll horizontal, para
+       que en móvil se desplace ella y no la página; la columna de etiquetas se queda fija a la
+       izquierda con fondo opaco para que las cifras no pasen por debajo. */
+    .comparar-caja { overflow-x: auto; max-width: 100%; }
+    .tbl-comparar { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .tbl-comparar th, .tbl-comparar td { padding: 6px 10px; text-align: right; border-top: 1px solid rgb(var(--brand-border)); white-space: nowrap; }
+    .tbl-comparar thead th { border-top: 0; vertical-align: top; text-align: left; min-width: 9.5rem; font-weight: 400; }
+    .tbl-comparar th.etq { text-align: left; font-weight: 500; color: rgb(var(--brand-textMuted));
+      position: sticky; left: 0; z-index: 1; background: rgb(var(--brand-card)); white-space: normal; min-width: 7.5rem; max-width: 9rem; }
+    @media (max-width: 639px) {
+      .tbl-comparar th.etq { min-width: 6.25rem; max-width: 6.75rem; font-size: 11px; padding-left: 4px; }
+      .tbl-comparar thead th { min-width: 8.5rem; }
+    }
+    .tbl-comparar td { font-weight: 600; }
+    .tbl-comparar td.mejor { background: rgb(var(--brand-emerald) / 0.16); color: rgb(var(--brand-emerald)); font-weight: 700; }
+    .cmp-cab { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+    .cmp-letra { background: rgb(var(--brand-accent)); color: #fff; font-weight: 900; font-size: 12px; border-radius: 6px; padding: 0 7px; line-height: 20px; }
+    .cmp-btn { font-size: 11px; line-height: 18px; padding: 0 6px; border-radius: 6px; cursor: pointer;
+      border: 1px solid rgb(var(--brand-border)); background: rgb(var(--brand-bg)); color: rgb(var(--brand-textMuted)); }
+    .cmp-btn:hover { border-color: rgb(var(--brand-accent)); color: rgb(var(--brand-accent)); }
+    .cmp-nombre { font-size: 11px; line-height: 1.35; font-weight: 600; color: rgb(var(--brand-text)); white-space: normal; }
+    .cmp-nombre span { display: block; }
     .faq-tabla { width: 100%; margin: 4px 0 10px; font-variant-numeric: tabular-nums; }
     .faq-tabla td { padding: 4px 0; border-bottom: 1px solid rgb(var(--brand-border)); }
     .faq-tabla td:nth-child(2) { text-align: right; font-weight: 700; padding-right: 10px; }
@@ -253,13 +275,16 @@
       <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiDeudaDesc"></div>
       <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiDeudaDetalle">--</div>
     </div>
-    <div class="lg:col-span-2 bg-brand-card border-2 border-brand-accent/40 rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-col justify-between">
+    <div class="lg:col-span-2 bg-brand-card border-2 border-brand-accent/40 rounded-xl px-3 py-2.5 lg:p-[15px] shadow-sm flex flex-col justify-between">
+      <!-- Rótulo, cifra y detalle: la misma estructura que las demás tarjetas. El rótulo cabe en
+           una línea porque es corto («ANUALIZADA A [26] AÑOS»); con el largo de antes partía en
+           dos y la tarjeta crecía por encima de sus vecinas. -->
       <div class="flex items-baseline justify-between gap-3 lg:block">
-        <div class="text-[11px] font-semibold text-brand-accent uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
-          <span class="tooltip-help" data-i18n="kpiAnualizada" data-i18n-title="kpiAnualizadaTip">RENTABILIDAD ANUALIZADA A</span>
+        <div class="text-[11px] font-semibold text-brand-accent uppercase tracking-wide flex items-center gap-1 whitespace-nowrap">
+          <span class="tooltip-help" data-i18n="kpiAnualizada" data-i18n-title="kpiAnualizadaTip">ANUALIZADA A</span>
           <!-- El año no es sólo una etiqueta: elige de qué fila de la proyección sale la cifra
                grande, para poder mirar la operación a cinco años sin recortar el horizonte. -->
-          <select id="anoRef" class="bg-brand-bg border border-brand-accent/40 rounded px-1 py-0.5 text-[11px] font-bold text-brand-accent cursor-pointer" data-i18n-title="anoRefTip"></select>
+          <select id="anoRef" class="bg-brand-bg border border-brand-accent/40 rounded px-0.5 py-0 h-[15px] leading-none text-[11px] font-bold text-brand-accent cursor-pointer" data-i18n-title="anoRefTip"></select>
           <span data-i18n="kpiAnualizadaAnos">AÑOS</span>
         </div>
         <div class="text-base lg:text-xl font-bold num lg:mt-1.5" id="kpiAnualizada">--</div>
@@ -267,7 +292,7 @@
       <div class="lg:hidden text-[10px] leading-tight text-brand-textMuted mt-0.5" data-i18n="kpiAnualizadaDesc"></div>
       <!-- Una línea y sólo una: truncate antes que un salto que descuadre la altura de la tarjeta.
            El texto completo, con el matiz que no cabe, va en el título. -->
-      <div class="hidden lg:block text-[11px] mt-1 text-brand-textMuted num truncate tooltip-help" id="kpiPayback">--</div>
+      <div class="hidden lg:block text-[11px] mt-0.5 text-brand-textMuted num truncate tooltip-help" id="kpiPayback">--</div>
     </div>
     <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiAnosAlquiler" data-i18n-title="kpiAnosAlquilerTip">AÑOS DE ALQUILER</div>
@@ -396,6 +421,13 @@
         </div>
 
         <div class="salida border-brand-accent/40 bg-brand-accent/10 mt-2"><span class="tooltip-help" data-i18n="liquidez" data-i18n-title="liquidezTip">Liquidez aportada</span><span id="outLiquidez" class="text-brand-accent">--</span></div>
+
+        <!-- Guarda la financiación de los campos como una opción para compararla con otras en el
+             resumen. El aviso es una línea breve que se borra sola. -->
+        <div class="flex items-center gap-2 flex-wrap pt-1">
+          <button type="button" id="btnComparar" onclick="anadirComparacion()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-brand-accent/40 text-brand-accent bg-brand-accent/10 transition" data-i18n="compararBoton">➕ Añadir a la comparación</button>
+          <span id="avisoComparar" class="text-[11px] text-brand-textMuted" role="status" aria-live="polite"></span>
+        </div>
       </div>
     </div>
 
@@ -468,10 +500,14 @@
     </div>
 
     <!-- Resumen: ocupa las tres columnas, y reparte dentro sus dos tablas y la nota fiscal -->
-    <div class="lg:col-span-3 bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+    <div class="lg:col-span-3 min-w-0 bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
       <div class="flex items-center justify-between border-b border-brand-border pb-3">
         <h2 class="text-base font-bold" data-i18n="resumenTitulo">Resumen de la operación</h2>
         <span class="text-xs text-brand-amber font-semibold px-2 py-0.5 rounded bg-brand-amber/10 border border-brand-amber/20" data-i18n="resumenBadge">Salida</span>
+      </div>
+      <div id="bloqueComparar" class="hidden space-y-2 pb-4 border-b border-brand-border">
+        <h3 id="compararTitulo" class="text-xs font-bold uppercase tracking-wider text-brand-textMuted" data-i18n="compararTitulo">Comparar financiación</h3>
+        <div id="comparar"></div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-5">
         <div class="space-y-2">
@@ -493,7 +529,7 @@
 
   <!-- Pestañas -->
   <section class="max-w-7xl mx-auto">
-    <div class="flex gap-3 sm:gap-5 border-b border-brand-border mb-5 overflow-x-auto scrollbar-thin text-xs sm:text-sm font-semibold">
+    <div class="flex gap-2 sm:gap-5 border-b border-brand-border mb-5 overflow-x-auto scrollbar-thin text-[11px] sm:text-sm font-semibold">
       <button class="tab-btn text-brand-accent border-b-2 border-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('proyeccionTab', this)"><span class="sm:hidden" data-i18n="tabProyeccionCorto"></span><span class="hidden sm:inline" data-i18n="tabProyeccion"></span></button>
       <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('cajaTab', this)"><span class="sm:hidden" data-i18n="tabCajaCorto"></span><span class="hidden sm:inline" data-i18n="tabCaja"></span></button>
       <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('tablasTab', this)"><span class="sm:hidden" data-i18n="tabTablasCorto"></span><span class="hidden sm:inline" data-i18n="tabTablas"></span></button>
@@ -713,7 +749,7 @@
         kpiDeudaDesc: 'años hasta pagar hipoteca y préstamo',
         kpiAnualizadaDesc: 'lo que rinde cada año tu dinero hasta ese año',
         kpiAnosAlquilerDesc: 'años de alquiler íntegro que cuesta el piso',
-        tabProyeccionCorto: 'Proyección', tabCajaCorto: 'Caja', tabTablasCorto: 'Rentabilidad', tabParamsCorto: 'Parámetros',
+        tabProyeccionCorto: '📈 Proyección', tabCajaCorto: '💵 Caja', tabTablasCorto: '🔥 Rentabilidad', tabParamsCorto: '⚙️ Parámetros',
         btnIdioma: 'Switch to English', btnTema: 'Cambiar de tema', btnReset: 'Volver al escenario de ejemplo', btnCompartir: 'Compartir la calculadora o guardar estos cálculos en un enlace', compartirTitulo: 'Compartir', compartirHerramienta: 'La calculadora', compartirHerramientaSub: 'Vacía, con el escenario de ejemplo.', compartirCalculos: 'Estos cálculos', compartirCalculosSub: 'Quien abra el enlace verá el piso con tus cifras.', enlaceCopiado: 'Enlace copiado', copiaEnlace: 'Copia el enlace:',
         compartirTexto: 'Piso de {0} alquilado a {1}/mes: rentabilidad bruta {2}, caja {3}/mes, anualizada a {4} años {5}.',
         compartirTextoHerramienta: 'Calculadora de compra para alquiler residencial: rentabilidad de un piso con proyección año a año.', btnAyuda: 'Cómo funciona el modelo',
@@ -726,10 +762,28 @@
         kpiRoceTip: 'ROCE = Return on Capital Employed: rentabilidad sobre el capital empleado, es decir,\nsobre lo que pones de tu bolsillo (la liquidez aportada), no sobre el precio del piso.\n\nRentabilidad del primer año sobre ese dinero. Va en dos cifras porque no\ntodo lo que ganas es de la misma clase.\n\nLa grande es lo realizado: la caja que queda tras cuotas, gastos e impuestos, más el\nprincipal que amortizan esas cuotas. Lo primero está en tu banco y lo segundo es deuda\nque ya no debes; ninguna de las dos depende de ninguna hipótesis.\n\nLa de debajo añade la revalorización del piso entero, que es plusvalía latente sobre el\npapel: sale de la revalorización que hayas puesto y no se cobra hasta vender. Suele ser\nla mitad larga del total, así que conviene mirarla aparte.',
         kpiRoceConReval: '{0} con la revalorización',
         kpiCaja: 'CAJA ANUAL',
-        kpiCajaTip: 'Lo que queda en el bolsillo cada año una vez pagados el alquiler recibido menos gastos,\nimpuestos y las cuotas de hipoteca y préstamo que estén vivas.',
+        kpiCajaTip: 'Lo que queda en el bolsillo cada año: el alquiler recibido menos gastos, impuestos y las\ncuotas de hipoteca y préstamo que estén vivas.\n\nCon la amortización acelerada marcada, esa caja no llega al bolsillo: al año siguiente se usa entera\npara adelantar deuda. Entonces la cifra grande es la caja que te queda (0 si toda va a deuda) y debajo\nse dice cuánto se destina a amortizar. La caja generada, que es la que cuenta como retorno en el\nROCE, sigue en la tabla del resumen.',
+        kpiCajaAmortiza: '{0}/año van a amortizar deuda',
+        cajaAmortizar: 'A amortizar deuda', cajaQueda: 'Caja que te queda', cajaQuedaMensual: 'Caja que te queda al mes',
+        cajaAmortizarTip: 'Con la amortización acelerada, la caja del año se usa entera el año siguiente para adelantar deuda (la de tipo más alto primero).',
+        compararBoton: '➕ Añadir a la comparación', compararTip: 'Guarda la financiación de los campos como una opción para compararla con otras (máximo 4).',
+        compararMaxTip: 'Ya hay 4 opciones guardadas: quita alguna para añadir otra.',
+        compararDup: 'Esa financiación ya está en la comparación.', compararAnadida: 'Añadida como opción {0}.',
+        compararTitulo: 'Comparar financiación', compararUna: '1 opción guardada. Añade otra para comparar.',
+        compararQuitar: 'Quitar esta opción', compararCargar: 'Cargar',
+        compararCargarTip: 'Poner esta financiación en los campos de la tarjeta de Financiación.',
+        compararNota: 'Todas las opciones se calculan con la compra y el alquiler que tienes puestos ahora. En verde, el mejor valor de cada fila.',
+        compCuota: 'Cuota mensual total', compCajaGen: 'Caja 1.er año (generada)',
+        compCajaGenTip: 'La caja que genera el primer año completo. Con amortización acelerada no llega al bolsillo: va a adelantar deuda.',
+        compAnosDeuda: 'Años hasta liquidar la deuda', compIntereses: 'Intereses pagados en el horizonte',
+        compGanancia: 'Ganancia neta al año {0}',
+        compGananciaTip: 'Piso menos deuda, más la caja acumulada, menos todo lo que has puesto de tu bolsillo\n(liquidez inicial y aportaciones). Es lo que has ganado sobre el papel, sin vender.\n\nEl patrimonio a secas no sirve para comparar financiaciones: a ese año la deuda puede\nestar pagada en todas y saldría igual.',
+        compNomHip: 'Hipoteca {0} % · {1} a · {2} %', compNomPre: '+ préstamo {0} al {1} %', compNomPreSolo: 'Préstamo {0} al {1} %',
+        compNomAcel: 'acelerada', compNomHipAcel: 'hipoteca acelerada', compNomPreAcel: 'préstamo acelerado', compNomSin: 'Sin financiación',
+        compartirTextoAcel: 'Piso de {0} alquilado a {1}/mes: rentabilidad bruta {2}, caja {3}/mes ({6}/mes van a amortizar deuda), anualizada a {4} años {5}.',
         kpiDeuda: 'FIN DE DEUDA',
         kpiDeudaTip: 'Año en el que se cancela toda la deuda: hipoteca y préstamo personal.\nCon amortización acelerada, la caja acumulada se destina a reducir principal y se adelanta.',
-        kpiAnualizada: 'RENTABILIDAD ANUALIZADA A', kpiAnualizadaAnos: 'AÑOS',
+        kpiAnualizada: 'ANUALIZADA A', kpiAnualizadaAnos: 'AÑOS',
         kpiAnualizadaTip: 'Rentabilidad anualizada de la operación hasta el año que elijas en el desplegable.\nCompara lo que tendrías entonces (valor del piso menos deuda viva, más la caja acumulada)\ncon la liquidez que pusiste, y lo convierte en un tipo anual compuesto.',
         anoRefTip: 'Año hasta el que se mide. No recorta la proyección: la tabla y las gráficas siguen\nllegando al horizonte que tengas puesto en Parámetros.',
         kpiSobre: 'Sobre', kpiAportados: 'aportados',
@@ -913,7 +967,7 @@
         kpiDeudaDesc: 'years until mortgage and loan are paid off',
         kpiAnualizadaDesc: 'what your money earns each year up to that year',
         kpiAnosAlquilerDesc: 'years of full rent the flat costs',
-        tabProyeccionCorto: 'Projection', tabCajaCorto: 'Cash', tabTablasCorto: 'Returns', tabParamsCorto: 'Parameters',
+        tabProyeccionCorto: '📈 Projection', tabCajaCorto: '💵 Cash', tabTablasCorto: '🔥 Returns', tabParamsCorto: '⚙️ Parameters',
         btnIdioma: 'Cambiar a español', btnTema: 'Switch theme', btnReset: 'Back to the example scenario', btnCompartir: 'Share the calculator or save these numbers in a link', compartirTitulo: 'Share', compartirHerramienta: 'The calculator', compartirHerramientaSub: 'Blank, with the example scenario.', compartirCalculos: 'These numbers', compartirCalculosSub: 'Whoever opens the link sees the flat with your figures.', enlaceCopiado: 'Link copied', copiaEnlace: 'Copy the link:',
         compartirTexto: '{0} flat rented at {1}/month: gross yield {2}, cash flow {3}/month, annualised over {4} years {5}.',
         compartirTextoHerramienta: 'Residential buy-to-let calculator: the return on a rental flat, projected year by year.', btnAyuda: 'How the model works',
@@ -926,10 +980,28 @@
         kpiRoceTip: 'ROCE = Return on Capital Employed: the return on the capital you employ, that is,\non what you put in from your own pocket (the cash invested), not on the price of the flat.\n\nFirst-year return on that money. Two figures, because not everything you earn\nis of the same kind.\n\nThe large one is what has actually happened: the cash left after instalments, costs and\ntax, plus the principal those instalments repay. The first is in your bank, the second is\ndebt you no longer owe; neither rests on an assumption.\n\nThe one below adds the appreciation of the whole flat, which is a paper gain: it follows\nthe appreciation rate you set and is not collected until you sell. It is usually more\nthan half the total, so it is worth reading separately.',
         kpiRoceConReval: '{0} including appreciation',
         kpiCaja: 'ANNUAL CASH',
-        kpiCajaTip: 'What is left each year after rent received less running costs, tax and whichever\nmortgage and loan instalments are still being paid.',
+        kpiCajaTip: 'What is left each year: rent received less running costs, tax and whichever mortgage and\nloan instalments are still being paid.\n\nWith accelerated repayment ticked that cash never reaches your pocket: next year it is all used to\npay debt down early. The big figure is then the cash you keep (0 if all of it goes to debt) and the\nline below says how much goes to repayment. The cash generated, which counts as return in the\nROCE, stays in the summary table.',
+        kpiCajaAmortiza: '{0}/yr goes to pay down debt',
+        cajaAmortizar: 'Towards debt repayment', cajaQueda: 'Cash you keep', cajaQuedaMensual: 'Cash you keep per month',
+        cajaAmortizarTip: 'With accelerated repayment, the year\'s cash is all used the following year to pay debt down early (the highest-rate debt first).',
+        compararBoton: '➕ Add to comparison', compararTip: 'Saves the financing in the fields as an option to compare with others (up to 4).',
+        compararMaxTip: 'There are already 4 saved options: remove one to add another.',
+        compararDup: 'That financing is already in the comparison.', compararAnadida: 'Added as option {0}.',
+        compararTitulo: 'Compare financing', compararUna: '1 option saved. Add another to compare.',
+        compararQuitar: 'Remove this option', compararCargar: 'Load',
+        compararCargarTip: 'Put this financing into the fields of the Financing card.',
+        compararNota: 'Every option is calculated with the purchase and the rent you have set right now. Green marks the best value in each row.',
+        compCuota: 'Total monthly instalment', compCajaGen: 'Cash, year 1 (generated)',
+        compCajaGenTip: 'The cash generated in the first full year. With accelerated repayment it never reaches your pocket: it goes to pay debt down early.',
+        compAnosDeuda: 'Years until debt-free', compIntereses: 'Interest paid over the horizon',
+        compGanancia: 'Net gain at year {0}',
+        compGananciaTip: 'Property less debt, plus accumulated cash, less everything you put in yourself\n(initial cash and top-ups). It is what you have gained on paper, without selling.\n\nNet worth alone does not compare financing options: by that year the debt may be\npaid off in all of them and it would come out the same.',
+        compNomHip: 'Mortgage {0}% · {1} y · {2}%', compNomPre: '+ loan {0} at {1}%', compNomPreSolo: 'Loan {0} at {1}%',
+        compNomAcel: 'accelerated', compNomHipAcel: 'mortgage accelerated', compNomPreAcel: 'loan accelerated', compNomSin: 'No financing',
+        compartirTextoAcel: '{0} flat rented at {1}/month: gross yield {2}, cash flow {3}/month ({6}/month goes to pay down debt), annualised over {4} years {5}.',
         kpiDeuda: 'DEBT CLEARED',
         kpiDeudaTip: 'The year all debt is repaid: mortgage and personal loan.\nWith accelerated repayment the accumulated cash pays down principal and brings this forward.',
-        kpiAnualizada: 'ANNUALISED RETURN OVER', kpiAnualizadaAnos: 'YEARS',
+        kpiAnualizada: 'ANNUALISED AT', kpiAnualizadaAnos: 'YRS',
         kpiAnualizadaTip: 'Annualised return on the deal up to the year you pick in the dropdown.\nIt compares what you would hold by then (property value less debt outstanding, plus\naccumulated cash) with the cash you put in, as a compound annual rate.',
         anoRefTip: 'The year the return is measured to. It does not shorten the projection: the table and the\ncharts still run to the horizon set in Parameters.',
         kpiSobre: 'On', kpiAportados: 'put in',
@@ -1842,6 +1914,21 @@
 
     const signo = (v) => v > 0 ? 'val-pos' : (v < 0 ? 'val-neg' : 'val-muted');
 
+    // La caja del primer año completo, partida en lo que se genera y lo que llega al bolsillo.
+    // Con la amortización acelerada marcada sobre una deuda viva, el motor usa esa caja entera
+    // el año siguiente para adelantar deuda: no es dinero que puedas gastar, y enseñarla como
+    // si lo fuera hacía que marcar la casilla no cambiase ningún indicador. La parte que se va
+    // a deuda no puede pasar del saldo que queda de las deudas aceleradas ni de la propia caja:
+    // con una caja negativa no hay nada que adelantar y todo queda como estaba.
+    // No toca calcular(): el motor ya hace esto año a año; aquí sólo se lee para pintarlo. El
+    // ROCE sigue contando la caja generada, que es retorno aunque vaya a deuda.
+    function cajaDelAno(d) {
+      const generada = d.regimenInicial.caja;
+      const absorbible = (d.hipAcelerada ? d.filas[0].hipFin : 0) + (d.preAcelerado ? d.filas[0].preFin : 0);
+      const amortiza = generada > 0 ? Math.min(generada, absorbible) : 0;
+      return { generada, amortiza, queda: generada - amortiza };
+    }
+
     function filaResumen(etiqueta, valor, opciones = {}) {
       const clase = opciones.clase || '';
       const titulo = opciones.titulo ? ` class="tooltip-help" title="${opciones.titulo.replace(/"/g, '&quot;')}"` : '';
@@ -1907,12 +1994,18 @@
       el('kpiRoce').className = 'text-base lg:text-xl font-bold lg:mt-1.5 num ' + (d.roceSinReval === null ? 'val-muted' : signo(d.roceSinReval));
       el('kpiRoceConReval').textContent = tf('kpiRoceConReval', fmtPct(d.roce));
       el('kpiRoceDetalle').textContent = d.aportado > 0 ? `${t('kpiSobre')} ${fmt(d.aportado)} ${t('kpiAportados')}` : t('kpiSinLiquidez');
-      el('kpiCaja').textContent = fmt(d.regimenInicial.caja);
-      el('kpiCaja').className = 'text-base lg:text-xl font-bold lg:mt-1.5 num ' + signo(d.regimenInicial.caja);
-      el('kpiResCaja').textContent = fmt(d.regimenInicial.caja);
-      el('kpiResCaja').className = signo(d.regimenInicial.caja);
+      // Con amortización acelerada la cifra grande es la caja que te queda, en gris neutro: ni
+      // verde ni rojo, porque no es un resultado sino lo que sobra de un reparto.
+      const cj = cajaDelAno(d);
+      const claseCaja = cj.amortiza > 0 ? 'val-muted' : signo(cj.generada);
+      el('kpiCaja').textContent = fmt(cj.queda);
+      el('kpiCaja').className = 'text-base lg:text-xl font-bold lg:mt-1.5 num ' + claseCaja;
+      el('kpiResCaja').textContent = fmt(cj.queda);
+      el('kpiResCaja').className = claseCaja;
       const hayDeuda = d.principalHip > 0 || d.principalPre > 0;
-      el('kpiCajaMes').textContent = fmt(d.regimenInicial.caja / 12) + (hayDeuda ? t('kpiMesConDeuda') : t('kpiMesSinDeuda'));
+      el('kpiCajaMes').textContent = cj.amortiza > 0 ? tf('kpiCajaAmortiza', fmt(cj.amortiza))
+        : fmt(cj.generada / 12) + (hayDeuda ? t('kpiMesConDeuda') : t('kpiMesSinDeuda'));
+      el('kpiCajaMes').title = cj.amortiza > 0 ? t('cajaAmortizarTip') : '';
 
       el('kpiDeuda').textContent = !hayDeuda ? '—' : d.sinDeuda ? `${d.sinDeuda.n} ${t('kpiAnos')}` : `> ${d.horizonte} ${t('kpiAnos')}`;
       el('kpiDeudaDetalle').textContent = d.sinDeuda || !hayDeuda
@@ -1952,7 +2045,13 @@
         filaResumen(t('cuotasDeuda'), reg.cuotas > 0 ? '− ' + fmt(reg.cuotas) : '—', { clase: reg.cuotas > 0 ? 'val-neg' : 'val-muted' }),
         filaResumen(t('irpf'), reg.impuestos > 0 ? '− ' + fmt(reg.impuestos) : '—', { clase: reg.impuestos > 0 ? 'val-neg' : 'val-muted' }),
         filaResumen(t('cajaNetaAnual'), fmt(reg.caja), { clase: signo(reg.caja) }),
-        filaResumen(t('cajaNetaMensual'), fmt(reg.caja / 12), { clase: signo(reg.caja) })
+        ...(cj.amortiza > 0 ? [
+          filaResumen('− ' + t('cajaAmortizar'), '− ' + fmt(cj.amortiza), { clase: 'val-muted', titulo: t('cajaAmortizarTip'), sinRaya: true }),
+          filaResumen('= ' + t('cajaQueda'), fmt(cj.queda), { clase: 'val-muted', sinRaya: true }),
+          filaResumen(t('cajaQuedaMensual'), fmt(cj.queda / 12), { clase: 'val-muted' })
+        ] : [
+          filaResumen(t('cajaNetaMensual'), fmt(reg.caja / 12), { clase: signo(reg.caja) })
+        ])
       ].join('');
 
       el('desgloseIngresosSub').textContent = d.aportacionesExtra > 0
@@ -1989,6 +2088,7 @@
       renderTablas(d);
       renderFaqApalancamiento(d);
       renderCharts(d);
+      pintarComparacion();
       guardar();
     }
 
@@ -2401,7 +2501,9 @@
       clearTimeout(guardarTimer);
       guardarTimer = setTimeout(() => {
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(leerEstado()));
+          // Las opciones de la comparación viajan con el resto del estado guardado, pero no en el
+          // enlace de compartir: son una herramienta de trabajo, no parte del escenario.
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...leerEstado(), comparar: OPCIONES }));
           const ind = el('saveIndicator');
           ind.textContent = t(avisoGuardado);
           avisoGuardado = 'guardado';
@@ -2411,7 +2513,237 @@
       }, 600);
     }
 
-    function resetDefaults() { avisoGuardado = 'datosReseteados'; aplicarEstado(DEFECTOS); render(); }
+    function resetDefaults() { avisoGuardado = 'datosReseteados'; OPCIONES = []; aplicarEstado(DEFECTOS); render(); }
+
+    /* ---------- Comparar financiación ---------- */
+
+    // Hasta cuatro financiaciones guardadas, A–D. Cada una es sólo el conjunto de campos de la
+    // tarjeta de Financiación: la compra y el alquiler se toman siempre de lo que haya puesto en
+    // ese momento, así que cambiar el precio recalcula todas las opciones a la vez.
+    const MAX_OPCIONES = 4;
+    const LETRAS_OPCION = ['A', 'B', 'C', 'D'];
+    let OPCIONES = [];
+
+    // Dos decimales como mucho: es lo que enseñan los campos y lo que parseNum lee sin
+    // confundir una coma decimal con un separador de miles («2,125» se leería como 2125).
+    const r2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
+    const leerFinanciacion = () => ({
+      usarHipoteca: el('usarHipoteca').checked, pctFinanciado: r2(num('pctFinanciado')),
+      plazoHipoteca: r2(num('plazoHipoteca')), tipoHipoteca: r2(num('tipoHipoteca')),
+      hipotecaAcelerada: el('hipotecaAcelerada').checked,
+      usarPrestamo: el('usarPrestamo').checked, importePrestamo: Math.round(num('importePrestamo')),
+      plazoPrestamo: r2(num('plazoPrestamo')), tipoPrestamo: r2(num('tipoPrestamo')),
+      prestamoAcelerado: el('prestamoAcelerado').checked
+    });
+
+    function ponerFinanciacion(f) {
+      el('usarHipoteca').checked = f.usarHipoteca;
+      fijar('pctFinanciado', f.pctFinanciado, 2);
+      fijar('plazoHipoteca', f.plazoHipoteca, 2);
+      fijar('tipoHipoteca', f.tipoHipoteca, 2, 2);
+      el('hipotecaAcelerada').checked = f.hipotecaAcelerada;
+      el('usarPrestamo').checked = f.usarPrestamo;
+      fijar('importePrestamo', f.importePrestamo, 0);
+      fijar('plazoPrestamo', f.plazoPrestamo, 2);
+      fijar('tipoPrestamo', f.tipoPrestamo, 2, 2);
+      el('prestamoAcelerado').checked = f.prestamoAcelerado;
+    }
+
+    // Lo que de verdad financia una opción: una fuente apagada, o encendida pero a cero, no
+    // cuenta. Sirve para no duplicar y para el nombre.
+    const hayHip = (f) => f.usarHipoteca && f.pctFinanciado > 0;
+    const hayPre = (f) => f.usarPrestamo && f.importePrestamo > 0;
+    const claveFinanciacion = (f) => JSON.stringify([
+      hayHip(f) ? [f.pctFinanciado, f.plazoHipoteca, f.tipoHipoteca, f.hipotecaAcelerada] : 0,
+      hayPre(f) ? [f.importePrestamo, f.plazoPrestamo, f.tipoPrestamo, f.prestamoAcelerado] : 0
+    ]);
+
+    const fmtMax = (v) => new Intl.NumberFormat(t('locale'), { maximumFractionDigits: 2 }).format(v);
+
+    // Nombre corto en piezas, una por línea en la cabecera de la tabla.
+    function piezasOpcion(f) {
+      const hip = hayHip(f), pre = hayPre(f);
+      const piezas = [];
+      if (hip) piezas.push(tf('compNomHip', fmtMax(f.pctFinanciado), fmtMax(f.plazoHipoteca), fmtNum(f.tipoHipoteca, 2)));
+      if (pre) piezas.push(tf(hip ? 'compNomPre' : 'compNomPreSolo', fmt(f.importePrestamo), fmtMax(f.tipoPrestamo)));
+      const aHip = hip && f.hipotecaAcelerada, aPre = pre && f.prestamoAcelerado;
+      if (aHip || aPre) {
+        // Con las dos deudas vivas y una sola acelerada hay que decir cuál; si no, basta «acelerada».
+        piezas.push(hip && pre && aHip !== aPre ? t(aHip ? 'compNomHipAcel' : 'compNomPreAcel') : t('compNomAcel'));
+      }
+      return piezas.length ? piezas : [t('compNomSin')];
+    }
+
+    // Calcula varias financiaciones con la compra y el alquiler actuales sin dejar rastro en la
+    // pantalla. calcular() lee los campos y además escribe en algunos (el máximo del préstamo, los
+    // gastos estimados, el tipo de la ganancia), así que se guarda el estado entero antes y se
+    // repone entero después: valores, casillas, candados y fuentes. También el cursor, porque
+    // reponer el valor de un campo en el que se está escribiendo lo manda al final.
+    function conFinanciaciones(lista, calculo) {
+      const estado = leerEstado();
+      const activo = document.activeElement;
+      const sel = activo && activo.tagName === 'INPUT' && activo.type === 'text'
+        ? [activo.selectionStart, activo.selectionEnd] : null;
+      try {
+        return lista.map(f => { ponerFinanciacion(f); return calculo(calcular()); });
+      } finally {
+        CAMPOS.forEach(id => { el(id).value = estado[id]; });
+        CASILLAS.forEach(id => { el(id).checked = estado[id]; });
+        ESTIMABLES.forEach(pintarCandado);
+        FUENTES.forEach(pintarFuente);
+        if (sel) { try { activo.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
+      }
+    }
+
+    // Los intereses salen de reparto.intereses, que el motor ya acumula año a año en todo el
+    // horizonte (con la convención del primer año a medias, igual que el resto del reparto).
+    function metricasOpcion(d) {
+      const cj = cajaDelAno(d);
+      const hayDeuda = d.principalHip > 0 || d.principalPre > 0;
+      return {
+        liquidez: d.aportado,
+        cuota: (d.principalHip > 0 ? d.cuotaHip : 0) + (d.principalPre > 0 ? d.cuotaPre : 0),
+        cajaGenerada: cj.generada, cajaQueda: cj.queda, acelera: cj.amortiza > 0,
+        roce: d.roceSinReval, anualizada: d.filaRef.anualizada, tirVenta: d.filaRef.tirVenta,
+        anosDeuda: !hayDeuda ? 0 : d.sinDeuda ? d.sinDeuda.n : Infinity,
+        intereses: d.reparto.intereses, ganancia: d.filaRef.ganancia,
+        horizonte: d.horizonte, anoRef: d.anoRef
+      };
+    }
+
+    // mejor: 'max' (más es mejor) o 'min'. redondeo: a la precisión con que se enseña la cifra,
+    // para que dos valores que se leen igual no resalten uno y otro no.
+    const FILAS_COMPARAR = [
+      { id: 'liquidez', etq: () => t('liquidez'), tip: () => t('liquidezTip'), v: m => m.liquidez, f: fmt, mejor: 'min', r: Math.round },
+      { id: 'cuota', etq: () => t('compCuota'), v: m => m.cuota, f: fmt, mejor: 'min', r: Math.round },
+      { id: 'cajaGenerada', etq: () => t('compCajaGen'), tip: () => t('compCajaGenTip'), v: m => m.cajaGenerada, f: fmt, mejor: 'max', r: Math.round },
+      { id: 'cajaQueda', etq: () => t('cajaQueda'), tip: () => t('cajaAmortizarTip'), v: m => m.cajaQueda, f: fmt, mejor: 'max', r: Math.round, solo: ms => ms.some(m => m.acelera) },
+      { id: 'roce', etq: () => t('rentRoceSin'), tip: () => t('rentRoceSinTip'), v: m => m.roce, f: v => fmtPct(v, 1), mejor: 'max', r: v => Math.round(v * 1000) },
+      { id: 'anualizada', etq: (m) => tf('rentAnualizada', m.anoRef), tip: () => t('kpiAnualizadaTip'), v: m => m.anualizada, f: v => fmtPct(v, 1), mejor: 'max', r: v => Math.round(v * 1000) },
+      { id: 'tirVenta', etq: (m) => tf('rentTirVenta', m.anoRef), tip: () => t('rentTirVentaTip'), v: m => m.tirVenta, f: v => fmtPct(v, 1), mejor: 'max', r: v => Math.round(v * 1000) },
+      { id: 'anosDeuda', etq: () => t('compAnosDeuda'), v: m => m.anosDeuda, mejor: 'min', r: v => v,
+        f: (v, m) => v === 0 ? '—' : isFinite(v) ? `${v} ${t('kpiAnos')}` : `> ${m.horizonte} ${t('kpiAnos')}` },
+      { id: 'intereses', etq: () => t('compIntereses'), v: m => m.intereses, f: fmt, mejor: 'min', r: Math.round },
+      { id: 'ganancia', etq: (m) => tf('compGanancia', m.anoRef), tip: () => t('compGananciaTip'), v: m => m.ganancia, f: fmt, mejor: 'max', r: Math.round }
+    ];
+
+    const escapar = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+    let ultimaTabla = null;
+    function pintarComparacion() {
+      const boton = el('btnComparar');
+      const lleno = OPCIONES.length >= MAX_OPCIONES;
+      boton.disabled = lleno;
+      boton.classList.toggle('opacity-50', lleno);
+      boton.classList.toggle('cursor-not-allowed', lleno);
+      boton.title = lleno ? t('compararMaxTip') : t('compararTip');
+
+      const bloque = el('bloqueComparar'), caja = el('comparar');
+      bloque.classList.toggle('hidden', OPCIONES.length === 0);
+      el('compararTitulo').classList.toggle('hidden', OPCIONES.length < 2);
+      if (OPCIONES.length === 0) { caja.innerHTML = ''; ultimaTabla = null; return; }
+      if (OPCIONES.length === 1) {
+        ultimaTabla = null;
+        caja.innerHTML = `<p class="text-[11px] text-brand-textMuted flex items-center gap-2" id="compararUna">
+          <span>${t('compararUna')}</span>
+          <button type="button" class="cmp-btn" data-quitar="${OPCIONES[0].letra}" title="${t('compararQuitar')}" aria-label="${t('compararQuitar')}">✕</button></p>`;
+        return;
+      }
+
+      const ms = conFinanciaciones(OPCIONES, metricasOpcion);
+      const cabeceras = OPCIONES.map(o => {
+        const piezas = piezasOpcion(o);
+        return `<th scope="col" data-opcion="${o.letra}">
+          <div class="cmp-cab"><span class="cmp-letra">${o.letra}</span><span class="flex gap-1">
+            <button type="button" class="cmp-btn" data-cargar="${o.letra}" title="${t('compararCargarTip')}">${t('compararCargar')}</button>
+            <button type="button" class="cmp-btn" data-quitar="${o.letra}" title="${t('compararQuitar')}" aria-label="${t('compararQuitar')}">✕</button></span></div>
+          <div class="cmp-nombre" title="${escapar(piezas.join(' '))}">${piezas.map(p => `<span>${escapar(p)}</span>`).join('')}</div></th>`;
+      }).join('');
+
+      const filas = FILAS_COMPARAR.filter(fila => !fila.solo || fila.solo(ms)).map(fila => {
+        const vals = ms.map(m => fila.v(m));
+        // Sólo cuentan los valores que existen (un ROCE sin liquidez es null), y no se resalta nada
+        // si todos se leen igual: no hay mejor donde no hay diferencia.
+        const redondeados = vals.map(v => v === null || v === undefined || Number.isNaN(v) ? null : fila.r(v));
+        const validos = redondeados.filter(v => v !== null);
+        const mejor = fila.mejor === 'max' ? Math.max(...validos) : Math.min(...validos);
+        const hayDiferencia = new Set(validos).size > 1;
+        const celdas = vals.map((v, i) => {
+          const marca = hayDiferencia && redondeados[i] === mejor ? ' class="mejor"' : '';
+          return `<td${marca} data-opcion="${OPCIONES[i].letra}">${redondeados[i] === null ? '—' : fila.f(v, ms[i])}</td>`;
+        }).join('');
+        const titulo = fila.tip ? ` class="tooltip-help" title="${escapar(fila.tip())}"` : '';
+        return `<tr data-fila="${fila.id}"><th scope="row" class="etq"><span${titulo}>${fila.etq(ms[0])}${fila.tip ? ' ⓘ' : ''}</span></th>${celdas}</tr>`;
+      }).join('');
+
+      const html = `<div class="comparar-caja scrollbar-thin"><table class="tbl-comparar" id="tblComparar">
+        <thead><tr><th class="etq" aria-hidden="true" style="position:sticky;left:0;background:rgb(var(--brand-card));min-width:7.5rem"></th>${cabeceras}</tr></thead>
+        <tbody>${filas}</tbody></table></div>
+        <p class="text-[11px] text-brand-textMuted pt-1">${t('compararNota')}</p>`;
+      // Sin cambios no se toca el DOM: conserva el scroll horizontal de la caja y no pisa un clic.
+      if (ultimaTabla !== html) { const sc = caja.firstElementChild ? caja.firstElementChild.scrollLeft : 0; caja.innerHTML = html; ultimaTabla = html; caja.firstElementChild.scrollLeft = sc; }
+    }
+
+    let avisoCompararTimer = null;
+    function avisarComparar(texto) {
+      el('avisoComparar').textContent = texto;
+      clearTimeout(avisoCompararTimer);
+      avisoCompararTimer = setTimeout(() => { el('avisoComparar').textContent = ''; }, 2500);
+    }
+
+    // Los botones de la tabla actúan al pulsar el ratón y no al soltarlo: salir de un campo
+    // recalcula todo, la tabla se vuelve a pintar entre el pulsar y el soltar, y el clic se
+    // perdía sobre un botón que ya no existía. Con teclado (clic sin ratón, detail 0) sí vale el clic.
+    function accionComparar(ev) {
+      const boton = ev.target.closest && ev.target.closest('button[data-quitar], button[data-cargar]');
+      if (!boton) return;
+      if (ev.type === 'mousedown') { if (ev.button !== 0) return; ev.preventDefault(); }
+      else if (ev.detail !== 0) return;
+      if (boton.dataset.quitar) quitarComparacion(boton.dataset.quitar); else cargarOpcion(boton.dataset.cargar);
+    }
+
+    function anadirComparacion() {
+      if (OPCIONES.length >= MAX_OPCIONES) return;
+      const f = leerFinanciacion();
+      const clave = claveFinanciacion(f);
+      if (OPCIONES.some(o => claveFinanciacion(o) === clave)) { avisarComparar(t('compararDup')); return; }
+      const letra = LETRAS_OPCION.find(l => !OPCIONES.some(o => o.letra === l));
+      OPCIONES.push({ letra, ...f });
+      OPCIONES.sort((a, b) => a.letra.localeCompare(b.letra));
+      avisarComparar(tf('compararAnadida', letra));
+      render();
+    }
+
+    function quitarComparacion(letra) {
+      OPCIONES = OPCIONES.filter(o => o.letra !== letra);
+      render();
+    }
+
+    function cargarOpcion(letra) {
+      const o = OPCIONES.find(x => x.letra === letra);
+      if (!o) return;
+      ponerFinanciacion(o);
+      FUENTES.forEach(pintarFuente);
+      render();
+    }
+
+    // Lo guardado puede venir de otra versión o estar manipulado: sólo se admite lo que tiene la
+    // forma esperada, con las letras sin repetir y como mucho cuatro.
+    function leerOpciones(crudo) {
+      if (!Array.isArray(crudo)) return [];
+      const vistas = new Set(), limpias = [];
+      for (const o of crudo) {
+        if (!o || !LETRAS_OPCION.includes(o.letra) || vistas.has(o.letra) || limpias.length >= MAX_OPCIONES) continue;
+        const n = (v) => Number.isFinite(Number(v)) ? Math.max(Number(v), 0) : 0;
+        vistas.add(o.letra);
+        limpias.push({ letra: o.letra,
+          usarHipoteca: o.usarHipoteca === true, pctFinanciado: Math.min(n(o.pctFinanciado), 100),
+          plazoHipoteca: Math.max(n(o.plazoHipoteca), 1), tipoHipoteca: n(o.tipoHipoteca), hipotecaAcelerada: o.hipotecaAcelerada === true,
+          usarPrestamo: o.usarPrestamo === true, importePrestamo: n(o.importePrestamo),
+          plazoPrestamo: Math.max(n(o.plazoPrestamo), 1), tipoPrestamo: n(o.tipoPrestamo), prestamoAcelerado: o.prestamoAcelerado === true });
+      }
+      return limpias.sort((a, b) => a.letra.localeCompare(b.letra));
+    }
 
     // Caja plegable de métricas (solo móvil; en escritorio el botón está oculto y la rejilla siempre
     // visible por CSS). No recuerda estado: se vuelve a plegar en cada visita.
@@ -2538,8 +2870,10 @@
     function textoCompartido(conCalculos) {
       if (!conCalculos) return t('compartirTextoHerramienta');
       const d = calcular();
-      return tf('compartirTexto', fmt(d.oferta), fmt(d.alquiler), fmtPct(d.rentabilidadBruta),
-        fmt(d.regimenInicial.caja / 12), d.anoRef, fmtPct(d.filaRef.anualizada));
+      // Con amortización acelerada la caja que se cuenta es la que queda, y se dice cuánto va a deuda.
+      const cj = cajaDelAno(d);
+      return tf(cj.amortiza > 0 ? 'compartirTextoAcel' : 'compartirTexto', fmt(d.oferta), fmt(d.alquiler), fmtPct(d.rentabilidadBruta),
+        fmt(cj.queda / 12), d.anoRef, fmtPct(d.filaRef.anualizada), fmt(cj.amortiza / 12));
     }
 
     function compartir(conCalculos) {
@@ -2579,7 +2913,7 @@
 
       try {
         const guardado = localStorage.getItem(STORAGE_KEY);
-        if (guardado) aplicarEstado(JSON.parse(guardado));
+        if (guardado) { const e = JSON.parse(guardado); aplicarEstado(e); OPCIONES = leerOpciones(e.comparar); }
       } catch (e) {}
       // Un enlace con cálculos compartidos manda sobre lo guardado en este navegador.
       leerEscenarioCompartido();
@@ -2604,6 +2938,8 @@
         }
       });
       CASILLAS.forEach(id => el(id).addEventListener('change', render));
+      el('comparar').addEventListener('mousedown', accionComparar);
+      el('comparar').addEventListener('click', accionComparar);
 
       ESTIMABLES.forEach(pintarCandado);
       FUENTES.forEach(pintarFuente);

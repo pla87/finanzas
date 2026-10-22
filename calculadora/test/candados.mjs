@@ -58,7 +58,7 @@ check('reestimar recalcula el IBI', (await n('ibi')) === Math.round(0.24/100*855
 check('sin errores de consola', errs.length === 0, errs[0] ?? '');
 await p.evaluate(() => resetDefaults()); await p.waitForTimeout(300);
 await p.locator('main').screenshot({ path: salida('gastos.png') });
-await p.click('text=⚙️ Parámetros'); await p.waitForTimeout(300);
+await p.click('.tab-btn >> text=⚙️ Parámetros >> visible=true'); await p.waitForTimeout(300);
 await p.locator('#paramsTab').screenshot({ path: salida('params.png') });
 await b.close();
 console.log(fallos ? `\n${fallos} fallos` : '\nTODO OK');

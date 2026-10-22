@@ -96,7 +96,7 @@ check('el tipo efectivo crece con la ganancia',
 check('y se queda dentro de la escala', tipos.every(t => t >= 0.19 - 1e-9 && t <= 0.28 + 1e-9));
 
 // Abrir el candado impone un tipo plano. El candado vive en la pestaña de parámetros.
-await p.click('text=⚙️ Parámetros'); await p.waitForTimeout(200);
+await p.click('.tab-btn >> text=⚙️ Parámetros >> visible=true'); await p.waitForTimeout(200);
 await p.click('#lockPctGananciaVenta');
 await p.evaluate(() => { document.getElementById('pctGananciaVenta').value = '19'; render(); });
 const plano = await p.evaluate(() => calcular().filas.filter(f => f.gananciaFiscal > 0)
@@ -146,7 +146,7 @@ check('y su explicación en la cabecera', (cols.titulo || '').length > 60);
 check('el resumen enseña la anualizada vendiendo',
   (await p.textContent('#tblRentabilidad')).includes('vendiendo'));
 
-await p.click('text=📈 Proyección'); await p.waitForTimeout(300);
+await p.click('.tab-btn >> text=📈 Proyección >> visible=true'); await p.waitForTimeout(300);
 await p.evaluate(() => document.getElementById('tblProyeccion').scrollIntoView({ block: 'center' }));
 await p.waitForTimeout(200);
 await p.screenshot({ path: salida('v7-tabla.png') });

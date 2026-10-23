@@ -144,7 +144,7 @@ const t2 = await p.evaluate(() => ({
   letras: [...document.querySelectorAll('#tblComparar thead th[data-opcion]')].map(e => e.dataset.opcion).join(''),
   filas: [...document.querySelectorAll('#tblComparar tbody tr')].map(r => r.dataset.fila),
   nombres: [...document.querySelectorAll('#tblComparar .cmp-nombre')].map(e => [...e.children].map(c => c.textContent).join(' / ')),
-  titulo: document.getElementById('compararTitulo').textContent, visible: !document.getElementById('compararTitulo').classList.contains('hidden'),
+  titulo: document.getElementById('compararTitulo').textContent, visible: !document.getElementById('bloqueComparar').classList.contains('hidden'),
   dentroDelResumen: document.getElementById('bloqueComparar').closest('.bg-brand-card').querySelector('h2').textContent
 }));
 check('con 2 opciones aparece la tabla con 2 columnas A y B', t2.cols === 2 && t2.letras === 'AB' && t2.visible && t2.titulo === 'Comparar financiación', JSON.stringify(t2));
@@ -223,7 +223,7 @@ check('  y la nueva ocupa la letra libre', (await p.evaluate(() => OPCIONES.map(
 /* ---------- 7) renombrar opciones con doble clic ---------- */
 const nombres = () => p.evaluate(() => [...document.querySelectorAll('#tblComparar thead .cmp-letra')].map(e => e.textContent));
 check('por defecto se llaman «Opción 1» … «Opción 4», con la descripción debajo', (await nombres()).join() === 'Opción 1,Opción 2,Opción 3,Opción 4' && /Hipoteca/.test(await txt('#tblComparar thead th[data-opcion="A"] .cmp-nombre')));
-check('  y el nombre dice «Doble clic para cambiar el nombre»', (await p.getAttribute('[data-renombrar="A"]', 'title')) === 'Doble clic para cambiar el nombre');
+check('  y el nombre dice «Doble clic para cambiar el nombre»', / · Doble clic para cambiar el nombre$/.test(await p.getAttribute('[data-renombrar="A"]', 'title')));
 await p.dblclick('[data-renombrar="A"]');
 const ed = await p.evaluate(() => { const i = document.querySelector('#tblComparar .cmp-edit'); return i && { v: i.value, ini: i.selectionStart, fin: i.selectionEnd, foco: document.activeElement === i, max: i.maxLength }; });
 check('doble clic: campo de texto en su sitio, con el texto seleccionado y enfocado', ed && ed.v === 'Opción 1' && ed.ini === 0 && ed.fin === 8 && ed.foco && ed.max === 30, JSON.stringify(ed));
@@ -279,6 +279,47 @@ await p.evaluate(() => resetDefaults()); await p.waitForTimeout(300);
 // Reseteo.
 await poner('pctFinanciado', 80); await p.click('#btnComparar'); await poner('pctFinanciado', 60); await p.click('#btnComparar');
 check('hay dos opciones antes de resetear', (await p.evaluate(() => OPCIONES.length)) === 2);
+
+// El título va en la esquina de la tabla, en la fila de las cabeceras, y no suelto encima.
+const esquina = await p.evaluate(() => { const t = document.getElementById('compararTitulo'); const th = t.closest('th'); const fila = th.parentElement;
+  const pil = document.querySelector('#tblComparar .cmp-letra').getBoundingClientRect(), tt = t.getBoundingClientRect();
+  return { enThead: !!t.closest('thead'), primera: fila.firstElementChild === th, hermanas: fila.querySelectorAll('th[data-opcion]').length,
+    suelto: !!document.querySelector('#bloqueComparar > h3'), texto: t.textContent, dy: Math.abs((tt.top + 10) - (pil.top + pil.height / 2)) }; });
+check('el título está en la primera celda de la cabecera, alineado con las píldoras', esquina.enThead && esquina.primera && esquina.hermanas === 2 && !esquina.suelto && esquina.texto === 'Comparar financiación' && esquina.dy <= 1.5, JSON.stringify(esquina));
+
+// Nada se mueve al renombrar: posición y ancho de cada celda de la cabecera y de una fila de datos.
+const celdas = () => p.evaluate(() => { const o = document.getElementById('tblComparar').getBoundingClientRect(); return [...document.querySelectorAll('#tblComparar thead th, #tblComparar tbody tr[data-fila="cuota"] > *')].map(e => { const r = e.getBoundingClientRect(); return [r.left - o.left, r.top - o.top, r.width, r.height]; }); });
+const igual = (x, y) => x.length === y.length && x.every((r, i) => r.every((v, j) => Math.abs(v - y[i][j]) <= 1));
+const antes = await celdas();
+await p.dblclick('[data-renombrar="A"]');
+const editando = await celdas();
+check('al abrir la edición del nombre ninguna celda cambia de sitio ni de tamaño (±1 px)', antes.length >= 6 && igual(antes, editando), JSON.stringify({ antes, editando }));
+await p.keyboard.press('Control+A'); await p.keyboard.type('W'.repeat(30));
+const escrito = await celdas();
+check('  ni tras escribir 30 caracteres', igual(antes, escrito), JSON.stringify(escrito));
+const campo = await p.evaluate(() => { const c = document.querySelector('.cmp-edit').getBoundingClientRect(), th = document.querySelector('#tblComparar thead th[data-opcion="A"]').getBoundingClientRect(); const bt = [...document.querySelectorAll('#tblComparar thead th[data-opcion="A"] .cmp-btn')].map(x => x.getBoundingClientRect());
+  return { h: c.height, dentro: c.left >= th.left && c.right <= th.right, sinPisar: bt.every(x => c.right <= x.left + 0.5) }; });
+check('  y el campo mide 20 px de alto, cabe en la celda y no pisa Cargar/✕', Math.abs(campo.h - 20) <= 0.5 && campo.dentro && campo.sinPisar, JSON.stringify(campo));
+await p.locator('#bloqueComparar').screenshot({ path: salida('calc5-comparar-editando.png') });
+await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+const despues = await celdas();
+check('  y al cancelar vuelve todo a donde estaba', igual(antes, despues), JSON.stringify({ antes, despues }));
+await p.locator('#bloqueComparar').screenshot({ path: salida('calc5-comparar-normal.png') });
+
+// Nombre de 30 caracteres anchos y descripción larga: nada sobresale de su celda.
+await p.evaluate(() => { OPCIONES[0].nombre = 'W'.repeat(30); OPCIONES[1].nombre = 'M'.repeat(30); ultimaTabla = null; render(); });
+const largo = await p.evaluate(() => {
+  const th = document.querySelector('#tblComparar thead th[data-opcion="A"]'), c = th.getBoundingClientRect();
+  const fuera = [...th.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.left < c.left - 0.5 || r.right > c.right + 0.5 || r.bottom > c.bottom + 0.5); }).map(e => e.className || e.tagName);
+  const cab = document.querySelector('#tblComparar thead tr').getBoundingClientRect(), caja = document.querySelector('.comparar-caja').getBoundingClientRect();
+  const pil = th.querySelector('.cmp-letra');
+  return { fuera, tabla: document.getElementById('tblComparar').getBoundingClientRect().right <= caja.right + 0.5, recortado: pil.scrollWidth > pil.clientWidth, title: pil.title, desc: th.querySelector('.cmp-nombre').title.length };
+});
+check('con un nombre de 30 «W» y descripción larga nada sobresale de su celda', largo.fuera.length === 0 && largo.tabla, JSON.stringify(largo));
+check('  el nombre entero va en title', largo.title.startsWith('W'.repeat(30)) && largo.desc > 20, JSON.stringify(largo));
+await p.locator('#bloqueComparar').screenshot({ path: salida('calc5-comparar-largo.png') });
+await p.evaluate(() => { OPCIONES.forEach(o => { o.nombre = ''; }); ultimaTabla = null; render(); });
+
 await p.dblclick('[data-renombrar="A"]'); await p.keyboard.type('Banco Norte 80 %'); await p.keyboard.press('Enter');
 await p.locator('#bloqueComparar').scrollIntoViewIfNeeded();
 await p.locator('#bloqueComparar').screenshot({ path: salida('calc4-1440-comparar.png') });
@@ -287,6 +328,28 @@ const trasReset = await p.evaluate(() => ({ n: OPCIONES.length, oculto: document
 check('el reseteo ♻️ las borra, también de lo guardado', trasReset.n === 0 && trasReset.oculto && trasReset.g === 0, JSON.stringify(trasReset));
 check('1440: sin errores de consola', p.errs.length === 0, p.errs[0] ?? '');
 await p.close();
+
+/* ---------- rótulo de la tarjeta «anualizada» ---------- */
+for (const w of [1024, 1280, 1440, 1920]) {
+  const q = await abrir(w, 1000);
+  const r = await q.evaluate(() => {
+    const card = document.querySelector('#kpiAnualizada').closest('.border-2'), c = card.getBoundingClientRect();
+    const cs = getComputedStyle(card), area = { l: c.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft), r: c.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight) };
+    const rot = card.querySelector('.kpi-rotulo-anual'), hijos = [...rot.children], sel = card.querySelector('select').getBoundingClientRect();
+    const txt = rot.querySelector('.kpi-rotulo-texto'); const rt = document.createRange(); rt.selectNodeContents(txt); const tr = rt.getBoundingClientRect();
+    const fuera = hijos.filter(e => { const b = e.getBoundingClientRect(); return b.left < area.l - 0.5 || b.right > area.r + 0.5 || b.right > c.right || b.bottom > c.bottom; }).map(e => e.className || e.tagName);
+    const tops = [...document.querySelectorAll('#kpiGrid > div')].map(d => d.querySelector('.uppercase')).filter(Boolean);
+    const alturas = [...document.querySelectorAll('#kpiGrid > div')].map(d => Math.round(d.getBoundingClientRect().height));
+    return { fuera, dy: Math.abs((sel.top + sel.height / 2) - (tr.top + tr.height / 2)), una: rot.getBoundingClientRect().height < 20,
+      lineas: new Set(tops.map(e => Math.round(e.getBoundingClientRect().top))).size, alturas: new Set(alturas).size, alturaRot: rot.getBoundingClientRect().height };
+  });
+  check(`${w}: nada del rótulo de la anualizada sobresale de la tarjeta`, r.fuera.length === 0 && r.una, JSON.stringify(r));
+  check(`${w}: el desplegable está centrado con «ANUALIZADA A» (±1,5 px)`, r.dy <= 1.5, r.dy.toFixed(2));
+  check(`${w}: los seis rótulos en la misma línea y las seis tarjetas miden lo mismo`, r.lineas === 1 && r.alturas === 1, JSON.stringify({ l: r.lineas, a: r.alturas }));
+  if (w === 1024 || w === 1440) await q.locator('#kpiGrid').screenshot({ path: salida(`calc5-kpis-${w}.png`) });
+  check(`${w}: sin errores de consola`, q.errs.length === 0, q.errs[0] ?? '');
+  await q.close();
+}
 
 /* ---------- móvil ---------- */
 const m = await abrir(390, 844);
@@ -298,6 +361,9 @@ await mponer('pctFinanciado', 80); await mponer('plazoHipoteca', 30); await m.un
 const mv = await m.evaluate(() => { const c = document.querySelector('.comparar-caja'); const de = document.documentElement;
   return { scrollCaja: c.scrollWidth, anchoCaja: c.clientWidth, pagina: de.scrollWidth, ventana: de.clientWidth, cols: document.querySelectorAll('#tblComparar thead th[data-opcion]').length }; });
 check('390: la tabla tiene 3 columnas y se desplaza dentro de su caja', mv.cols === 3 && mv.scrollCaja > mv.anchoCaja, JSON.stringify(mv));
+const recMov = await m.evaluate(() => { OPCIONES[0].nombre = 'W'.repeat(30); ultimaTabla = null; render(); const pil = document.querySelector('#tblComparar .cmp-letra'), th = pil.closest('th'), c = th.getBoundingClientRect(), bt = th.querySelector('.cmp-btn').getBoundingClientRect(), r = pil.getBoundingClientRect();
+  return { recortado: pil.scrollWidth > pil.clientWidth, dentro: r.left >= c.left && r.right <= bt.left, elipsis: getComputedStyle(pil).textOverflow }; });
+check('390: un nombre de 30 «W» se recorta con «…» dentro de su celda, sin pisar los botones', recMov.recortado && recMov.dentro && recMov.elipsis === 'ellipsis', JSON.stringify(recMov));
 check('390: la página no se desborda', mv.pagina <= mv.ventana, `${mv.pagina} <= ${mv.ventana}`);
 await m.click('#kpiToggle');
 const rotM = await m.evaluate(() => { const l = document.querySelector('#kpiAnualizada').closest('.border-2').querySelector('.uppercase'); return { h: l.getBoundingClientRect().height, sw: l.scrollWidth, cw: l.clientWidth }; });

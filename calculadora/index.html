@@ -189,11 +189,16 @@
     .tbl-comparar td { font-weight: 600; }
     .tbl-comparar td.mejor { background: rgb(var(--brand-emerald) / 0.16); color: rgb(var(--brand-emerald)); font-weight: 700; }
     .cmp-cab { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
-    .cmp-letra { background: rgb(var(--brand-accent)); color: #fff; font-weight: 900; font-size: 12px; border-radius: 6px; padding: 0 7px; line-height: 20px; }
+    /* El nombre de la opción (por defecto «Opción N»). Se renombra con doble clic, así que
+       lleva cursor de texto y se recorta con puntos suspensivos: el máximo son 30 caracteres. */
+    .cmp-letra { background: rgb(var(--brand-accent)); color: #fff; font-weight: 800; font-size: 12px; border-radius: 6px; padding: 0 7px; line-height: 20px;
+      min-width: 0; max-width: 11rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: text; }
+    .cmp-edit { width: 9.5rem; max-width: 100%; font: inherit; font-size: 12px; font-weight: 700; line-height: 20px; padding: 0 6px; border-radius: 6px;
+      border: 1px solid rgb(var(--brand-accent)); background: rgb(var(--brand-bg)); color: rgb(var(--brand-text)); }
     .cmp-btn { font-size: 11px; line-height: 18px; padding: 0 6px; border-radius: 6px; cursor: pointer;
       border: 1px solid rgb(var(--brand-border)); background: rgb(var(--brand-bg)); color: rgb(var(--brand-textMuted)); }
     .cmp-btn:hover { border-color: rgb(var(--brand-accent)); color: rgb(var(--brand-accent)); }
-    .cmp-nombre { font-size: 11px; line-height: 1.35; font-weight: 600; color: rgb(var(--brand-text)); white-space: normal; }
+    .cmp-nombre { font-size: 10px; line-height: 1.35; font-weight: 400; color: rgb(var(--brand-textMuted)); white-space: normal; }
     .cmp-nombre span { display: block; }
     .faq-tabla { width: 100%; margin: 4px 0 10px; font-variant-numeric: tabular-nums; }
     .faq-tabla td { padding: 4px 0; border-bottom: 1px solid rgb(var(--brand-border)); }
@@ -255,13 +260,17 @@
       <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiBrutaDetalle">--</div>
     </div>
     <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
-      <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiRoce" data-i18n-title="kpiRoceTip">ROCE</div>
+      <!-- El «sobre X aportados» va en la línea del rótulo, detrás de ROCE y más discreto: así la
+           tarjeta lleva una sola línea de detalle debajo de la cifra y no es más alta que las demás.
+           Una línea y sólo una (truncate); el texto entero va en el title cuando no cabe. -->
+      <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">
+        <span class="tooltip-help" data-i18n="kpiRoce" data-i18n-title="kpiRoceTip">ROCE</span><span id="kpiRoceDetalle" class="hidden lg:inline normal-case font-normal tracking-normal text-[10px] opacity-80"></span>
+      </div>
       <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiRoce">--</div>
       <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiRoceDesc"></div>
       <!-- La cifra grande es la que ya ha ocurrido; la plusvalía sobre el papel va debajo, que
            es donde se puede leer como lo que es: una hipótesis, no dinero cobrado. -->
       <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiRoceConReval">--</div>
-      <div class="hidden lg:block text-[11px] text-brand-textMuted num" id="kpiRoceDetalle">--</div>
     </div>
     <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiCaja" data-i18n-title="kpiCajaTip">CAJA ANUAL</div>
@@ -275,7 +284,7 @@
       <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiDeudaDesc"></div>
       <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiDeudaDetalle">--</div>
     </div>
-    <div class="lg:col-span-2 bg-brand-card border-2 border-brand-accent/40 rounded-xl px-3 py-2.5 lg:p-[15px] shadow-sm flex flex-col justify-between">
+    <div class="lg:col-span-2 bg-brand-card border-2 border-brand-accent/40 rounded-xl px-3 py-2.5 lg:p-[15px] shadow-sm flex flex-col lg:block">
       <!-- Rótulo, cifra y detalle: la misma estructura que las demás tarjetas. El rótulo cabe en
            una línea porque es corto («ANUALIZADA A [26] AÑOS»); con el largo de antes partía en
            dos y la tarjeta crecía por encima de sus vecinas. -->
@@ -287,7 +296,9 @@
           <select id="anoRef" class="bg-brand-bg border border-brand-accent/40 rounded px-0.5 py-0 h-[15px] leading-none text-[11px] font-bold text-brand-accent cursor-pointer" data-i18n-title="anoRefTip"></select>
           <span data-i18n="kpiAnualizadaAnos">AÑOS</span>
         </div>
-        <div class="text-base lg:text-xl font-bold num lg:mt-1.5" id="kpiAnualizada">--</div>
+        <!-- «rentabilidad» detrás de la cifra, pequeño y gris: dice qué es sin gastar una línea.
+             Sólo en escritorio; en móvil la descripción de debajo ya lo cuenta. -->
+        <div class="lg:mt-1.5 whitespace-nowrap"><span class="text-base lg:text-xl font-bold num" id="kpiAnualizada">--</span><span class="hidden lg:inline text-[11px] font-normal text-brand-textMuted ml-1" data-i18n="kpiAnualizadaRent">rentabilidad</span></div>
       </div>
       <div class="lg:hidden text-[10px] leading-tight text-brand-textMuted mt-0.5" data-i18n="kpiAnualizadaDesc"></div>
       <!-- Una línea y sólo una: truncate antes que un salto que descuadre la altura de la tarjeta.
@@ -306,11 +317,16 @@
   <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
     <!-- Compra, financiación y explotación en fila; el resumen debajo, a todo lo ancho -->
-    <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
-        <div class="flex items-center justify-between border-b border-brand-border pb-3 mb-1">
+    <!-- Las tres tarjetas de datos son columnas flex y miden lo mismo (la fila de la rejilla las
+         iguala). El contenido va en un contenedor que crece y reparte el sobrante ENTRE filas
+         (justify-between), no en un hueco al final: así el último elemento de cada una queda
+         pegado abajo, a la misma altura que el de las otras dos. -->
+    <div class="bg-brand-card border border-brand-border rounded-xl p-5 flex flex-col space-y-3">
+        <div class="flex items-center justify-between border-b border-brand-border pb-3">
           <h2 class="text-base font-bold" data-i18n="compraTitulo">Compra</h2>
           <span class="text-xs text-brand-accent font-semibold px-2 py-0.5 rounded bg-brand-accent/10 border border-brand-accent/20" data-i18n="compraBadge">Entrada</span>
         </div>
+        <div class="flex-1 flex flex-col justify-between gap-3">
 
         <div class="fila">
           <label for="precioAnunciado" class="tooltip-help" data-i18n="precioAnunciado" data-i18n-title="precioAnunciadoTip">Precio anunciado</label>
@@ -362,15 +378,24 @@
         </div>
 
         <div class="salida flex-wrap"><span><span data-i18n="gastosCompra">Gastos de compra</span> <b id="outGastosCompra" class="text-brand-rose num">--</b></span><span><span class="font-normal text-brand-textMuted" data-i18n="costeTotal">Coste total</span> <b id="outCosteTotal" class="text-brand-amber num">--</b></span></div>
+        </div>
       </div>
 
       <!-- Financiación -->
-      <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
-        <div class="flex items-center justify-between border-b border-brand-border pb-3">
+      <div class="bg-brand-card border border-brand-border rounded-xl p-5 flex flex-col space-y-3">
+        <!-- El botón de comparar vive junto al distintivo «Deuda»: ahí no ocupa una fila del pie
+             y el aviso (absoluto, bajo la cabecera) no la descuadra al aparecer. -->
+        <div class="relative flex items-center justify-between border-b border-brand-border pb-3">
           <h2 class="text-base font-bold" data-i18n="finTitulo">Financiación</h2>
-          <span class="text-xs text-brand-rose font-semibold px-2 py-0.5 rounded bg-brand-rose/10 border border-brand-rose/20" data-i18n="finBadge">Deuda</span>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btnComparar" onclick="anadirComparacion()" class="text-xs font-semibold px-2 py-0.5 rounded border border-brand-rose/20 text-brand-rose bg-brand-rose/10 hover:bg-brand-rose/20 hover:border-brand-rose/40 transition whitespace-nowrap" data-i18n="compararBoton">➕ Comparar</button>
+            <span class="text-xs text-brand-rose font-semibold px-2 py-0.5 rounded bg-brand-rose/10 border border-brand-rose/20" data-i18n="finBadge">Deuda</span>
+          </div>
+          <span id="avisoComparar" class="empty:hidden absolute right-0 top-full mt-1 z-10 text-[11px] text-brand-textMuted bg-brand-card border border-brand-border rounded px-2 py-1 shadow-sm" role="status" aria-live="polite"></span>
         </div>
 
+        <div class="flex-1 flex flex-col justify-between gap-3">
+        <div class="space-y-3">
         <div class="flex items-center gap-2 pt-1">
           <button type="button" class="lock-btn" onclick="alternarFuente('hipoteca')" id="lockHipoteca"></button>
           <h3 class="text-xs font-bold uppercase tracking-wider text-brand-textMuted" data-i18n="hipoteca">Hipoteca</h3>
@@ -399,6 +424,9 @@
           </div>
         </div>
 
+        </div>
+
+        <div class="space-y-3">
         <div class="flex items-center gap-2 pt-2 border-t border-brand-border">
           <button type="button" class="lock-btn mt-3" onclick="alternarFuente('prestamo')" id="lockPrestamo"></button>
           <h3 class="text-xs font-bold uppercase tracking-wider text-brand-textMuted mt-3" data-i18n="prestamo">Préstamo personal</h3>
@@ -420,22 +448,17 @@
           <div class="salida"><span data-i18n="cuotaMensual">Cuota mensual</span><span id="outCuotaPrestamo">--</span></div>
         </div>
 
-        <div class="salida border-brand-accent/40 bg-brand-accent/10 mt-2"><span class="tooltip-help" data-i18n="liquidez" data-i18n-title="liquidezTip">Liquidez aportada</span><span id="outLiquidez" class="text-brand-accent">--</span></div>
-
-        <!-- Guarda la financiación de los campos como una opción para compararla con otras en el
-             resumen. El aviso es una línea breve que se borra sola. -->
-        <div class="flex items-center gap-2 flex-wrap pt-1">
-          <button type="button" id="btnComparar" onclick="anadirComparacion()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-brand-accent/40 text-brand-accent bg-brand-accent/10 transition" data-i18n="compararBoton">➕ Añadir a la comparación</button>
-          <span id="avisoComparar" class="text-[11px] text-brand-textMuted" role="status" aria-live="polite"></span>
+        <div class="salida border-brand-accent/40 bg-brand-accent/10"><span class="tooltip-help" data-i18n="liquidez" data-i18n-title="liquidezTip">Liquidez aportada</span><span id="outLiquidez" class="text-brand-accent">--</span></div>
         </div>
       </div>
     </div>
 
-    <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
+    <div class="bg-brand-card border border-brand-border rounded-xl p-5 flex flex-col space-y-3">
       <div class="flex items-center justify-between border-b border-brand-border pb-3">
         <h2 class="text-base font-bold" data-i18n="explotacionTitulo">Explotación del alquiler</h2>
         <span class="text-xs text-brand-emerald font-semibold px-2 py-0.5 rounded bg-brand-emerald/10 border border-brand-emerald/20" data-i18n="explotacionBadge">Ingresos</span>
       </div>
+      <div class="flex-1 flex flex-col justify-between gap-3">
 
 
       <div class="fila">
@@ -497,12 +520,18 @@
         </div>
         <input type="checkbox" id="autoRevalorizacion" checked class="hidden">
       </div>
+      </div>
     </div>
 
     <!-- Resumen: ocupa las tres columnas, y reparte dentro sus dos tablas y la nota fiscal -->
     <div class="lg:col-span-3 min-w-0 bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
-      <div class="flex items-center justify-between border-b border-brand-border pb-3">
-        <h2 class="text-base font-bold" data-i18n="resumenTitulo">Resumen de la operación</h2>
+      <div class="flex items-center justify-between gap-3 border-b border-brand-border pb-3">
+        <!-- Con una sola opción guardada el aviso vive aquí, detrás del título: es una pista, no
+             un bloque, y no merece una fila propia encima de las tablas. -->
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 min-w-0">
+          <h2 class="text-base font-bold" data-i18n="resumenTitulo">Resumen de la operación</h2>
+          <p class="hidden text-[11px] font-normal text-brand-textMuted items-center gap-2" id="compararUna"></p>
+        </div>
         <span class="text-xs text-brand-amber font-semibold px-2 py-0.5 rounded bg-brand-amber/10 border border-brand-amber/20" data-i18n="resumenBadge">Salida</span>
       </div>
       <div id="bloqueComparar" class="hidden space-y-2 pb-4 border-b border-brand-border">
@@ -766,10 +795,11 @@
         kpiCajaAmortiza: '{0}/año van a amortizar deuda',
         cajaAmortizar: 'A amortizar deuda', cajaQueda: 'Caja que te queda', cajaQuedaMensual: 'Caja que te queda al mes',
         cajaAmortizarTip: 'Con la amortización acelerada, la caja del año se usa entera el año siguiente para adelantar deuda (la de tipo más alto primero).',
-        compararBoton: '➕ Añadir a la comparación', compararTip: 'Guarda la financiación de los campos como una opción para compararla con otras (máximo 4).',
+        compararBoton: '➕ Comparar', compararTip: 'Guarda la financiación de los campos como una opción para compararla con otras (máximo 4).',
         compararMaxTip: 'Ya hay 4 opciones guardadas: quita alguna para añadir otra.',
         compararDup: 'Esa financiación ya está en la comparación.', compararAnadida: 'Añadida como opción {0}.',
-        compararTitulo: 'Comparar financiación', compararUna: '1 opción guardada. Añade otra para comparar.',
+        compararOpcionN: 'Opción {0}', compararRenombrar: 'Doble clic para cambiar el nombre',
+        compararTitulo: 'Comparar financiación', compararUna: '1 opción de financiación guardada. Añade otra para comparar.',
         compararQuitar: 'Quitar esta opción', compararCargar: 'Cargar',
         compararCargarTip: 'Poner esta financiación en los campos de la tarjeta de Financiación.',
         compararNota: 'Todas las opciones se calculan con la compra y el alquiler que tienes puestos ahora. En verde, el mejor valor de cada fila.',
@@ -783,19 +813,19 @@
         compartirTextoAcel: 'Piso de {0} alquilado a {1}/mes: rentabilidad bruta {2}, caja {3}/mes ({6}/mes van a amortizar deuda), anualizada a {4} años {5}.',
         kpiDeuda: 'FIN DE DEUDA',
         kpiDeudaTip: 'Año en el que se cancela toda la deuda: hipoteca y préstamo personal.\nCon amortización acelerada, la caja acumulada se destina a reducir principal y se adelanta.',
-        kpiAnualizada: 'ANUALIZADA A', kpiAnualizadaAnos: 'AÑOS',
+        kpiAnualizada: 'ANUALIZADA A', kpiAnualizadaAnos: 'AÑOS', kpiAnualizadaRent: 'rentabilidad',
         kpiAnualizadaTip: 'Rentabilidad anualizada de la operación hasta el año que elijas en el desplegable.\nCompara lo que tendrías entonces (valor del piso menos deuda viva, más la caja acumulada)\ncon la liquidez que pusiste, y lo convierte en un tipo anual compuesto.',
         anoRefTip: 'Año hasta el que se mide. No recorta la proyección: la tabla y las gráficas siguen\nllegando al horizonte que tengas puesto en Parámetros.',
         kpiSobre: 'Sobre', kpiAportados: 'aportados',
         kpiSinLiquidez: 'Sin liquidez aportada', kpiMesConDeuda: '/mes con la deuda viva', kpiMesSinDeuda: '/mes sin deuda',
         kpiDeudaInicial: 'Deuda inicial', kpiQuedan: 'Quedan', kpiAlAno: 'al año', kpiAnos: 'años',
-        kpiRecuperas: 'Recuperas los {0} aportados en el año {1}.',
+        kpiRecuperas: 'Caja recuperada en {1} años',
         kpiRecuperasTip: 'Recuperas los {0} aportados en el año {1}, sólo con la caja que va dejando el alquiler y sin vender el piso.',
-        kpiNoRecuperaAcel: 'La caja no devuelve los {0} aportados.',
+        kpiNoRecuperaAcel: 'La caja va a amortizar deuda',
         kpiNoRecuperaAcelTip: 'La caja no llega a devolver los {0} aportados: cada año se destina a amortizar deuda antes de poder acumularse.',
-        kpiNoRecupera: 'La caja llega a {0}, no a los {2} aportados.',
+        kpiNoRecupera: 'Caja: {0} de {2} aportados',
         kpiNoRecuperaTip: 'La caja acumulada se queda en {0} al año {1}: no llega a devolver los {2} que has aportado.',
-        kpiSinAportacion: 'Sin liquidez aportada no hay nada que recuperar.',
+        kpiSinAportacion: 'Sin aportación que recuperar',
         kpiSinAportacionTip: 'Sin liquidez aportada no hay nada que recuperar: la operación se financia entera con deuda.',
         compraTitulo: 'Compra', compraBadge: 'Entrada',
         precioAnunciado: 'Precio anunciado', precioAnunciadoTip: 'Precio de venta que pide el vendedor. Sirve de referencia para medir el descuento.',
@@ -984,10 +1014,11 @@
         kpiCajaAmortiza: '{0}/yr goes to pay down debt',
         cajaAmortizar: 'Towards debt repayment', cajaQueda: 'Cash you keep', cajaQuedaMensual: 'Cash you keep per month',
         cajaAmortizarTip: 'With accelerated repayment, the year\'s cash is all used the following year to pay debt down early (the highest-rate debt first).',
-        compararBoton: '➕ Add to comparison', compararTip: 'Saves the financing in the fields as an option to compare with others (up to 4).',
+        compararBoton: '➕ Compare', compararTip: 'Saves the financing in the fields as an option to compare with others (up to 4).',
         compararMaxTip: 'There are already 4 saved options: remove one to add another.',
         compararDup: 'That financing is already in the comparison.', compararAnadida: 'Added as option {0}.',
-        compararTitulo: 'Compare financing', compararUna: '1 option saved. Add another to compare.',
+        compararOpcionN: 'Option {0}', compararRenombrar: 'Double-click to rename',
+        compararTitulo: 'Compare financing', compararUna: '1 financing option saved. Add another to compare.',
         compararQuitar: 'Remove this option', compararCargar: 'Load',
         compararCargarTip: 'Put this financing into the fields of the Financing card.',
         compararNota: 'Every option is calculated with the purchase and the rent you have set right now. Green marks the best value in each row.',
@@ -1001,19 +1032,19 @@
         compartirTextoAcel: '{0} flat rented at {1}/month: gross yield {2}, cash flow {3}/month ({6}/month goes to pay down debt), annualised over {4} years {5}.',
         kpiDeuda: 'DEBT CLEARED',
         kpiDeudaTip: 'The year all debt is repaid: mortgage and personal loan.\nWith accelerated repayment the accumulated cash pays down principal and brings this forward.',
-        kpiAnualizada: 'ANNUALISED AT', kpiAnualizadaAnos: 'YRS',
+        kpiAnualizada: 'ANNUALISED AT', kpiAnualizadaAnos: 'YRS', kpiAnualizadaRent: 'return',
         kpiAnualizadaTip: 'Annualised return on the deal up to the year you pick in the dropdown.\nIt compares what you would hold by then (property value less debt outstanding, plus\naccumulated cash) with the cash you put in, as a compound annual rate.',
         anoRefTip: 'The year the return is measured to. It does not shorten the projection: the table and the\ncharts still run to the horizon set in Parameters.',
         kpiSobre: 'On', kpiAportados: 'put in',
         kpiSinLiquidez: 'No cash put in', kpiMesConDeuda: '/month while in debt', kpiMesSinDeuda: '/month debt free',
         kpiDeudaInicial: 'Debt at purchase', kpiQuedan: 'Still', kpiAlAno: 'in year', kpiAnos: 'years',
-        kpiRecuperas: 'You get your {0} back in year {1}.',
+        kpiRecuperas: 'Cash recovered in {1} years',
         kpiRecuperasTip: 'You get your {0} back in year {1}, on the cash the letting throws off alone and without selling the flat.',
-        kpiNoRecuperaAcel: 'Cash never returns the {0} you put in.',
+        kpiNoRecuperaAcel: 'Cash goes to paying down debt',
         kpiNoRecuperaAcelTip: 'Cash never returns the {0} you put in: each year it goes to paying down debt before it can build up.',
-        kpiNoRecupera: 'Cash reaches {0}, not the {2} you put in.',
+        kpiNoRecupera: 'Cash: {0} of {2} put in',
         kpiNoRecuperaTip: 'Accumulated cash reaches only {0} by year {1}: it never returns the {2} you put in.',
-        kpiSinAportacion: 'No cash of your own, nothing to recover.',
+        kpiSinAportacion: 'Nothing put in to recover',
         kpiSinAportacionTip: 'With no cash of your own there is nothing to recover: the deal is financed entirely with debt.',
         compraTitulo: 'Purchase', compraBadge: 'Input',
         precioAnunciado: 'Asking price', precioAnunciadoTip: 'What the seller is asking. Used as the reference for the discount.',
@@ -1993,7 +2024,6 @@
       el('kpiRoce').textContent = fmtPct(d.roceSinReval);
       el('kpiRoce').className = 'text-base lg:text-xl font-bold lg:mt-1.5 num ' + (d.roceSinReval === null ? 'val-muted' : signo(d.roceSinReval));
       el('kpiRoceConReval').textContent = tf('kpiRoceConReval', fmtPct(d.roce));
-      el('kpiRoceDetalle').textContent = d.aportado > 0 ? `${t('kpiSobre')} ${fmt(d.aportado)} ${t('kpiAportados')}` : t('kpiSinLiquidez');
       // Con amortización acelerada la cifra grande es la caja que te queda, en gris neutro: ni
       // verde ni rojo, porque no es un resultado sino lo que sobra de un reparto.
       const cj = cajaDelAno(d);
@@ -2013,10 +2043,13 @@
         : `${t('kpiQuedan')} ${fmt(d.ultima.hipFin + d.ultima.preFin)} ${t('kpiAlAno')} ${d.horizonte}`;
 
       el('kpiAnualizada').textContent = fmtPct(d.filaRef.anualizada);
-      el('kpiAnualizada').className = 'text-base lg:text-xl font-bold num lg:mt-1.5 ' + (d.filaRef.anualizada === null ? 'val-muted' : signo(d.filaRef.anualizada));
-      el('kpiRoceDetalle').textContent = d.aportacionesExtra > 0
+      el('kpiAnualizada').className = 'text-base lg:text-xl font-bold num ' + (d.filaRef.anualizada === null ? 'val-muted' : signo(d.filaRef.anualizada));
+      // Va detrás del rótulo, así que empieza en minúscula: «ROCE · sobre 259.800 € aportados».
+      const detalleRoce = d.aportacionesExtra > 0
         ? tf('kpiMasAportaciones', fmt(d.aportado), fmt(d.aportacionesExtra))
         : (d.aportado > 0 ? `${t('kpiSobre')} ${fmt(d.aportado)} ${t('kpiAportados')}` : t('kpiSinLiquidez'));
+      el('kpiRoceDetalle').textContent = ' · ' + detalleRoce.charAt(0).toLowerCase() + detalleRoce.slice(1);
+      el('kpiRoceDetalle').title = detalleRoce;
 
       // Mismo mensaje en corto para la línea y entero para el globo: en la tarjeta sólo cabe un
       // renglón, y el matiz que se cae -de dónde sale ese dinero- merece seguir estando.
@@ -2627,7 +2660,13 @@
       { id: 'ganancia', etq: (m) => tf('compGanancia', m.anoRef), tip: () => t('compGananciaTip'), v: m => m.ganancia, f: fmt, mejor: 'max', r: Math.round }
     ];
 
-    const escapar = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    // Escapa también > y ': el nombre de una opción lo escribe el usuario y acaba en un innerHTML.
+    const escapar = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const MAX_NOMBRE = 30;
+    // Lo que se enseña como nombre: el que puso el usuario o «Opción N», con N = la posición de
+    // la letra libre más baja (A=1 ... D=4), igual que antes se repartían las letras.
+    const nombreOpcion = (o) => o.nombre || tf('compararOpcionN', LETRAS_OPCION.indexOf(o.letra) + 1);
+    const limpiarNombre = (v) => typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, MAX_NOMBRE) : '';
 
     let ultimaTabla = null;
     function pintarComparacion() {
@@ -2636,25 +2675,30 @@
       boton.disabled = lleno;
       boton.classList.toggle('opacity-50', lleno);
       boton.classList.toggle('cursor-not-allowed', lleno);
+      // El rótulo es corto («➕ Comparar»); lo que hace de verdad va en el globo y en el aria-label.
       boton.title = lleno ? t('compararMaxTip') : t('compararTip');
+      boton.setAttribute('aria-label', boton.title);
 
       const bloque = el('bloqueComparar'), caja = el('comparar');
-      bloque.classList.toggle('hidden', OPCIONES.length === 0);
-      el('compararTitulo').classList.toggle('hidden', OPCIONES.length < 2);
-      if (OPCIONES.length === 0) { caja.innerHTML = ''; ultimaTabla = null; return; }
-      if (OPCIONES.length === 1) {
-        ultimaTabla = null;
-        caja.innerHTML = `<p class="text-[11px] text-brand-textMuted flex items-center gap-2" id="compararUna">
-          <span>${t('compararUna')}</span>
-          <button type="button" class="cmp-btn" data-quitar="${OPCIONES[0].letra}" title="${t('compararQuitar')}" aria-label="${t('compararQuitar')}">✕</button></p>`;
-        return;
-      }
+      // Con 0 o 1 opciones no hay tabla: la de una sola es un aviso en la cabecera del resumen.
+      bloque.classList.toggle('hidden', OPCIONES.length < 2);
+      const una = el('compararUna');
+      una.classList.toggle('hidden', OPCIONES.length !== 1);
+      una.classList.toggle('flex', OPCIONES.length === 1);
+      una.innerHTML = OPCIONES.length === 1
+        ? `<span>${t('compararUna')}</span>
+          <button type="button" class="cmp-btn" data-quitar="${OPCIONES[0].letra}" title="${t('compararQuitar')}" aria-label="${t('compararQuitar')}">✕</button>`
+        : '';
+      if (OPCIONES.length < 2) { caja.innerHTML = ''; ultimaTabla = null; return; }
 
+      // Mientras se edita un nombre no se repinta la tabla: se perdería lo escrito. El repintado
+      // pendiente ocurre al confirmar o cancelar, que vuelven a llamar aquí.
+      if (caja.querySelector('.cmp-edit')) return;
       const ms = conFinanciaciones(OPCIONES, metricasOpcion);
       const cabeceras = OPCIONES.map(o => {
         const piezas = piezasOpcion(o);
         return `<th scope="col" data-opcion="${o.letra}">
-          <div class="cmp-cab"><span class="cmp-letra">${o.letra}</span><span class="flex gap-1">
+          <div class="cmp-cab"><span class="cmp-letra" data-renombrar="${o.letra}" title="${escapar(t('compararRenombrar'))}">${escapar(nombreOpcion(o))}</span><span class="flex gap-1">
             <button type="button" class="cmp-btn" data-cargar="${o.letra}" title="${t('compararCargarTip')}">${t('compararCargar')}</button>
             <button type="button" class="cmp-btn" data-quitar="${o.letra}" title="${t('compararQuitar')}" aria-label="${t('compararQuitar')}">✕</button></span></div>
           <div class="cmp-nombre" title="${escapar(piezas.join(' '))}">${piezas.map(p => `<span>${escapar(p)}</span>`).join('')}</div></th>`;
@@ -2684,6 +2728,29 @@
       if (ultimaTabla !== html) { const sc = caja.firstElementChild ? caja.firstElementChild.scrollLeft : 0; caja.innerHTML = html; ultimaTabla = html; caja.firstElementChild.scrollLeft = sc; }
     }
 
+    // Doble clic sobre el nombre: se convierte en un campo en su sitio, con el texto seleccionado.
+    // Enter o salir del campo guardan; Escape cancela; vacío vuelve al nombre por defecto.
+    function renombrarOpcion(etiqueta) {
+      const o = OPCIONES.find(x => x.letra === etiqueta.dataset.renombrar);
+      if (!o || etiqueta.querySelector('.cmp-edit')) return;
+      const campo = document.createElement('input');
+      campo.type = 'text'; campo.className = 'cmp-edit'; campo.maxLength = MAX_NOMBRE;
+      campo.value = nombreOpcion(o); campo.setAttribute('aria-label', t('compararRenombrar'));
+      let cerrado = false;
+      const cerrar = (guardarNombre) => {
+        if (cerrado) return; cerrado = true;
+        if (guardarNombre) o.nombre = limpiarNombre(campo.value);
+        campo.remove(); ultimaTabla = null; render();
+      };
+      campo.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); cerrar(true); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); cerrar(false); }
+      });
+      campo.addEventListener('blur', () => cerrar(true));
+      etiqueta.textContent = ''; etiqueta.appendChild(campo);
+      campo.focus(); campo.select();
+    }
+
     let avisoCompararTimer = null;
     function avisarComparar(texto) {
       el('avisoComparar').textContent = texto;
@@ -2708,9 +2775,9 @@
       const clave = claveFinanciacion(f);
       if (OPCIONES.some(o => claveFinanciacion(o) === clave)) { avisarComparar(t('compararDup')); return; }
       const letra = LETRAS_OPCION.find(l => !OPCIONES.some(o => o.letra === l));
-      OPCIONES.push({ letra, ...f });
+      OPCIONES.push({ letra, nombre: '', ...f });
       OPCIONES.sort((a, b) => a.letra.localeCompare(b.letra));
-      avisarComparar(tf('compararAnadida', letra));
+      avisarComparar(tf('compararAnadida', LETRAS_OPCION.indexOf(letra) + 1));
       render();
     }
 
@@ -2736,7 +2803,7 @@
         if (!o || !LETRAS_OPCION.includes(o.letra) || vistas.has(o.letra) || limpias.length >= MAX_OPCIONES) continue;
         const n = (v) => Number.isFinite(Number(v)) ? Math.max(Number(v), 0) : 0;
         vistas.add(o.letra);
-        limpias.push({ letra: o.letra,
+        limpias.push({ letra: o.letra, nombre: limpiarNombre(o.nombre),
           usarHipoteca: o.usarHipoteca === true, pctFinanciado: Math.min(n(o.pctFinanciado), 100),
           plazoHipoteca: Math.max(n(o.plazoHipoteca), 1), tipoHipoteca: n(o.tipoHipoteca), hipotecaAcelerada: o.hipotecaAcelerada === true,
           usarPrestamo: o.usarPrestamo === true, importePrestamo: n(o.importePrestamo),
@@ -2938,8 +3005,14 @@
         }
       });
       CASILLAS.forEach(id => el(id).addEventListener('change', render));
-      el('comparar').addEventListener('mousedown', accionComparar);
-      el('comparar').addEventListener('click', accionComparar);
+      for (const id of ['comparar', 'compararUna']) {
+        el(id).addEventListener('mousedown', accionComparar);
+        el(id).addEventListener('click', accionComparar);
+      }
+      el('comparar').addEventListener('dblclick', (ev) => {
+        const e = ev.target.closest && ev.target.closest('[data-renombrar]');
+        if (e) renombrarOpcion(e);
+      });
 
       ESTIMABLES.forEach(pintarCandado);
       FUENTES.forEach(pintarFuente);

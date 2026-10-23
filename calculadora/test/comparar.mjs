@@ -71,10 +71,9 @@ const alt = await p.evaluate(() => {
 });
 const dentro = (a, tol = 2) => Math.max(...a) - Math.min(...a) <= tol;
 check('1440: las seis tarjetas de cabecera, misma altura', dentro(alt.estirado), alt.estirado.map(Math.round).join('/'));
-// La del ROCE lleva dos líneas de detalle y es la más alta por sí sola; la de la anualizada tiene
-// que medir lo mismo que las cuatro que sólo llevan rótulo, cifra y una línea.
-const cuatro = [0, 2, 3, 5].map(i => alt.natural[i]);
-check('  y la de la anualizada mide lo mismo que las de una línea de detalle', dentro([...cuatro, alt.natural[4]]), alt.natural.map(Math.round).join('/'));
+// Ya ninguna lleva dos líneas de detalle (el «sobre X aportados» del ROCE va en su rótulo): aun
+// sin estirarlas, las seis miden lo mismo y lo menos posible.
+check('  y sin estirar también: ninguna es más alta por contenido', dentro(alt.natural), alt.natural.map(Math.round).join('/'));
 check('  y su rótulo cabe en una línea', alt.rot < 20, `${alt.rot}px`);
 check('  con el rótulo corto «ANUALIZADA A … AÑOS»', await p.evaluate(() => /^ANUALIZADA A\s*[\d\s]*AÑOS$/i.test(document.querySelector('#kpiAnualizada').closest('.border-2').querySelector('.uppercase').textContent.replace(/\s+/g, ' ').trim())));
 await p.click('#langBtn');
@@ -82,16 +81,59 @@ const altEn = await p.evaluate(() => { const l = document.querySelector('#kpiAnu
 check('  en inglés también en una línea y sin recortar', altEn.h < 20 && altEn.sw <= altEn.cw, JSON.stringify(altEn));
 await p.click('#langBtn');
 
+// Cada indicador cabe en una línea: rótulo, cifra y detalle, ninguno partido. Se mira con el
+// ejemplo de fábrica, con uno que no recupera la caja, con aportaciones posteriores y en inglés.
+const lineas = () => p.evaluate(() => {
+  const ids = ['kpiBrutaDetalle', 'kpiRoceConReval', 'kpiCajaMes', 'kpiDeudaDetalle', 'kpiPayback', 'kpiAnosAlquilerDetalle'];
+  const g = document.getElementById('kpiGrid');
+  const alturas = [...g.children].map(c => c.getBoundingClientRect().height);
+  const r = document.getElementById('kpiRoce').closest('.bg-brand-card').querySelector('.uppercase');
+  const rd = document.getElementById('kpiRoceDetalle');
+  return { alturas, partidos: ids.filter(id => { const e = document.getElementById(id); return e.getBoundingClientRect().height > parseFloat(getComputedStyle(e).lineHeight) * 1.5; }),
+    rotRoce: r.getBoundingClientRect().height, roceDet: rd.textContent.trim(), roceTitle: rd.title, payback: document.getElementById('kpiPayback').textContent, paybackTitle: document.getElementById('kpiPayback').title,
+    anual: document.getElementById('kpiAnualizada').parentElement.textContent.replace(/\s+/g, ' ').trim() };
+});
+const l0 = await lineas();
+check('1440 de fábrica: seis tarjetas iguales y sin detalles partidos', dentro(l0.alturas) && l0.partidos.length === 0, l0.alturas.map(Math.round).join('/') + ' ' + l0.partidos);
+check('  ROCE lleva «· sobre X € aportados» en la línea del rótulo', l0.rotRoce < 20 && /^· sobre [\d.]+\s€ aportados$/.test(l0.roceDet), l0.roceDet);
+check('  anualizada: «rentabilidad» detrás de la cifra y recuperación corta', /^[\d,.-]+%\s*rentabilidad$/.test(l0.anual) && /^Caja recuperada en \d+ años$/.test(l0.payback) && /^Recuperas los .* aportados en el año \d+/.test(l0.paybackTitle), `${l0.anual} | ${l0.payback} | ${l0.paybackTitle}`);
+await poner('alquiler', 300);
+const l1 = await lineas();
+check('  sin recuperación: cifras iguales, una línea, tooltip largo', dentro(l1.alturas) && l1.partidos.length === 0 && /^Caja: .* de .* aportados$/.test(l1.payback) && l1.paybackTitle.length > l1.payback.length, l1.alturas.map(Math.round).join('/') + ' ' + l1.payback);
+await p.screenshot({ path: salida('calc4-1440-sin-recuperacion.png'), clip: { x: 0, y: 0, width: 1440, height: 330 } });
+await p.evaluate(() => resetDefaults());
+await p.click('#langBtn');
+const l2 = await lineas();
+check('  en inglés también', dentro(l2.alturas) && l2.partidos.length === 0 && /^Cash recovered in \d+ years$/.test(l2.payback) && /^[\d,.-]+%\s*return$/.test(l2.anual) && /^· on [^\d]*[\d,]+ put in$/.test(l2.roceDet), `${l2.alturas.map(Math.round).join('/')} ${l2.payback} | ${l2.anual} | ${l2.roceDet}`);
+await p.click('#langBtn');
+
+/* ---------- 5) las tres tarjetas de datos llenan lo mismo ---------- */
+const tar = await p.evaluate(() => {
+  const ult = ['outCosteTotal', 'outLiquidez', 'inflacion'].map(id => document.getElementById(id).closest('.salida, .fila'));
+  const cards = ult.map(e => e.closest('.bg-brand-card'));
+  return { h: cards.map(c => c.getBoundingClientRect().height), fondo: ult.map(e => e.getBoundingClientRect().bottom) };
+});
+check('1440: Compra, Financiación y Explotación miden lo mismo', dentro(tar.h), tar.h.map(Math.round).join('/'));
+check('  y su último elemento queda alineado abajo (±3 px)', dentro(tar.fondo, 3), tar.fondo.map(Math.round).join('/'));
+await p.screenshot({ path: salida('calc4-1440-tarjetas.png'), clip: { x: 0, y: 330, width: 1440, height: 700 } });
+
 /* ---------- 3) comparar financiaciones ---------- */
 const sinOpciones = await p.evaluate(() => ({ oculto: document.getElementById('bloqueComparar').classList.contains('hidden'), tabla: !!document.getElementById('tblComparar') }));
 check('con 0 opciones no hay nada', sinOpciones.oculto && !sinOpciones.tabla);
-check('el botón está al final de la tarjeta de Financiación', await p.evaluate(() => { const c = document.getElementById('btnComparar').closest('.bg-brand-card'); return c.querySelector('h2').textContent === 'Financiación' && c.lastElementChild.contains(document.getElementById('btnComparar')); }));
-check('  y se llama «➕ Añadir a la comparación»', (await txt('#btnComparar')) === '➕ Añadir a la comparación');
+check('el botón está en la cabecera de la tarjeta de Financiación, junto a «Deuda»', await p.evaluate(() => { const c = document.getElementById('btnComparar').closest('.bg-brand-card'); const cab = c.querySelector('h2').parentElement; return c.querySelector('h2').textContent === 'Financiación' && cab.contains(document.getElementById('btnComparar')) && /Deuda/.test(cab.textContent); }));
+check('  se llama «➕ Comparar» y lleva el texto largo en title y aria-label', await p.evaluate(() => { const b = document.getElementById('btnComparar'); return b.textContent.trim() === '➕ Comparar' && b.title.length > 30 && b.getAttribute('aria-label') === b.title; }));
+check('  y es rojo de financiación, como el distintivo', await p.evaluate(() => /text-brand-rose/.test(document.getElementById('btnComparar').className) && /bg-brand-rose\/10/.test(document.getElementById('btnComparar').className)));
 
 // A: hipoteca 80 % a 30 años al 3,10 %
 await poner('pctFinanciado', 80); await poner('plazoHipoteca', 30); await poner('tipoHipoteca', '3,10');
 await p.click('#btnComparar');
-check('con 1 opción, una línea discreta con su ✕ y sin tabla', (await txt('#compararUna')).startsWith('1 opción guardada. Añade otra para comparar.') && !(await p.$('#tblComparar')) && !!(await p.$('[data-quitar="A"]')));
+check('con 1 opción, el aviso va en la cabecera del resumen, con su ✕ y sin tabla', (await txt('#compararUna')).startsWith('1 opción de financiación guardada. Añade otra para comparar.') && await p.evaluate(() => { const h = document.getElementById('compararUna').closest('.bg-brand-card').querySelector('h2'); return h.parentElement.parentElement.contains(document.getElementById('compararUna')) && h.parentElement.contains(document.getElementById('compararUna')); }) && !(await p.$('#tblComparar')) && !!(await p.$('[data-quitar="A"]')));
+await p.screenshot({ path: salida('calc4-1440-resumen-1op.png'), clip: { x: 0, y: 0, width: 1440, height: 1300 } });
+check('  y la cabecera de Financiación no se descuadra con el aviso de duplicado', await (async () => {
+  const antes = await p.evaluate(() => document.getElementById('btnComparar').closest('.bg-brand-card').getBoundingClientRect().height);
+  await p.click('#btnComparar');
+  const aviso = await p.evaluate(() => { const a = document.getElementById('avisoComparar'), c = document.getElementById('btnComparar').closest('.bg-brand-card'); return { h: c.getBoundingClientRect().height, vis: a.getBoundingClientRect().height > 0 }; });
+  return aviso.h === antes && aviso.vis; })());
 await p.click('#btnComparar');
 check('añadir la misma financiación no la duplica y avisa', (await p.evaluate(() => OPCIONES.length)) === 1 && /ya está/i.test(await txt('#avisoComparar')), await txt('#avisoComparar'));
 // B: 70 % a 25 años acelerada
@@ -99,7 +141,7 @@ await poner('pctFinanciado', 70); await poner('plazoHipoteca', 25); await p.chec
 await p.click('#btnComparar');
 const t2 = await p.evaluate(() => ({
   cols: document.querySelectorAll('#tblComparar thead th[data-opcion]').length,
-  letras: [...document.querySelectorAll('#tblComparar thead .cmp-letra')].map(e => e.textContent).join(''),
+  letras: [...document.querySelectorAll('#tblComparar thead th[data-opcion]')].map(e => e.dataset.opcion).join(''),
   filas: [...document.querySelectorAll('#tblComparar tbody tr')].map(r => r.dataset.fila),
   nombres: [...document.querySelectorAll('#tblComparar .cmp-nombre')].map(e => [...e.children].map(c => c.textContent).join(' / ')),
   titulo: document.getElementById('compararTitulo').textContent, visible: !document.getElementById('compararTitulo').classList.contains('hidden'),
@@ -173,16 +215,56 @@ check('«Cargar» pone la opción en los campos de financiación', cargada.pct =
 
 // Quitar, y la letra libre se reutiliza.
 await p.click('[data-quitar="B"]');
-const q = await p.evaluate(() => ({ letras: [...document.querySelectorAll('#tblComparar thead .cmp-letra')].map(e => e.textContent).join(''), dis: document.getElementById('btnComparar').disabled }));
+const q = await p.evaluate(() => ({ letras: [...document.querySelectorAll('#tblComparar thead th[data-opcion]')].map(e => e.dataset.opcion).join(''), dis: document.getElementById('btnComparar').disabled }));
 check('quitar una opción deja las demás y reactiva el botón', q.letras === 'ACD' && !q.dis, JSON.stringify(q));
 await p.click('#btnComparar');
 check('  y la nueva ocupa la letra libre', (await p.evaluate(() => OPCIONES.map(o => o.letra).join(''))) === 'ABCD');
+
+/* ---------- 7) renombrar opciones con doble clic ---------- */
+const nombres = () => p.evaluate(() => [...document.querySelectorAll('#tblComparar thead .cmp-letra')].map(e => e.textContent));
+check('por defecto se llaman «Opción 1» … «Opción 4», con la descripción debajo', (await nombres()).join() === 'Opción 1,Opción 2,Opción 3,Opción 4' && /Hipoteca/.test(await txt('#tblComparar thead th[data-opcion="A"] .cmp-nombre')));
+check('  y el nombre dice «Doble clic para cambiar el nombre»', (await p.getAttribute('[data-renombrar="A"]', 'title')) === 'Doble clic para cambiar el nombre');
+await p.dblclick('[data-renombrar="A"]');
+const ed = await p.evaluate(() => { const i = document.querySelector('#tblComparar .cmp-edit'); return i && { v: i.value, ini: i.selectionStart, fin: i.selectionEnd, foco: document.activeElement === i, max: i.maxLength }; });
+check('doble clic: campo de texto en su sitio, con el texto seleccionado y enfocado', ed && ed.v === 'Opción 1' && ed.ini === 0 && ed.fin === 8 && ed.foco && ed.max === 30, JSON.stringify(ed));
+// Mientras se escribe, un repintado no debe llevarse el campo ni lo escrito.
+await p.keyboard.type('Banco Norte');
+await p.evaluate(() => { pintarComparacion(); render(); });
+check('  un repintado a medias no pierde la edición en curso', await p.evaluate(() => { const i = document.querySelector('#tblComparar .cmp-edit'); return !!i && i.value === 'Banco Norte' && document.activeElement === i; }));
+await p.keyboard.press('Enter');
+check('  Enter guarda el nombre', (await nombres())[0] === 'Banco Norte' && !(await p.$('.cmp-edit')), (await nombres()).join());
+await p.dblclick('[data-renombrar="B"]'); await p.keyboard.type('Descartado'); await p.keyboard.press('Escape');
+check('  Escape cancela', (await nombres())[1] === 'Opción 2' && !(await p.$('.cmp-edit')), (await nombres()).join());
+await p.dblclick('[data-renombrar="A"]'); await p.keyboard.press('Control+A'); await p.keyboard.press('Backspace'); await p.keyboard.press('Enter');
+check('  vacío vuelve a «Opción 1»', (await nombres())[0] === 'Opción 1');
+await p.dblclick('[data-renombrar="A"]'); await p.keyboard.press('Control+A'); await p.keyboard.type('Fuera del campo');
+await p.click('h1, header', { position: { x: 5, y: 5 } }).catch(() => {}); await p.evaluate(() => document.activeElement && document.activeElement.blur());
+check('  salir del campo también guarda', (await nombres())[0] === 'Fuera del campo', (await nombres()).join());
+await p.dblclick('[data-renombrar="B"]'); await p.keyboard.press('Control+A'); await p.keyboard.type('x'.repeat(50)); await p.keyboard.press('Enter');
+check('  máximo 30 caracteres', (await nombres())[1] === 'x'.repeat(30));
+// Nombre con HTML: se ve como texto y no crea elementos.
+const xss = '<img src=x onerror=alert(1)>';
+await p.evaluate(() => { window.__alertas = 0; window.alert = () => { window.__alertas++; }; });
+await p.dblclick('[data-renombrar="C"]'); await p.keyboard.press('Control+A'); await p.keyboard.type(xss); await p.keyboard.press('Enter');
+await p.waitForTimeout(200);
+const seg = await p.evaluate(() => ({ imgs: document.querySelectorAll('#comparar img, #tblComparar img').length, texto: document.querySelector('#tblComparar thead [data-renombrar="C"]').textContent, alertas: window.__alertas,
+  guardado: OPCIONES.find(o => o.letra === 'C').nombre }));
+check('un nombre con HTML sale como texto y no crea ningún <img>', seg.imgs === 0 && seg.texto === xss && seg.alertas === 0 && seg.guardado === xss, JSON.stringify(seg));
+check('  ni al editarlo de nuevo (el campo lleva el texto tal cual)', await (async () => { await p.dblclick('[data-renombrar="C"]'); const v = await p.evaluate(() => document.querySelector('.cmp-edit').value); await p.keyboard.press('Escape'); return v === xss && !(await p.$('#comparar img')); })());
+// Cargar y quitar siguen funcionando con nombres propios.
+await p.click('[data-cargar="A"]');
+check('  «Cargar» sigue funcionando con una opción renombrada', (await p.evaluate(() => document.getElementById('pctFinanciado').value)) === '80');
+await p.click('[data-quitar="D"]');
+check('  y ✕ quita la opción y respeta los nombres de las demás', (await nombres()).join().startsWith('Fuera del campo,xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,' + xss) && (await nombres()).length === 3, (await nombres()).join());
+await poner('pctFinanciado', 55); await p.click('#btnComparar');
+check('  la opción nueva ocupa el número libre más bajo', (await nombres()).at(-1) === 'Opción 4', (await nombres()).join());
 
 // Persistencia tras recargar.
 await p.waitForTimeout(900);
 await p.reload(); await p.waitForTimeout(700);
 const rec = await p.evaluate(() => ({ cols: document.querySelectorAll('#tblComparar thead th[data-opcion]').length, letras: OPCIONES.map(o => o.letra).join('') }));
 check('las opciones sobreviven a recargar la página', rec.cols === 4 && rec.letras === 'ABCD', JSON.stringify(rec));
+check('  y los nombres propios también (validados al leer)', (await nombres()).join() === ['Fuera del campo', 'x'.repeat(30), xss, 'Opción 4'].join(), (await nombres()).join());
 const guardado = await p.evaluate(() => JSON.parse(localStorage.getItem('calc_pisos_v2')).comparar.length);
 check('  se guardan junto al resto del estado', guardado === 4);
 check('  pero no viajan en el enlace compartido', !(await p.evaluate(() => enlaceConCalculos())).includes('compar'));
@@ -197,6 +279,9 @@ await p.evaluate(() => resetDefaults()); await p.waitForTimeout(300);
 // Reseteo.
 await poner('pctFinanciado', 80); await p.click('#btnComparar'); await poner('pctFinanciado', 60); await p.click('#btnComparar');
 check('hay dos opciones antes de resetear', (await p.evaluate(() => OPCIONES.length)) === 2);
+await p.dblclick('[data-renombrar="A"]'); await p.keyboard.type('Banco Norte 80 %'); await p.keyboard.press('Enter');
+await p.locator('#bloqueComparar').scrollIntoViewIfNeeded();
+await p.locator('#bloqueComparar').screenshot({ path: salida('calc4-1440-comparar.png') });
 await p.click('#btnReset'); await p.waitForTimeout(900);
 const trasReset = await p.evaluate(() => ({ n: OPCIONES.length, oculto: document.getElementById('bloqueComparar').classList.contains('hidden'), g: JSON.parse(localStorage.getItem('calc_pisos_v2')).comparar.length }));
 check('el reseteo ♻️ las borra, también de lo guardado', trasReset.n === 0 && trasReset.oculto && trasReset.g === 0, JSON.stringify(trasReset));

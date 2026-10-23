@@ -177,29 +177,56 @@
        que en móvil se desplace ella y no la página; la columna de etiquetas se queda fija a la
        izquierda con fondo opaco para que las cifras no pasen por debajo. */
     .comparar-caja { overflow-x: auto; max-width: 100%; }
-    .tbl-comparar { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12px; font-variant-numeric: tabular-nums; }
-    .tbl-comparar th, .tbl-comparar td { padding: 6px 10px; text-align: right; border-top: 1px solid rgb(var(--brand-border)); white-space: nowrap; }
-    .tbl-comparar thead th { border-top: 0; vertical-align: top; text-align: left; min-width: 9.5rem; font-weight: 400; }
+    /* Anchos fijos (table-layout: fixed): la primera columna (etiquetas) tiene un ancho propio y
+       las de opciones se reparten el resto a partes iguales. Con el reparto automático, abrir el
+       campo de renombrar cambiaba el ancho que pedía su contenido y toda la tabla se movía. El
+       ancho mínimo por columna hace que en móvil la tabla se desplace dentro de su caja. */
+    .tbl-comparar { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; font-size: 12px; font-variant-numeric: tabular-nums; }
+    /* 14rem en escritorio: las etiquetas («Anualizada vendiendo al año 30 ⓘ») caben en una línea
+       y la tabla no crece al doble de alto. En móvil se estrecha y parten línea. */
+    .tbl-comparar col.cmp-col-etq { width: 14rem; }
+    .tbl-comparar th, .tbl-comparar td { padding: 6px 10px; text-align: right; border-top: 1px solid rgb(var(--brand-border)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tbl-comparar thead th { border-top: 0; vertical-align: top; text-align: left; font-weight: 400; }
     .tbl-comparar th.etq { text-align: left; font-weight: 500; color: rgb(var(--brand-textMuted));
-      position: sticky; left: 0; z-index: 1; background: rgb(var(--brand-card)); white-space: normal; min-width: 7.5rem; max-width: 9rem; }
+      position: sticky; left: 0; z-index: 1; background: rgb(var(--brand-card)); white-space: normal; overflow-wrap: anywhere; }
     @media (max-width: 639px) {
-      .tbl-comparar th.etq { min-width: 6.25rem; max-width: 6.75rem; font-size: 11px; padding-left: 4px; }
-      .tbl-comparar thead th { min-width: 8.5rem; }
+      .tbl-comparar col.cmp-col-etq { width: 7rem; }
+      .tbl-comparar th.etq { font-size: 11px; padding-left: 4px; }
     }
     .tbl-comparar td { font-weight: 600; }
     .tbl-comparar td.mejor { background: rgb(var(--brand-emerald) / 0.16); color: rgb(var(--brand-emerald)); font-weight: 700; }
-    .cmp-cab { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+    /* Título de la tabla en la esquina de arriba a la izquierda, con la misma altura de línea que
+       las píldoras de los nombres para que queden alineados. */
+    .cmp-titulo { display: block; font-size: 11px; line-height: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgb(var(--brand-textMuted)); }
+    .cmp-cab { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; min-width: 0; }
+    .cmp-cab > .flex { flex: none; }
     /* El nombre de la opción (por defecto «Opción N»). Se renombra con doble clic, así que
-       lleva cursor de texto y se recorta con puntos suspensivos: el máximo son 30 caracteres. */
-    .cmp-letra { background: rgb(var(--brand-accent)); color: #fff; font-weight: 800; font-size: 12px; border-radius: 6px; padding: 0 7px; line-height: 20px;
-      min-width: 0; max-width: 11rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: text; }
-    .cmp-edit { width: 9.5rem; max-width: 100%; font: inherit; font-size: 12px; font-weight: 700; line-height: 20px; padding: 0 6px; border-radius: 6px;
-      border: 1px solid rgb(var(--brand-accent)); background: rgb(var(--brand-bg)); color: rgb(var(--brand-text)); }
+       lleva cursor de texto y se recorta con puntos suspensivos: el máximo son 30 caracteres.
+       Alto fijo (20 px): el campo de edición ocupa exactamente el sitio de la píldora. */
+    .cmp-letra { box-sizing: border-box; height: 20px; background: rgb(var(--brand-accent)); color: #fff; font-weight: 800; font-size: 12px; border-radius: 6px; padding: 0 7px; line-height: 20px;
+      flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: text; }
+    .cmp-letra:has(.cmp-edit) { flex: 1 1 auto; padding: 0; background: transparent; overflow: visible; }
+    .cmp-edit { display: block; box-sizing: border-box; width: 100%; height: 20px; margin: 0; font: inherit; font-size: 12px; font-weight: 700; line-height: 18px; padding: 0 6px; border-radius: 6px;
+      border: 1px solid rgb(var(--brand-accent)); background: rgb(var(--brand-bg)); color: rgb(var(--brand-text)); outline: none; }
+    .cmp-edit:focus { box-shadow: 0 0 0 1px rgb(var(--brand-accent)); }
     .cmp-btn { font-size: 11px; line-height: 18px; padding: 0 6px; border-radius: 6px; cursor: pointer;
       border: 1px solid rgb(var(--brand-border)); background: rgb(var(--brand-bg)); color: rgb(var(--brand-textMuted)); }
     .cmp-btn:hover { border-color: rgb(var(--brand-accent)); color: rgb(var(--brand-accent)); }
-    .cmp-nombre { font-size: 10px; line-height: 1.35; font-weight: 400; color: rgb(var(--brand-textMuted)); white-space: normal; }
+    /* Las piezas de la descripción parten línea dentro de la celda, aunque no tengan espacios. */
+    .cmp-nombre { font-size: 10px; line-height: 1.35; font-weight: 400; color: rgb(var(--brand-textMuted)); white-space: normal; overflow-wrap: anywhere; }
     .cmp-nombre span { display: block; }
+    /* Rótulo de la tarjeta «anualizada»: lleva un desplegable dentro y es el único que no cabe
+       siempre. La altura de línea es la de los rótulos vecinos (11 px × 1,5) para que la fila de
+       seis rótulos quede alineada, y el desplegable se centra en ella. Lo que cede es el texto
+       («ANUALIZADA A» se recorta con puntos suspensivos); el desplegable y «AÑOS» no encogen. */
+    .kpi-rotulo-anual { line-height: 16.5px; height: 16.5px; min-width: 0; }
+    .kpi-rotulo-anual select { flex: none; align-self: center; margin: 0; box-sizing: border-box; }
+    .kpi-rotulo-texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .kpi-rotulo-fin { flex: none; }
+    @media (min-width: 1024px) and (max-width: 1279px) {
+      .kpi-rotulo-anual { font-size: 9.5px; letter-spacing: -0.01em; gap: 3px; }
+      .kpi-rotulo-anual select { font-size: 10px; }
+    }
     .faq-tabla { width: 100%; margin: 4px 0 10px; font-variant-numeric: tabular-nums; }
     .faq-tabla td { padding: 4px 0; border-bottom: 1px solid rgb(var(--brand-border)); }
     .faq-tabla td:nth-child(2) { text-align: right; font-weight: 700; padding-right: 10px; }
@@ -289,12 +316,12 @@
            una línea porque es corto («ANUALIZADA A [26] AÑOS»); con el largo de antes partía en
            dos y la tarjeta crecía por encima de sus vecinas. -->
       <div class="flex items-baseline justify-between gap-3 lg:block">
-        <div class="text-[11px] font-semibold text-brand-accent uppercase tracking-wide flex items-center gap-1 whitespace-nowrap">
-          <span class="tooltip-help" data-i18n="kpiAnualizada" data-i18n-title="kpiAnualizadaTip">ANUALIZADA A</span>
+        <div class="kpi-rotulo-anual text-[11px] font-semibold text-brand-accent uppercase tracking-wide flex items-center gap-1 whitespace-nowrap">
+          <span class="tooltip-help kpi-rotulo-texto" data-i18n="kpiAnualizada" data-i18n-title="kpiAnualizadaTip">ANUALIZADA A</span>
           <!-- El año no es sólo una etiqueta: elige de qué fila de la proyección sale la cifra
                grande, para poder mirar la operación a cinco años sin recortar el horizonte. -->
           <select id="anoRef" class="bg-brand-bg border border-brand-accent/40 rounded px-0.5 py-0 h-[15px] leading-none text-[11px] font-bold text-brand-accent cursor-pointer" data-i18n-title="anoRefTip"></select>
-          <span data-i18n="kpiAnualizadaAnos">AÑOS</span>
+          <span class="kpi-rotulo-fin" data-i18n="kpiAnualizadaAnos">AÑOS</span>
         </div>
         <!-- «rentabilidad» detrás de la cifra, pequeño y gris: dice qué es sin gastar una línea.
              Sólo en escritorio; en móvil la descripción de debajo ya lo cuenta. -->
@@ -535,7 +562,6 @@
         <span class="text-xs text-brand-amber font-semibold px-2 py-0.5 rounded bg-brand-amber/10 border border-brand-amber/20" data-i18n="resumenBadge">Salida</span>
       </div>
       <div id="bloqueComparar" class="hidden space-y-2 pb-4 border-b border-brand-border">
-        <h3 id="compararTitulo" class="text-xs font-bold uppercase tracking-wider text-brand-textMuted" data-i18n="compararTitulo">Comparar financiación</h3>
         <div id="comparar"></div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-5">
@@ -2698,7 +2724,7 @@
       const cabeceras = OPCIONES.map(o => {
         const piezas = piezasOpcion(o);
         return `<th scope="col" data-opcion="${o.letra}">
-          <div class="cmp-cab"><span class="cmp-letra" data-renombrar="${o.letra}" title="${escapar(t('compararRenombrar'))}">${escapar(nombreOpcion(o))}</span><span class="flex gap-1">
+          <div class="cmp-cab"><span class="cmp-letra" data-renombrar="${o.letra}" title="${escapar(nombreOpcion(o) + ' · ' + t('compararRenombrar'))}">${escapar(nombreOpcion(o))}</span><span class="flex gap-1">
             <button type="button" class="cmp-btn" data-cargar="${o.letra}" title="${t('compararCargarTip')}">${t('compararCargar')}</button>
             <button type="button" class="cmp-btn" data-quitar="${o.letra}" title="${t('compararQuitar')}" aria-label="${t('compararQuitar')}">✕</button></span></div>
           <div class="cmp-nombre" title="${escapar(piezas.join(' '))}">${piezas.map(p => `<span>${escapar(p)}</span>`).join('')}</div></th>`;
@@ -2720,8 +2746,10 @@
         return `<tr data-fila="${fila.id}"><th scope="row" class="etq"><span${titulo}>${fila.etq(ms[0])}${fila.tip ? ' ⓘ' : ''}</span></th>${celdas}</tr>`;
       }).join('');
 
-      const html = `<div class="comparar-caja scrollbar-thin"><table class="tbl-comparar" id="tblComparar">
-        <thead><tr><th class="etq" aria-hidden="true" style="position:sticky;left:0;background:rgb(var(--brand-card));min-width:7.5rem"></th>${cabeceras}</tr></thead>
+      // Ancho mínimo: la columna de etiquetas más 11 rem por opción; por debajo la caja se desplaza.
+      const html = `<div class="comparar-caja scrollbar-thin"><table class="tbl-comparar" id="tblComparar" style="min-width:calc(7rem + ${OPCIONES.length} * 11rem)">
+        <colgroup><col class="cmp-col-etq">${OPCIONES.map(() => '<col>').join('')}</colgroup>
+        <thead><tr><th class="etq" scope="col"><span class="cmp-titulo" id="compararTitulo">${escapar(t('compararTitulo'))}</span></th>${cabeceras}</tr></thead>
         <tbody>${filas}</tbody></table></div>
         <p class="text-[11px] text-brand-textMuted pt-1">${t('compararNota')}</p>`;
       // Sin cambios no se toca el DOM: conserva el scroll horizontal de la caja y no pisa un clic.

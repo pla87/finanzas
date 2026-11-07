@@ -150,7 +150,7 @@ const t2 = await p.evaluate(() => ({
 check('con 2 opciones aparece la tabla con 2 columnas A y B', t2.cols === 2 && t2.letras === 'AB' && t2.visible && t2.titulo === 'Comparar financiación', JSON.stringify(t2));
 check('  dentro de «Resumen de la operación»', t2.dentroDelResumen === 'Resumen de la operación');
 check('  con los nombres automáticos', limpio(t2.nombres[0]) === 'Hipoteca 80 % · 30 a · 3,10 %' && limpio(t2.nombres[1]) === 'Hipoteca 70 % · 25 a · 3,10 % / acelerada', t2.nombres.join(' || '));
-check('  y las filas pedidas, con «caja que te queda» al haber acelerada', ['liquidez', 'cuota', 'cajaGenerada', 'cajaQueda', 'roce', 'anualizada', 'tirVenta', 'anosDeuda', 'intereses', 'ganancia'].join() === t2.filas.join(), t2.filas.join());
+check('  y las filas pedidas, con «caja que te queda» al haber acelerada', ['liquidez', 'cuota', 'cajaGenerada', 'cajaQueda', 'roce', 'anualizada', 'tirVenta', 'anosDeuda', 'intereses'].join() === t2.filas.join(), t2.filas.join());
 // C: 80 % + préstamo de 20.000 € sin acelerar (la casilla del préstamo nace marcada)
 await poner('pctFinanciado', 80); await poner('plazoHipoteca', 30); await p.uncheck('#hipotecaAcelerada');
 await p.click('#lockPrestamo'); await poner('importePrestamo', 20000); await p.uncheck('#prestamoAcelerado');
@@ -170,7 +170,7 @@ await p.uncheck('#prestamoAcelerado');
 const num = (s) => Number(String(s).replace(/[^\d,-]/g, '').replace(',', '.'));
 const mejores = await p.evaluate(() => [...document.querySelectorAll('#tblComparar tbody tr')].map(r => ({
   id: r.dataset.fila, valores: [...r.querySelectorAll('td')].map(td => td.textContent), marcadas: [...r.querySelectorAll('td')].map(td => td.classList.contains('mejor')) })));
-const regla = { liquidez: 'min', cuota: 'min', cajaGenerada: 'max', cajaQueda: 'max', roce: 'max', anualizada: 'max', tirVenta: 'max', intereses: 'min', ganancia: 'max' };
+const regla = { liquidez: 'min', cuota: 'min', cajaGenerada: 'max', cajaQueda: 'max', roce: 'max', anualizada: 'max', tirVenta: 'max', intereses: 'min' };
 let malas = [];
 for (const f of mejores) {
   if (!regla[f.id]) continue;
@@ -213,12 +213,16 @@ await p.click('[data-cargar="B"]');
 const cargada = await p.evaluate(() => ({ pct: document.getElementById('pctFinanciado').value, plazo: document.getElementById('plazoHipoteca').value, acel: document.getElementById('hipotecaAcelerada').checked, pre: document.getElementById('usarPrestamo').checked }));
 check('«Cargar» pone la opción en los campos de financiación', cargada.pct === '70' && cargada.plazo === '25' && cargada.acel && !cargada.pre, JSON.stringify(cargada));
 
-// Quitar, y la letra libre se reutiliza.
+// Quitar: las demás se renumeran por posición; la nueva se añade siempre al final.
 await p.click('[data-quitar="B"]');
 const q = await p.evaluate(() => ({ letras: [...document.querySelectorAll('#tblComparar thead th[data-opcion]')].map(e => e.dataset.opcion).join(''), dis: document.getElementById('btnComparar').disabled }));
 check('quitar una opción deja las demás y reactiva el botón', q.letras === 'ACD' && !q.dis, JSON.stringify(q));
+check('  las que no tienen nombre propio se renumeran: «Opción 1», «Opción 2», «Opción 3»', (await p.evaluate(() => [...document.querySelectorAll('#tblComparar thead .cmp-letra-txt')].map(e => e.textContent).join())) === 'Opción 1,Opción 2,Opción 3');
 await p.click('#btnComparar');
-check('  y la nueva ocupa la letra libre', (await p.evaluate(() => OPCIONES.map(o => o.letra).join(''))) === 'ABCD');
+check('  y la nueva va siempre al final (reutiliza la letra libre, no el sitio)', (await p.evaluate(() => OPCIONES.map(o => o.letra).join(''))) === 'ACDB');
+check('  con su número por posición: «Opción 4»', (await p.evaluate(() => [...document.querySelectorAll('#tblComparar thead .cmp-letra-txt')].map(e => e.textContent).join())) === 'Opción 1,Opción 2,Opción 3,Opción 4');
+// Las pruebas de renombrar apuntan a las posiciones 0-3 como A-D: se vuelve al orden alfabético.
+await p.evaluate(() => { OPCIONES.sort((a, b) => a.letra.localeCompare(b.letra)); ultimaTabla = null; render(); });
 
 /* ---------- 7) renombrar opciones con doble clic ---------- */
 const nombres = () => p.evaluate(() => [...document.querySelectorAll('#tblComparar thead .cmp-letra')].map(e => e.textContent));
@@ -306,6 +310,31 @@ const despues = await celdas();
 check('  y al cancelar vuelve todo a donde estaba', igual(antes, despues), JSON.stringify({ antes, despues }));
 await p.locator('#bloqueComparar').screenshot({ path: salida('calc5-comparar-normal.png') });
 
+// El lápiz: mismo editor que el doble clic, con ratón y con teclado, sin mover nada.
+check('cada nombre lleva su lápiz, con title y aria-label', await p.evaluate(() => [...document.querySelectorAll('#tblComparar thead .cmp-letra')].every(e => { const b = e.querySelector('.cmp-lapiz'); return b && b.title === 'Cambiar el nombre' && b.getAttribute('aria-label') === 'Cambiar el nombre' && getComputedStyle(e).cursor === 'text'; })));
+const lapizAntes = await celdas();
+await p.click('[data-renombrar="A"] .cmp-lapiz');
+check('  clic en el lápiz abre la edición, con el foco y el texto seleccionado', await p.evaluate(() => { const i = document.querySelector('#tblComparar .cmp-edit'); return !!i && document.activeElement === i && i.selectionStart === 0 && i.selectionEnd === i.value.length; }));
+check('  y no mueve ninguna celda (±1 px)', igual(lapizAntes, await celdas()));
+await p.keyboard.press('Escape');
+await p.focus('[data-renombrar="B"] .cmp-lapiz'); await p.keyboard.press('Enter');
+check('  con teclado (foco en el lápiz + Enter) también', await p.evaluate(() => !!document.querySelector('#tblComparar .cmp-edit')));
+await p.keyboard.type('Por teclado'); await p.keyboard.press('Enter');
+check('  y el nombre se guarda', (await nombres())[1] === 'Por teclado', (await nombres()).join());
+await p.evaluate(() => { OPCIONES[1].nombre = ''; ultimaTabla = null; render(); });
+check('el lápiz mide lo mismo y está atenuado hasta el ratón', await p.evaluate(() => { const b = document.querySelector('.cmp-lapiz').getBoundingClientRect(); return b.width === 16 && b.height === 16; }));
+
+// La fila «Ganancia neta» ya no está.
+check('el comparador no tiene fila «Ganancia neta al año N»', await p.evaluate(() => !document.querySelector('#tblComparar tr[data-fila="ganancia"]') && !/Ganancia neta/.test(document.getElementById('comparar').textContent)));
+
+// La descripción corre seguida y sólo parte donde no cabe.
+const desc = await p.evaluate(() => [...document.querySelectorAll('#tblComparar .cmp-nombre')].map(e => { const lh = parseFloat(getComputedStyle(e).lineHeight); const piezas = [...e.children]; return { lineas: Math.round(e.getBoundingClientRect().height / lh), n: piezas.length, ancho: e.clientWidth, usado: Math.max(...[...e.getClientRects()].map(r => r.width)), bloque: piezas.some(x => getComputedStyle(x).display === 'block') }; }));
+check('la descripción no fuerza saltos entre piezas (ninguna pieza es un bloque)', desc.every(d => !d.bloque), JSON.stringify(desc));
+const seguidas = await p.evaluate(() => { const o = OPCIONES[0]; Object.assign(o, { usarHipoteca: true, pctFinanciado: 70, plazoHipoteca: 20, tipoHipoteca: 2.65, hipotecaAcelerada: true, usarPrestamo: false }); ultimaTabla = null; render();
+  const ps = [...document.querySelector('#tblComparar thead th[data-opcion="' + o.letra + '"] .cmp-nombre').children]; const a = ps[0].getClientRects(), b = ps[1].getClientRects();
+  return { textos: ps.map(x => x.textContent), topA: a[a.length - 1].top, topB: b[0].top }; });
+check('  «Hipoteca 70 % · 20 a · 2,65 %» y «acelerada» comparten línea cuando caben', seguidas.textos.length === 2 && Math.abs(seguidas.topA - seguidas.topB) < 2, JSON.stringify(seguidas));
+
 // Nombre de 30 caracteres anchos y descripción larga: nada sobresale de su celda.
 await p.evaluate(() => { OPCIONES[0].nombre = 'W'.repeat(30); OPCIONES[1].nombre = 'M'.repeat(30); ultimaTabla = null; render(); });
 const largo = await p.evaluate(() => {
@@ -335,16 +364,19 @@ for (const w of [1024, 1280, 1440, 1920]) {
   const r = await q.evaluate(() => {
     const card = document.querySelector('#kpiAnualizada').closest('.border-2'), c = card.getBoundingClientRect();
     const cs = getComputedStyle(card), area = { l: c.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft), r: c.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight) };
-    const rot = card.querySelector('.kpi-rotulo-anual'), hijos = [...rot.children], sel = card.querySelector('select').getBoundingClientRect();
+    const rot = card.querySelector('.kpi-rotulo-anual'), hijos = [...rot.children], sel = card.querySelector('#anoRefBtn').getBoundingClientRect(), numT = card.querySelector('#anoRefTxt');
     const txt = rot.querySelector('.kpi-rotulo-texto'); const rt = document.createRange(); rt.selectNodeContents(txt); const tr = rt.getBoundingClientRect();
     const fuera = hijos.filter(e => { const b = e.getBoundingClientRect(); return b.left < area.l - 0.5 || b.right > area.r + 0.5 || b.right > c.right || b.bottom > c.bottom; }).map(e => e.className || e.tagName);
     const tops = [...document.querySelectorAll('#kpiGrid > div')].map(d => d.querySelector('.uppercase')).filter(Boolean);
     const alturas = [...document.querySelectorAll('#kpiGrid > div')].map(d => Math.round(d.getBoundingClientRect().height));
-    return { fuera, dy: Math.abs((sel.top + sel.height / 2) - (tr.top + tr.height / 2)), una: rot.getBoundingClientRect().height < 20,
+    const rn = document.createRange(); rn.selectNodeContents(numT); const nr = rn.getBoundingClientRect();
+    const cn = getComputedStyle(numT.parentElement), ct = getComputedStyle(txt);
+    return { fuera, base: Math.abs(nr.bottom - tr.bottom), mismoTipo: cn.fontSize === ct.fontSize && cn.fontWeight === ct.fontWeight, dy: Math.abs((sel.top + sel.height / 2) - (tr.top + tr.height / 2)), una: rot.getBoundingClientRect().height < 20,
       lineas: new Set(tops.map(e => Math.round(e.getBoundingClientRect().top))).size, alturas: new Set(alturas).size, alturaRot: rot.getBoundingClientRect().height };
   });
   check(`${w}: nada del rótulo de la anualizada sobresale de la tarjeta`, r.fuera.length === 0 && r.una, JSON.stringify(r));
   check(`${w}: el desplegable está centrado con «ANUALIZADA A» (±1,5 px)`, r.dy <= 1.5, r.dy.toFixed(2));
+  check(`${w}: el número queda en la línea base de «ANUALIZADA A», con su mismo tamaño y peso`, r.base <= 0.6 && r.mismoTipo, `${r.base.toFixed(2)} ${r.mismoTipo}`);
   check(`${w}: los seis rótulos en la misma línea y las seis tarjetas miden lo mismo`, r.lineas === 1 && r.alturas === 1, JSON.stringify({ l: r.lineas, a: r.alturas }));
   if (w === 1024 || w === 1440) await q.locator('#kpiGrid').screenshot({ path: salida(`calc5-kpis-${w}.png`) });
   check(`${w}: sin errores de consola`, q.errs.length === 0, q.errs[0] ?? '');
@@ -362,7 +394,7 @@ const mv = await m.evaluate(() => { const c = document.querySelector('.comparar-
   return { scrollCaja: c.scrollWidth, anchoCaja: c.clientWidth, pagina: de.scrollWidth, ventana: de.clientWidth, cols: document.querySelectorAll('#tblComparar thead th[data-opcion]').length }; });
 check('390: la tabla tiene 3 columnas y se desplaza dentro de su caja', mv.cols === 3 && mv.scrollCaja > mv.anchoCaja, JSON.stringify(mv));
 const recMov = await m.evaluate(() => { OPCIONES[0].nombre = 'W'.repeat(30); ultimaTabla = null; render(); const pil = document.querySelector('#tblComparar .cmp-letra'), th = pil.closest('th'), c = th.getBoundingClientRect(), bt = th.querySelector('.cmp-btn').getBoundingClientRect(), r = pil.getBoundingClientRect();
-  return { recortado: pil.scrollWidth > pil.clientWidth, dentro: r.left >= c.left && r.right <= bt.left, elipsis: getComputedStyle(pil).textOverflow }; });
+  const tx = pil.querySelector('.cmp-letra-txt'); return { recortado: tx.scrollWidth > tx.clientWidth, dentro: r.left >= c.left && r.right <= bt.left, elipsis: getComputedStyle(tx).textOverflow }; });
 check('390: un nombre de 30 «W» se recorta con «…» dentro de su celda, sin pisar los botones', recMov.recortado && recMov.dentro && recMov.elipsis === 'ellipsis', JSON.stringify(recMov));
 check('390: la página no se desborda', mv.pagina <= mv.ventana, `${mv.pagina} <= ${mv.ventana}`);
 await m.click('#kpiToggle');
@@ -375,6 +407,40 @@ const tabsEn = await m.evaluate(() => { const c = document.querySelector('.tab-b
 check('360: las pestañas con emoji caben en una línea también en inglés', tabsEn.tops === 1 && tabsEn.ok, JSON.stringify(tabsEn));
 check('móvil sin errores de consola', m.errs.length === 0, m.errs[0] ?? '');
 await m.close();
+
+/* ---------- el desplegable propio del año ---------- */
+for (const [w, tema] of [[1280, 'light'], [1280, 'dark'], [390, 'light']]) {
+  const d = await abrir(w, 900);
+  if (tema === 'dark') await d.evaluate(() => applyTheme('dark'));
+  if (w < 1024) { await d.click('#kpiToggle'); }
+  const T = `${w} ${tema}:`;
+  const abierta = () => d.evaluate(() => !document.getElementById('anoRefLista').hidden);
+  check(`${T} el botón enseña el año, con rol de listbox y sin lista a la vista`, await d.evaluate(() => { const b = document.getElementById('anoRefBtn'); return b.textContent.trim() === document.getElementById('anoRef').value && b.getAttribute('aria-haspopup') === 'listbox' && b.getAttribute('aria-expanded') === 'false' && document.getElementById('anoRefLista').hidden; }));
+  await d.click('#anoRefBtn');
+  const ab = await d.evaluate(() => { const ul = document.getElementById('anoRefLista'), sel = ul.querySelector('[aria-selected="true"]'), r = ul.getBoundingClientRect(), cs = getComputedStyle(ul);
+    return { abierta: !ul.hidden, rol: ul.getAttribute('role'), opciones: ul.querySelectorAll('[role=option]').length, esperadas: document.getElementById('anoRef').options.length, actual: sel && sel.textContent,
+      visible: sel && sel.getBoundingClientRect().top >= r.top - 0.5 && sel.getBoundingClientRect().bottom <= r.bottom + 0.5, scroll: ul.scrollHeight > ul.clientHeight, fino: cs.scrollbarWidth, fondo: cs.backgroundColor, dentro: r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight + 0.5 && r.top >= 0 }; });
+  check(`${T} abre una lista con todas las opciones, la actual resaltada y a la vista`, ab.abierta && ab.rol === 'listbox' && ab.opciones === ab.esperadas && ab.actual === '30' && ab.visible && ab.scroll && ab.dentro, JSON.stringify(ab));
+  check(`${T}   con scroll fino y el color del tema (no el blanco nativo)`, ab.fino === 'thin' && (tema === 'dark' ? ab.fondo === 'rgb(15, 23, 42)' : ab.fondo === 'rgb(255, 255, 255)'), `${ab.fino} ${ab.fondo}`);
+  await d.screenshot({ path: salida(`calc6-anoref-abierto-${w}-${tema}.png`) });
+  const k30 = await d.textContent('#kpiAnualizada');
+  await d.keyboard.press('ArrowUp'); await d.keyboard.press('ArrowUp');
+  await d.keyboard.press('Enter');
+  check(`${T} flechas + Enter eligen el año, cierran y recalculan`, !(await abierta()) && await d.inputValue('#anoRef') === '28' && (await d.textContent('#anoRefTxt')) === '28'  && (await d.textContent('#kpiAnualizada')) !== k30);
+  const k28 = await d.textContent('#kpiAnualizada');
+  await d.click('#anoRefBtn'); await d.keyboard.press('Escape');
+  check(`${T} Esc cierra sin cambiar y devuelve el foco al botón`, !(await abierta()) && await d.inputValue('#anoRef') === '28' && await d.evaluate(() => document.activeElement.id === 'anoRefBtn'));
+  await d.click('#anoRefBtn'); await d.mouse.click(2, 2);
+  check(`${T} un clic fuera cierra`, !(await abierta()));
+  await d.click('#anoRefBtn'); await d.click('#anoRefOp5');
+  const k5 = await d.textContent('#kpiAnualizada');
+  check(`${T} elegir con el ratón cambia el año, la cifra y lo guardado`, await d.inputValue('#anoRef') === '5' && k5 !== k28 && !(await abierta()), `${k28} → ${k5}`);
+  await d.waitForTimeout(700);
+  check(`${T}   y el año sobrevive a recargar`, (await d.evaluate(() => JSON.parse(localStorage.getItem('calc_pisos_v2')).anoRef)) === '5');
+  await d.screenshot({ path: salida(`calc6-anoref-cerrado-${w}-${tema}.png`) });
+  check(`${T} sin errores de consola`, d.errs.length === 0, d.errs[0] ?? '');
+  await d.close();
+}
 
 await b.close();
 console.log(fallos ? `\n${fallos} FALLO(S)` : '\nTODO OK');

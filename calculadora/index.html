@@ -223,29 +223,61 @@
     /* El nombre de la opción (por defecto «Opción N»). Se renombra con doble clic, así que
        lleva cursor de texto y se recorta con puntos suspensivos: el máximo son 30 caracteres.
        Alto fijo (20 px): el campo de edición ocupa exactamente el sitio de la píldora. */
-    .cmp-letra { box-sizing: border-box; height: 20px; background: rgb(var(--brand-accent)); color: #fff; font-weight: 800; font-size: 12px; border-radius: 6px; padding: 0 7px; line-height: 20px;
-      flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: text; }
-    .cmp-letra:has(.cmp-edit) { flex: 1 1 auto; padding: 0; background: transparent; overflow: visible; }
+    .cmp-letra { box-sizing: border-box; height: 20px; background: rgb(var(--brand-accent)); color: #fff; font-weight: 800; font-size: 12px; border-radius: 6px; padding: 0 4px 0 7px; line-height: 20px;
+      flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; cursor: text; display: flex; align-items: center; gap: 3px; }
+    /* El recorte con puntos suspensivos va en el texto y no en la píldora: así el lápiz, que va
+       detrás, nunca se come. */
+    .cmp-letra-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    /* Lápiz: dice que el nombre se puede cambiar. Atenuado hasta que se pasa el ratón o se
+       enfoca. Mide siempre lo mismo (16 px) y entra y sale con la píldora, que al editarse se
+       vacía entera: el campo ocupa su sitio y las columnas no se mueven. */
+    .cmp-lapiz { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; padding: 0; margin: 0; border: 0; border-radius: 4px;
+      background: transparent; color: rgb(255 255 255 / 0.55); cursor: pointer; }
+    .cmp-lapiz:hover, .cmp-lapiz:focus-visible { color: #fff; background: rgb(255 255 255 / 0.22); outline: none; }
+    .cmp-lapiz svg { width: 12px; height: 12px; display: block; }
+    .cmp-letra:has(.cmp-edit) { flex: 1 1 auto; padding: 0; background: transparent; overflow: visible; display: block; }
     .cmp-edit { display: block; box-sizing: border-box; width: 100%; height: 20px; margin: 0; font: inherit; font-size: 12px; font-weight: 700; line-height: 18px; padding: 0 6px; border-radius: 6px;
       border: 1px solid rgb(var(--brand-accent)); background: rgb(var(--brand-bg)); color: rgb(var(--brand-text)); outline: none; }
     .cmp-edit:focus { box-shadow: 0 0 0 1px rgb(var(--brand-accent)); }
     .cmp-btn { font-size: 11px; line-height: 18px; padding: 0 6px; border-radius: 6px; cursor: pointer;
       border: 1px solid rgb(var(--brand-border)); background: rgb(var(--brand-bg)); color: rgb(var(--brand-textMuted)); }
     .cmp-btn:hover { border-color: rgb(var(--brand-accent)); color: rgb(var(--brand-accent)); }
-    /* Las piezas de la descripción parten línea dentro de la celda, aunque no tengan espacios. */
+    /* Las piezas de la descripción corren seguidas, separadas por « · », y parten línea sólo
+       donde haga falta. Antes cada una era un bloque y «acelerada» bajaba aunque cupiese. */
     .cmp-nombre { font-size: 10px; line-height: 1.35; font-weight: 400; color: rgb(var(--brand-textMuted)); white-space: normal; overflow-wrap: anywhere; }
-    .cmp-nombre span { display: block; }
+    .cmp-nombre span + span::before { content: ' · '; }
     /* Rótulo de la tarjeta «anualizada»: lleva un desplegable dentro y es el único que no cabe
        siempre. La altura de línea es la de los rótulos vecinos (11 px × 1,5) para que la fila de
        seis rótulos quede alineada, y el desplegable se centra en ella. Lo que cede es el texto
        («ANUALIZADA A» se recorta con puntos suspensivos); el desplegable y «AÑOS» no encogen. */
     .kpi-rotulo-anual { line-height: 16.5px; height: 16.5px; min-width: 0; }
-    .kpi-rotulo-anual select { flex: none; align-self: center; margin: 0; box-sizing: border-box; }
+    /* Desplegable propio (el nativo sacaba su lista y su barra de scroll fuera del tema). El
+       <select> sigue ahí, invisible pero presente, como fuente de verdad del valor. El botón
+       hereda tamaño, peso y altura de línea del rótulo y no lleva borde de caja (sombra interior)
+       para no añadir alto: así el número queda en la misma línea base que el texto. */
+    .anoref { position: relative; flex: none; display: inline-flex; }
+    .anoref-nativo { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; margin: 0; padding: 0; border: 0; }
+    .anoref-btn { display: inline-flex; align-items: baseline; gap: 2px; margin: 0; padding: 0 3px; font: inherit; letter-spacing: inherit; text-transform: inherit; line-height: inherit; color: inherit;
+      background: rgb(var(--brand-bg)); border: 0; border-radius: 4px; box-shadow: inset 0 0 0 1px rgb(var(--brand-accent) / 0.4); cursor: pointer; }
+    .anoref-btn:hover, .anoref-btn[aria-expanded="true"] { box-shadow: inset 0 0 0 1px rgb(var(--brand-accent)); }
+    .anoref-btn:focus-visible { outline: 2px solid rgb(var(--brand-accent) / 0.6); outline-offset: 1px; }
+    .anoref-flecha { width: 7px; height: 7px; align-self: center; flex: none; transition: transform .12s; }
+    .anoref-btn[aria-expanded="true"] .anoref-flecha { transform: rotate(180deg); }
+    .anoref-lista { position: fixed; z-index: 60; margin: 0; padding: 3px; list-style: none; min-width: 3.5rem; max-height: 11rem; overflow-y: auto; overscroll-behavior: contain;
+      background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); border: 1px solid rgb(var(--brand-border)); border-radius: 8px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+      font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; line-height: 1.2;
+      scrollbar-width: thin; scrollbar-color: rgb(var(--brand-border)) transparent; outline: none; }
+    .anoref-lista[hidden] { display: none; }
+    .anoref-lista::-webkit-scrollbar { width: 6px; }
+    .anoref-lista::-webkit-scrollbar-track { background: transparent; }
+    .anoref-lista::-webkit-scrollbar-thumb { background: rgb(var(--brand-border)); border-radius: 4px; }
+    .anoref-lista li { padding: 4px 10px; border-radius: 5px; cursor: pointer; text-align: center; font-variant-numeric: tabular-nums; }
+    .anoref-lista li.activa { background: rgb(var(--brand-accent) / 0.16); }
+    .anoref-lista li[aria-selected="true"] { background: rgb(var(--brand-accent)); color: #fff; }
     .kpi-rotulo-texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .kpi-rotulo-fin { flex: none; }
     @media (min-width: 1024px) and (max-width: 1279px) {
       .kpi-rotulo-anual { font-size: 9.5px; letter-spacing: -0.01em; gap: 3px; }
-      .kpi-rotulo-anual select { font-size: 10px; }
     }
     .faq-tabla { width: 100%; margin: 4px 0 10px; font-variant-numeric: tabular-nums; }
     .faq-tabla td { padding: 4px 0; border-bottom: 1px solid rgb(var(--brand-border)); }
@@ -336,11 +368,15 @@
            una línea porque es corto («ANUALIZADA A [26] AÑOS»); con el largo de antes partía en
            dos y la tarjeta crecía por encima de sus vecinas. -->
       <div class="flex items-baseline justify-between gap-3 lg:block">
-        <div class="kpi-rotulo-anual text-[11px] font-semibold text-brand-accent uppercase tracking-wide flex items-center gap-1 whitespace-nowrap">
+        <div class="kpi-rotulo-anual text-[11px] font-semibold text-brand-accent uppercase tracking-wide flex items-baseline gap-1 whitespace-nowrap">
           <span class="tooltip-help kpi-rotulo-texto" data-i18n="kpiAnualizada" data-i18n-title="kpiAnualizadaTip">ANUALIZADA A</span>
           <!-- El año no es sólo una etiqueta: elige de qué fila de la proyección sale la cifra
                grande, para poder mirar la operación a cinco años sin recortar el horizonte. -->
-          <select id="anoRef" class="bg-brand-bg border border-brand-accent/40 rounded px-0.5 py-0 h-[15px] leading-none text-[11px] font-bold text-brand-accent cursor-pointer" data-i18n-title="anoRefTip"></select>
+          <span class="anoref">
+            <select id="anoRef" class="anoref-nativo" tabindex="-1" aria-hidden="true"></select>
+            <button type="button" id="anoRefBtn" class="anoref-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="anoRefLista" data-i18n-title="anoRefTip"><span id="anoRefTxt"></span><svg class="anoref-flecha" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3.5 5 6.5 8 3.5"/></svg></button>
+            <ul id="anoRefLista" class="anoref-lista" role="listbox" tabindex="-1" hidden></ul>
+          </span>
           <span class="kpi-rotulo-fin" data-i18n="kpiAnualizadaAnos">AÑOS</span>
         </div>
         <!-- «rentabilidad» detrás de la cifra, pequeño y gris: dice qué es sin gastar una línea.
@@ -837,7 +873,7 @@
         compararBoton: '➕ Comparar', compararTip: 'Guarda la financiación de los campos como una opción para compararla con otras (máximo 4).',
         compararMaxTip: 'Ya hay 4 opciones guardadas: quita alguna para añadir otra.',
         compararDup: 'Esa financiación ya está en la comparación.', compararAnadida: 'Añadida como opción {0}.',
-        compararOpcionN: 'Opción {0}', compararRenombrar: 'Doble clic para cambiar el nombre',
+        compararOpcionN: 'Opción {0}', compararRenombrar: 'Doble clic para cambiar el nombre', compararLapiz: 'Cambiar el nombre',
         compararTitulo: 'Comparar financiación', compararUna: '1 opción de financiación guardada. Añade otra para comparar.',
         compararQuitar: 'Quitar esta opción', compararCargar: 'Cargar',
         compararCargarTip: 'Poner esta financiación en los campos de la tarjeta de Financiación.',
@@ -845,8 +881,6 @@
         compCuota: 'Cuota mensual total', compCajaGen: 'Caja 1.er año (generada)',
         compCajaGenTip: 'La caja que genera el primer año completo. Con amortización acelerada no llega al bolsillo: va a adelantar deuda.',
         compAnosDeuda: 'Años hasta liquidar la deuda', compIntereses: 'Intereses pagados en el horizonte',
-        compGanancia: 'Ganancia neta al año {0}',
-        compGananciaTip: 'Piso menos deuda, más la caja acumulada, menos todo lo que has puesto de tu bolsillo\n(liquidez inicial y aportaciones). Es lo que has ganado sobre el papel, sin vender.\n\nEl patrimonio a secas no sirve para comparar financiaciones: a ese año la deuda puede\nestar pagada en todas y saldría igual.',
         compNomHip: 'Hipoteca {0} % · {1} a · {2} %', compNomPre: '+ préstamo {0} al {1} %', compNomPreSolo: 'Préstamo {0} al {1} %',
         compNomApertura: 'apertura {0} %', compNomAcel: 'acelerada', compNomHipAcel: 'hipoteca acelerada', compNomPreAcel: 'préstamo acelerado', compNomSin: 'Sin financiación',
         compartirTextoAcel: 'Piso de {0} alquilado a {1}/mes: rentabilidad bruta {2}, caja {3}/mes ({6}/mes van a amortizar deuda), anualizada a {4} años {5}.',
@@ -1062,7 +1096,7 @@
         compararBoton: '➕ Compare', compararTip: 'Saves the financing in the fields as an option to compare with others (up to 4).',
         compararMaxTip: 'There are already 4 saved options: remove one to add another.',
         compararDup: 'That financing is already in the comparison.', compararAnadida: 'Added as option {0}.',
-        compararOpcionN: 'Option {0}', compararRenombrar: 'Double-click to rename',
+        compararOpcionN: 'Option {0}', compararRenombrar: 'Double-click to rename', compararLapiz: 'Rename',
         compararTitulo: 'Compare financing', compararUna: '1 financing option saved. Add another to compare.',
         compararQuitar: 'Remove this option', compararCargar: 'Load',
         compararCargarTip: 'Put this financing into the fields of the Financing card.',
@@ -1070,8 +1104,6 @@
         compCuota: 'Total monthly instalment', compCajaGen: 'Cash, year 1 (generated)',
         compCajaGenTip: 'The cash generated in the first full year. With accelerated repayment it never reaches your pocket: it goes to pay debt down early.',
         compAnosDeuda: 'Years until debt-free', compIntereses: 'Interest paid over the horizon',
-        compGanancia: 'Net gain at year {0}',
-        compGananciaTip: 'Property less debt, plus accumulated cash, less everything you put in yourself\n(initial cash and top-ups). It is what you have gained on paper, without selling.\n\nNet worth alone does not compare financing options: by that year the debt may be\npaid off in all of them and it would come out the same.',
         compNomHip: 'Mortgage {0}% · {1} y · {2}%', compNomPre: '+ loan {0} at {1}%', compNomPreSolo: 'Loan {0} at {1}%',
         compNomApertura: 'fee {0}%', compNomAcel: 'accelerated', compNomHipAcel: 'mortgage accelerated', compNomPreAcel: 'loan accelerated', compNomSin: 'No financing',
         compartirTextoAcel: '{0} flat rented at {1}/month: gross yield {2}, cash flow {3}/month ({6}/month goes to pay down debt), annualised over {4} years {5}.',
@@ -1625,7 +1657,98 @@
         sel.innerHTML = Array.from({ length: horizonte }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
       }
       sel.value = elegido;
+      sincronizarAnoRef();
       return elegido;
+    }
+
+    // Desplegable del año: botón + lista propios sobre el <select>, que sigue siendo la fuente de
+    // verdad (el guardado, el enlace y las pruebas lo leen). Elegir un año escribe en el select y
+    // dispara su 'change', que es lo que ya recalcula y guarda.
+    const anoRefLista = () => el('anoRefLista');
+    function sincronizarAnoRef() {
+      const sel = el('anoRef'), btn = el('anoRefBtn');
+      if (!btn) return;
+      el('anoRefTxt').textContent = sel.value;
+      const etq = `${t('kpiAnualizada')} ${sel.value} ${t('kpiAnualizadaAnos')}`;
+      btn.setAttribute('aria-label', etq);
+      anoRefLista().setAttribute('aria-label', etq);
+      // Si la lista está abierta y el horizonte cambia, se rehace; cerrada, se hace al abrir.
+      if (!anoRefLista().hidden) pintarListaAnoRef();
+    }
+    function pintarListaAnoRef() {
+      const sel = el('anoRef'), ul = anoRefLista();
+      ul.innerHTML = Array.from(sel.options, o => `<li role="option" id="anoRefOp${o.value}" data-v="${o.value}" aria-selected="${o.value === sel.value}">${o.value}</li>`).join('');
+      marcarActivaAnoRef(ul.querySelector('[aria-selected="true"]'));
+    }
+    // La opción «activa» es la que resalta el teclado o el ratón; la elegida lleva aria-selected.
+    function marcarActivaAnoRef(li, centrar) {
+      const ul = anoRefLista();
+      ul.querySelectorAll('.activa').forEach(x => x.classList.remove('activa'));
+      if (!li) return;
+      li.classList.add('activa');
+      ul.setAttribute('aria-activedescendant', li.id);
+      // Dentro del alcance visible sin tocar el scroll de la página.
+      const arriba = li.offsetTop, abajo = arriba + li.offsetHeight;
+      if (centrar) ul.scrollTop = arriba - (ul.clientHeight - li.offsetHeight) / 2;
+      else if (arriba < ul.scrollTop) ul.scrollTop = arriba;
+      else if (abajo > ul.scrollTop + ul.clientHeight) ul.scrollTop = abajo - ul.clientHeight;
+    }
+    function abrirAnoRef() {
+      const btn = el('anoRefBtn'), ul = anoRefLista();
+      pintarListaAnoRef();
+      ul.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+      // Fija (no absoluta) para que ninguna tarjeta con overflow la recorte; se coloca bajo el
+      // botón, o encima si abajo no cabe.
+      const r = btn.getBoundingClientRect();
+      const alto = Math.min(ul.scrollHeight, ul.offsetHeight);
+      const cabeAbajo = window.innerHeight - r.bottom - 8 >= alto || r.top < alto + 8;
+      ul.style.left = Math.max(4, Math.min(r.left, window.innerWidth - ul.offsetWidth - 4)) + 'px';
+      ul.style.top = (cabeAbajo ? r.bottom + 4 : r.top - alto - 4) + 'px';
+      marcarActivaAnoRef(ul.querySelector('[aria-selected="true"]'), true);
+      ul.focus({ preventScroll: true });
+    }
+    function cerrarAnoRef(devolverFoco) {
+      const ul = anoRefLista();
+      if (ul.hidden) return;
+      ul.hidden = true;
+      el('anoRefBtn').setAttribute('aria-expanded', 'false');
+      if (devolverFoco) el('anoRefBtn').focus({ preventScroll: true });
+    }
+    function elegirAnoRef(v) {
+      const sel = el('anoRef');
+      cerrarAnoRef(true);
+      if (sel.value === String(v)) return;
+      sel.value = v;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    function iniciarAnoRef() {
+      const btn = el('anoRefBtn'), ul = anoRefLista(), sel = el('anoRef');
+      btn.addEventListener('click', () => { if (ul.hidden) abrirAnoRef(); else cerrarAnoRef(true); });
+      btn.addEventListener('keydown', (ev) => {
+        if (['ArrowDown', 'ArrowUp'].includes(ev.key)) { ev.preventDefault(); if (ul.hidden) abrirAnoRef(); }
+      });
+      ul.addEventListener('click', (ev) => { const li = ev.target.closest('li'); if (li) elegirAnoRef(li.dataset.v); });
+      ul.addEventListener('mousemove', (ev) => { const li = ev.target.closest('li'); if (li && !li.classList.contains('activa')) marcarActivaAnoRef(li); });
+      ul.addEventListener('keydown', (ev) => {
+        const items = [...ul.children], i = items.findIndex(x => x.classList.contains('activa'));
+        const ir = (n) => { ev.preventDefault(); marcarActivaAnoRef(items[Math.max(0, Math.min(items.length - 1, n))]); };
+        if (ev.key === 'ArrowDown') ir(i + 1);
+        else if (ev.key === 'ArrowUp') ir(i - 1);
+        else if (ev.key === 'PageDown') ir(i + 5);
+        else if (ev.key === 'PageUp') ir(i - 5);
+        else if (ev.key === 'Home') ir(0);
+        else if (ev.key === 'End') ir(items.length - 1);
+        else if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); if (items[i]) elegirAnoRef(items[i].dataset.v); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); cerrarAnoRef(true); }
+        else if (ev.key === 'Tab') cerrarAnoRef(false);
+      });
+      // Clic fuera, desplazamiento de la página o cambio de tamaño: se cierra (una lista fija se
+      // quedaría colgada de donde estaba el botón).
+      document.addEventListener('mousedown', (ev) => { if (!ul.hidden && !ul.contains(ev.target) && !btn.contains(ev.target)) cerrarAnoRef(false); });
+      window.addEventListener('scroll', () => cerrarAnoRef(false), { passive: true });
+      window.addEventListener('resize', () => cerrarAnoRef(false));
+      sel.addEventListener('change', sincronizarAnoRef);
     }
 
     // La oferta se escribe en euros o como descuento sobre el anunciado, y al tocar una se ajusta
@@ -2753,7 +2876,7 @@
         cajaGenerada: cj.generada, cajaQueda: cj.queda, acelera: cj.amortiza > 0,
         roce: d.roceSinReval, anualizada: d.filaRef.anualizada, tirVenta: d.filaRef.tirVenta,
         anosDeuda: !hayDeuda ? 0 : d.sinDeuda ? d.sinDeuda.n : Infinity,
-        intereses: d.reparto.intereses, ganancia: d.filaRef.ganancia,
+        intereses: d.reparto.intereses,
         horizonte: d.horizonte, anoRef: d.anoRef
       };
     }
@@ -2770,18 +2893,19 @@
       { id: 'tirVenta', etq: (m) => tf('rentTirVenta', m.anoRef), tip: () => t('rentTirVentaTip'), v: m => m.tirVenta, f: v => fmtPct(v, 1), mejor: 'max', r: v => Math.round(v * 1000) },
       { id: 'anosDeuda', etq: () => t('compAnosDeuda'), v: m => m.anosDeuda, mejor: 'min', r: v => v,
         f: (v, m) => v === 0 ? '—' : isFinite(v) ? `${v} ${t('kpiAnos')}` : `> ${m.horizonte} ${t('kpiAnos')}` },
-      { id: 'intereses', etq: () => t('compIntereses'), v: m => m.intereses, f: fmt, mejor: 'min', r: Math.round },
-      { id: 'ganancia', etq: (m) => tf('compGanancia', m.anoRef), tip: () => t('compGananciaTip'), v: m => m.ganancia, f: fmt, mejor: 'max', r: Math.round }
+      { id: 'intereses', etq: () => t('compIntereses'), v: m => m.intereses, f: fmt, mejor: 'min', r: Math.round }
     ];
 
     // Escapa también > y ': el nombre de una opción lo escribe el usuario y acaba en un innerHTML.
     const escapar = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const MAX_NOMBRE = 30;
-    // Lo que se enseña como nombre: el que puso el usuario o «Opción N», con N = la posición de
-    // la letra libre más baja (A=1 ... D=4), igual que antes se repartían las letras.
-    const nombreOpcion = (o) => o.nombre || tf('compararOpcionN', LETRAS_OPCION.indexOf(o.letra) + 1);
+    // Lo que se enseña como nombre: el que puso el usuario o «Opción N», con N = la posición en la
+    // lista. La letra es sólo el id interno: al quitar una opción las demás se renumeran solas,
+    // porque el número no se guarda, se deduce de dónde está cada una. Las renombradas no cambian.
+    const nombreOpcion = (o) => o.nombre || tf('compararOpcionN', OPCIONES.indexOf(o) + 1);
     const limpiarNombre = (v) => typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, MAX_NOMBRE) : '';
 
+    const LAPIZ_SVG = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 2.5 13.5 5 5.5 13 2.5 13.5 3 10.5z"/></svg>';
     let ultimaTabla = null;
     function pintarComparacion() {
       const boton = el('btnComparar');
@@ -2812,7 +2936,7 @@
       const cabeceras = OPCIONES.map(o => {
         const piezas = piezasOpcion(o);
         return `<th scope="col" data-opcion="${o.letra}">
-          <div class="cmp-cab"><span class="cmp-letra" data-renombrar="${o.letra}" title="${escapar(nombreOpcion(o) + ' · ' + t('compararRenombrar'))}">${escapar(nombreOpcion(o))}</span><span class="flex gap-1">
+          <div class="cmp-cab"><span class="cmp-letra" data-renombrar="${o.letra}" title="${escapar(nombreOpcion(o) + ' · ' + t('compararRenombrar'))}"><span class="cmp-letra-txt">${escapar(nombreOpcion(o))}</span><button type="button" class="cmp-lapiz" data-lapiz title="${t('compararLapiz')}" aria-label="${t('compararLapiz')}">${LAPIZ_SVG}</button></span><span class="flex gap-1">
             <button type="button" class="cmp-btn" data-cargar="${o.letra}" title="${t('compararCargarTip')}">${t('compararCargar')}</button>
             <button type="button" class="cmp-btn" data-quitar="${o.letra}" title="${t('compararQuitar')}" aria-label="${t('compararQuitar')}">✕</button></span></div>
           <div class="cmp-nombre" title="${escapar(piezas.join(' '))}">${piezas.map(p => `<span>${escapar(p)}</span>`).join('')}</div></th>`;
@@ -2844,7 +2968,8 @@
       if (ultimaTabla !== html) { const sc = caja.firstElementChild ? caja.firstElementChild.scrollLeft : 0; caja.innerHTML = html; ultimaTabla = html; caja.firstElementChild.scrollLeft = sc; }
     }
 
-    // Doble clic sobre el nombre: se convierte en un campo en su sitio, con el texto seleccionado.
+    // Doble clic sobre el nombre, o clic (o Enter) en el lápiz: se convierte en un campo en su sitio,
+    // con el texto seleccionado.
     // Enter o salir del campo guardan; Escape cancela; vacío vuelve al nombre por defecto.
     function renombrarOpcion(etiqueta) {
       const o = OPCIONES.find(x => x.letra === etiqueta.dataset.renombrar);
@@ -2878,11 +3003,12 @@
     // recalcula todo, la tabla se vuelve a pintar entre el pulsar y el soltar, y el clic se
     // perdía sobre un botón que ya no existía. Con teclado (clic sin ratón, detail 0) sí vale el clic.
     function accionComparar(ev) {
-      const boton = ev.target.closest && ev.target.closest('button[data-quitar], button[data-cargar]');
+      const boton = ev.target.closest && ev.target.closest('button[data-quitar], button[data-cargar], button[data-lapiz]');
       if (!boton) return;
       if (ev.type === 'mousedown') { if (ev.button !== 0) return; ev.preventDefault(); }
       else if (ev.detail !== 0) return;
-      if (boton.dataset.quitar) quitarComparacion(boton.dataset.quitar); else cargarOpcion(boton.dataset.cargar);
+      if (boton.dataset.lapiz !== undefined) renombrarOpcion(boton.closest('[data-renombrar]'));
+      else if (boton.dataset.quitar) quitarComparacion(boton.dataset.quitar); else cargarOpcion(boton.dataset.cargar);
     }
 
     function anadirComparacion() {
@@ -2891,9 +3017,10 @@
       const clave = claveFinanciacion(f);
       if (OPCIONES.some(o => claveFinanciacion(o) === clave)) { avisarComparar(t('compararDup')); return; }
       const letra = LETRAS_OPCION.find(l => !OPCIONES.some(o => o.letra === l));
+      // Siempre al final: el orden es el de creación, no el de la letra (si se quita la B y se
+      // añade otra, ésta recoge la letra B pero va la última).
       OPCIONES.push({ letra, nombre: '', ...f });
-      OPCIONES.sort((a, b) => a.letra.localeCompare(b.letra));
-      avisarComparar(tf('compararAnadida', LETRAS_OPCION.indexOf(letra) + 1));
+      avisarComparar(tf('compararAnadida', OPCIONES.length));
       render();
     }
 
@@ -2925,7 +3052,8 @@
           usarPrestamo: o.usarPrestamo === true, importePrestamo: n(o.importePrestamo),
           plazoPrestamo: Math.max(n(o.plazoPrestamo), 1), tipoPrestamo: n(o.tipoPrestamo), aperturaPre: Math.min(n(o.aperturaPre), 100), prestamoAcelerado: o.prestamoAcelerado === true });
       }
-      return limpias.sort((a, b) => a.letra.localeCompare(b.letra));
+      // Se conserva el orden guardado: es el que ve el usuario.
+      return limpias;
     }
 
     // Caja plegable de métricas (solo móvil; en escritorio el botón está oculto y la rejilla siempre
@@ -3019,6 +3147,54 @@
     };
     const claveCorta = (id) => CLAVES_CORTAS[id] ?? id;
 
+    // Además de los campos, el enlace lleva el tema («tema=d» u «l») y la comparación («opc=»).
+    // Son claves de tres y cuatro letras a propósito: ninguna clave corta ni antigua de un campo
+    // las pisa, ni las que se añadan después (de una o dos letras).
+    const CLAVE_TEMA = 'tema', CLAVE_OPCIONES = 'opc';
+    // Financiación de partida de una opción: la del escenario de ejemplo, que es la que tienen los
+    // campos al arrancar. Una opción viaja sólo con lo que difiere de ella.
+    let FIN_BASE = {};
+
+    // Codificación compacta de la comparación: opciones separadas por «*»; en cada una, campos
+    // separados por «_»; cada campo es «clave-valor». La primera pieza es la letra (el id) y «N» el
+    // nombre, que sólo viaja si el usuario lo cambió. El resto sale de las claves de
+    // leerFinanciacion() con su clave corta, así que un campo nuevo de la financiación viaja sin
+    // tocar nada aquí. Booleanos como 1 y 0. En los nombres se escapa lo que sirve de separador
+    // con «-»: «--» es «-», «-u» es «_» y «-s» es «*».
+    // (Las claves usadas son letras, y «*», «_» y «-» son de las pocas cosas que
+    // URLSearchParams no convierte en %xx: por eso éstos y no otros.)
+    const escaparNombre = (n) => n.replace(/-/g, '--').replace(/_/g, '-u').replace(/\*/g, '-s');
+    const desescaparNombre = (n) => n.replace(/--|-u|-s/g, m => m === '--' ? '-' : m === '-u' ? '_' : '*');
+    function codificarOpciones(lista) {
+      return lista.map(o => {
+        const partes = [o.letra];
+        if (o.nombre) partes.push('N-' + escaparNombre(o.nombre));
+        Object.keys(FIN_BASE).forEach(id => {
+          if (o[id] === undefined || o[id] === FIN_BASE[id]) return;
+          partes.push(claveCorta(id) + '-' + (typeof o[id] === 'boolean' ? (o[id] ? '1' : '0') : String(o[id])));
+        });
+        return partes.join('_');
+      }).join('*');
+    }
+    function decodificarOpciones(texto) {
+      const porClave = {};
+      Object.keys(FIN_BASE).forEach(id => { porClave[claveCorta(id)] = id; });
+      return String(texto).slice(0, 2000).split('*').slice(0, MAX_OPCIONES).map(trozo => {
+        const [letra, ...campos] = trozo.split('_');
+        const o = { ...FIN_BASE, letra, nombre: '' };
+        for (const c of campos) {
+          const i = c.indexOf('-');
+          if (i < 1) continue;
+          const k = c.slice(0, i), v = c.slice(i + 1);
+          if (k === 'N') { o.nombre = desescaparNombre(v); continue; }
+          const id = porClave[k];
+          if (id === undefined) continue;
+          o[id] = typeof FIN_BASE[id] === 'boolean' ? v === '1' : Number(v);
+        }
+        return o;
+      });
+    }
+
     // Los cálculos viajan en la propia dirección, como parámetros, y solo los que difieren del
     // escenario de ejemplo: así el enlace es corto y legible. No pasa por ningún servidor.
     function enlaceConCalculos() {
@@ -3030,6 +3206,8 @@
       const valor = (v) => /\d/.test(String(v)) ? String(parseNum(v)) : String(v);
       CAMPOS.forEach(id => { if (valor(actual[id]) !== valor(DEFECTOS[id]) && !estimada(id)) params.set(claveCorta(id), valor(actual[id]).slice(0, 40)); });
       CASILLAS.forEach(id => { if (actual[id] !== DEFECTOS[id]) params.set(claveCorta(id), actual[id] ? '1' : '0'); });
+      params.set(CLAVE_TEMA, document.documentElement.getAttribute('data-theme') === 'dark' ? 'd' : 'l');
+      if (OPCIONES.length) params.set(CLAVE_OPCIONES, codificarOpciones(OPCIONES));
       const q = params.toString();
       return URL_HERRAMIENTA + (q ? '?' + q : '');
     }
@@ -3042,8 +3220,15 @@
       const clave = (id) => [claveCorta(id), CLAVES_ANTIGUAS[id], id].find(k => k && params.has(k)) ?? null;
       CAMPOS.forEach(id => { const k = clave(id); if (k) estado[id] = params.get(k).slice(0, 40); });
       CASILLAS.forEach(id => { const k = clave(id); if (k) estado[id] = params.get(k) === '1'; });
-      if (!Object.keys(estado).length) return;
-      aplicarEstado({ ...DEFECTOS, ...estado });
+      // Un enlace sin tema ni comparación (los de antes) no toca ni lo uno ni lo otro.
+      const tema = params.get(CLAVE_TEMA);
+      const hayOpciones = params.has(CLAVE_OPCIONES);
+      if (!Object.keys(estado).length && !tema && !hayOpciones) return;
+      if (tema === 'd' || tema === 'l') applyTheme(tema === 'd' ? 'dark' : 'light');
+      if (Object.keys(estado).length) aplicarEstado({ ...DEFECTOS, ...estado });
+      // La comparación del enlace sustituye a la guardada, pasando por el mismo filtro que lo
+      // guardado en el navegador: lo que no tenga la forma esperada se descarta.
+      if (hayOpciones) OPCIONES = leerOpciones(decodificarOpciones(params.get(CLAVE_OPCIONES)));
       // Se limpia la dirección: si no, recargar la página volvería a pisar lo que se cambie después.
       try { history.replaceState(null, '', location.pathname); } catch (e) {}
     }
@@ -3084,10 +3269,12 @@
       let idioma = 'es';
       try { if (localStorage.getItem(LANG_KEY) === 'en') idioma = 'en'; } catch (e) {}
       rellenarCcaa();
+      iniciarAnoRef();
       el('ccaa').value = 'madrid';
       rellenarAnoRef(Math.max(Math.round(num('horizonte')), 1));
 
       Object.assign(DEFECTOS, leerEstado());
+      FIN_BASE = leerFinanciacion();
 
       let tema = 'light';
       try { if (localStorage.getItem(THEME_KEY) === 'dark') tema = 'dark'; } catch (e) {}

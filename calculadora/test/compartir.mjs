@@ -86,6 +86,52 @@ check('y las de varias letras antiguas llegan a su campo', await viejo.evaluate(
 const p3 = await abrir('?alquiler=900&inventado=1&ccaa=%3Cimg%3E');
 check('las claves que no existen se ignoran', await p3.evaluate(() => parseNum(document.getElementById('alquiler').value)) === 900);
 
+// --- el enlace lleva también el tema y la comparación ---
+await p.evaluate(() => { localStorage.clear(); resetDefaults(); applyTheme('light'); });
+const fijarYTab = async (pg, id, v) => { await pg.fill('#' + id, String(v)); await pg.press('#' + id, 'Tab'); };
+check('sin comparación el enlace lleva el tema y ninguna «opc»', await p.evaluate(() => { const u = enlaceConCalculos(); return /[?&]tema=l/.test(u) && !/opc=/.test(u); }));
+await p.evaluate(() => applyTheme('dark'));
+check('  con el tema oscuro lleva tema=d', await p.evaluate(() => /[?&]tema=d/.test(enlaceConCalculos())));
+const pOsc = await abrir('?tema=d');
+check('  y quien abre un enlace oscuro lo ve oscuro', await pOsc.evaluate(() => document.documentElement.dataset.theme === 'dark'));
+await pOsc.evaluate(() => applyTheme('dark'));
+const pClaro = await abrir('?tema=l');
+check('  y uno claro lo ve claro aunque tenga guardado el oscuro', await pClaro.evaluate(() => document.documentElement.dataset.theme === 'light'));
+// Tres opciones: A (70 %), B con préstamo, C acelerada; B se renombra y luego se quita la A y se añade otra.
+await p.evaluate(() => { resetDefaults(); });
+await fijarYTab(p, 'pctFinanciado', 70); await p.click('#btnComparar');
+await p.click('#lockPrestamo').catch(() => {});
+await p.evaluate(() => { document.getElementById('usarPrestamo').checked = true; });
+await fijarYTab(p, 'importePrestamo', 15000); await fijarYTab(p, 'pctFinanciado', 80); await p.click('#btnComparar');
+await p.evaluate(() => { document.getElementById('usarPrestamo').checked = false; document.getElementById('usarPrestamo').dispatchEvent(new Event('change')); });
+await fijarYTab(p, 'pctFinanciado', 60); await p.check('#hipotecaAcelerada'); await p.click('#btnComparar');
+await p.evaluate(() => { OPCIONES[1].nombre = 'Banco_Norte*80-%  ñ&#'; ultimaTabla = null; render(); });
+await p.click('[data-quitar="A"]');
+await p.evaluate(() => { document.getElementById('hipotecaAcelerada').checked = false; });
+await fijarYTab(p, 'pctFinanciado', 50); await p.click('#btnComparar');
+const orden = await p.evaluate(() => OPCIONES.map(o => o.letra + ':' + (o.nombre || '·')).join(' '));
+check('la comparación de partida: 3 opciones, una renombrada, la nueva al final', OPCIONES_OK(orden), orden);
+function OPCIONES_OK(o) { return /^B:Banco_Norte\*80-%  ñ&# C:· [AD]:·$/.test(o); }
+const enl = await p.evaluate(() => enlaceConCalculos());
+const opc = new URL(enl).searchParams.get('opc');
+const largoJson = await p.evaluate(() => encodeURIComponent(JSON.stringify(OPCIONES)).length);
+check('  el enlace lleva «opc=» y es mucho más corto que el JSON', !!opc && enl.length - enl.indexOf('opc=') < largoJson / 3, `${enl.length - enl.indexOf('opc=')} vs ${largoJson}`);
+check('  y sólo lleva de cada opción lo que difiere del ejemplo', opc.split('*').every(t => t.split('_').length <= 6) && !/usarHipoteca|pctFinanciado/.test(enl), opc);
+const pOpc = await abrir(enl.slice(enl.indexOf('?')));
+// Se comparan con las claves ordenadas: leerOpciones las construye en su propio orden y eso no
+// es una diferencia que vea nadie.
+const mismas = await Promise.all([p, pOpc].map(x => x.evaluate(() => JSON.stringify(OPCIONES.map(o => Object.fromEntries(Object.entries(o).sort()))))));
+check('  quien lo abre recibe las mismas opciones, con nombres y en el mismo orden', mismas[0] === mismas[1] && JSON.parse(mismas[1]).length === 3, mismas[1].slice(0, 200));
+check('  y la tabla se pinta con ellas, sin errores', await pOpc.evaluate(() => document.querySelectorAll('#tblComparar thead th[data-opcion]').length === 3) && pOpc.errs.length === 0, pOpc.errs[0] ?? '');
+await pOpc.waitForTimeout(700);
+check('  y quedan guardadas en su navegador', await pOpc.evaluate(() => JSON.parse(localStorage.getItem('calc_pisos_v2')).comparar.length === 3));
+// Sin claves nuevas el enlace no borra la comparación del que lo abre; con basura se ignora.
+await pOpc.goto(PAGINA + '?alquiler=900'); await pOpc.waitForTimeout(500);
+check('un enlace de los de antes (sin «opc») no borra las opciones guardadas', await pOpc.evaluate(() => OPCIONES.length === 3 && parseNum(document.getElementById('alquiler').value) === 900));
+await pOpc.goto(PAGINA + '?opc=Z_f-abc*A_zz-1_f-x*'); await pOpc.waitForTimeout(500);
+check('una «opc» manipulada se filtra: sólo queda lo válido y no rompe nada', await pOpc.evaluate(() => OPCIONES.every(o => 'ABCD'.includes(o.letra) && Number.isFinite(o.pctFinanciado))) && pOpc.errs.length === 0, pOpc.errs[0] ?? '');
+await p.evaluate(() => { localStorage.clear(); applyTheme('light'); });
+
 // --- el texto que acompaña al enlace ---
 await p.evaluate(() => resetDefaults());
 const compartido = await p.evaluate(async () => {

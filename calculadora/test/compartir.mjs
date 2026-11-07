@@ -56,7 +56,11 @@ check('toda entrada tiene clave corta de 1 o 2 letras', tabla.ids.every(id => /^
 // Una letra siempre que quepa: las 26 letras se reparten entre los campos más tocados.
 check('hay 26 claves de una letra (todas las que caben)', cortas.filter(k => k.length === 1).length === 26, String(cortas.filter(k => k.length === 1).length));
 const antiguas = await p.evaluate(() => CLAVES_ANTIGUAS);
-check('las claves antiguas cubren todos los ids', tabla.ids.every(id => antiguas[id]));
+// Los campos nacidos después de la primera versión no tienen clave antigua: nunca hubo un enlace
+// que las llevara. Se lista cada uno para que añadir otro sea una decisión y no un descuido.
+const POSTERIORES = ['aperturaHip', 'aperturaPre'];
+check('las claves antiguas cubren todos los ids anteriores a ellas', tabla.ids.filter(id => !POSTERIORES.includes(id)).every(id => antiguas[id]));
+check('y los campos posteriores no inventan una', POSTERIORES.every(id => !(id in antiguas)));
 const todasAnt = Object.values(antiguas);
 check('las antiguas no se repiten entre sí', new Set(todasAnt).size === todasAnt.length);
 check('ninguna nueva coincide con una antigua de otro campo', tabla.ids.every(id => !todasAnt.includes(tabla.t[id]) || antiguas[id] === tabla.t[id]));

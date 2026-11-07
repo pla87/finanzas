@@ -139,7 +139,7 @@ const cols = await p.evaluate(() => {
   return { i, j, n: hs.length, celdas: fila.cells.length, neto: fila.cells[i]?.textContent.trim(),
            tir: fila.cells[j]?.textContent.trim(), titulo: hs[i]?.title };
 });
-check('las dos columnas están al final', cols.i > 0 && cols.j === cols.i + 1, `${cols.i} y ${cols.j} de ${cols.n}`);
+check('las dos columnas están al final', cols.i > 0 && cols.j > cols.i && cols.j === cols.n - 2, `${cols.i} y ${cols.j} de ${cols.n}`);
 check('cada fila tiene tantas celdas como cabeceras', cols.celdas === cols.n, `${cols.celdas} vs ${cols.n}`);
 check('con cifras dentro', /\d/.test(cols.neto) && /%/.test(cols.tir), `${cols.neto} · ${cols.tir}`);
 check('y su explicación en la cabecera', (cols.titulo || '').length > 60);

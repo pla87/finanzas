@@ -49,7 +49,7 @@ const col = await p.evaluate(() => {
   return { i, titulo: hs[i] ? hs[i].title : null, celda: fila.cells[i].textContent.trim(),
            anterior: fila.cells[i - 1].textContent.trim() };
 });
-check('la columna va junto al patrimonio nominal', col.i === 6, `columna ${col.i}`);
+check('la columna va junto al patrimonio nominal', col.i === 3, `columna ${col.i}`);
 check('la cabecera lleva su explicación', (col.titulo || '').length > 40, (col.titulo || '').slice(0, 40) + '…');
 check('y la cifra es menor que la nominal',
   parseNumES(col.celda) < parseNumES(col.anterior), `${col.anterior} → ${col.celda}`);
@@ -70,11 +70,10 @@ await p.selectOption('#anoRef', '5');
 await p.waitForTimeout(200);
 const a5 = await p.textContent('#kpiAnualizada');
 check('cambiar el año cambia la cifra', a5 !== a30, `${a30} → ${a5}`);
-check('coincide con la fila 5 de la tabla',
-  a5 === (await p.evaluate(() => {
-    const col = [...document.querySelectorAll('#proyeccionTab thead th')].findIndex(h => h.dataset.i18n === 'colRentab');
-    return document.querySelectorAll('#tblProyeccion tr')[4].cells[col].textContent.trim();
-  })), a5);
+// La tabla ya no enseña la anualizada sin vender (sólo la de vender y su versión real); la
+// tarjeta se contrasta con el motor, que es de donde sale la fila 5.
+check('coincide con la fila 5 del motor',
+  a5 === (await p.evaluate(() => fmtPct(calcular().filas[4].anualizada))), a5);
 check('la proyección no se recorta',
   (await p.evaluate(() => document.querySelectorAll('#tblProyeccion tr').length)) === 30);
 check('y el resumen mira el mismo año',

@@ -77,6 +77,7 @@ const montar = (p) => {
   set('pctFinanciado', (p.C4 - p.C11) / p.C4 * 100);
   set('plazoHipoteca', p.C15); set('tipoHipoteca', p.C16 * 100);
   set('hipotecaAcelerada', p.C19 === 'Sí' ? 'si' : 'no');
+  set('aperturaHip', (p.comHip || 0) * 100); set('aperturaPre', (p.comPre || 0) * 100);
   const gastosHoja = 0.1 * p.C4 + 1000 + p.C7 * (p.C8 === 'Sí' ? 1.21 : 1);
   const desembolsoHoja = p.C11 + gastosHoja + p.C10;
   const prestamo = Math.max(desembolsoHoja - p.C13, 0);
@@ -97,14 +98,14 @@ const montar = (p) => {
     const r = calcular();
     return {
       escalares: {
-        gastosCompra: r.gastosCompra, aportado: r.aportado,
+        gastosCompra: r.gastosCompra, aportado: r.aportado, comision: r.comisionApertura,
         cuotaHip: r.cuotaHip, cuotaPre: r.cuotaPre, gastosAnuales: r.gastosAnuales,
         amortizacion: r.amortizacion, impConPrestamo: r.regConPrestamo.impuestos,
         cajaConPrestamo: r.regConPrestamo.caja, impConHipoteca: r.regConHipoteca.impuestos,
         cajaConHipoteca: r.regConHipoteca.caja, impSinDeuda: r.regSinDeuda.impuestos,
         cajaSinDeuda: r.regSinDeuda.caja, costeTotal: r.costeTotal
       },
-      filas: r.filas.map(f => ({ n: f.n, hipIni: f.hipIni, hipFin: f.hipFin, preIni: f.preIni, preFin: f.preFin, patrimonio: f.patrimonio, cajaAno: f.cajaAno, aportacion: f.aportacion, cajaAcum: f.cajaAcum, anualizada: f.anualizada, gananciaFiscal: f.gananciaFiscal, impuestoVenta: f.impuestoVenta, netoVenta: f.netoVenta, tirVenta: f.tirVenta }))
+      filas: r.filas.map(f => ({ n: f.n, irpf: f.irpf, hipIni: f.hipIni, hipFin: f.hipFin, preIni: f.preIni, preFin: f.preFin, patrimonio: f.patrimonio, cajaAno: f.cajaAno, aportacion: f.aportacion, cajaAcum: f.cajaAcum, anualizada: f.anualizada, gananciaFiscal: f.gananciaFiscal, impuestoVenta: f.impuestoVenta, netoVenta: f.netoVenta, tirVenta: f.tirVenta }))
     };
   }, p);
 
@@ -114,7 +115,7 @@ const montar = (p) => {
     if (!cerca(web.escalares[k], v, 0.02)) { malos++; console.log(`  FALLO ${nombre} ${k}: py=${v} web=${web.escalares[k]}`); }
   }
   for (let i = 0; i < esc.salida.filas.length; i++) {
-    for (const k of ['hipIni', 'hipFin', 'preIni', 'preFin', 'patrimonio', 'cajaAno', 'aportacion', 'cajaAcum', 'anualizada', 'gananciaFiscal', 'impuestoVenta', 'netoVenta', 'tirVenta']) {
+    for (const k of ['irpf', 'hipIni', 'hipFin', 'preIni', 'preFin', 'patrimonio', 'cajaAno', 'aportacion', 'cajaAcum', 'anualizada', 'gananciaFiscal', 'impuestoVenta', 'netoVenta', 'tirVenta']) {
       if (!cerca(web.filas[i][k], esc.salida.filas[i][k], k.startsWith('tir') || k === 'anualizada' ? 1e-9 : 0.02)) {
         malos++;
         if (malos < 5) console.log(`  FALLO ${nombre} año ${i + 1} ${k}: py=${esc.salida.filas[i][k]} web=${web.filas[i][k]}`);

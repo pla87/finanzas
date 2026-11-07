@@ -61,6 +61,11 @@ def correr(p):
     F3 = C4 - C11
     H3 = C12 - C13
     tasa = 0.45*0.4
+    # Comisión de apertura: porcentaje del principal de cada deuda, pagado al firmar y por tanto
+    # parte de lo aportado. No entra en el coste ni en el valor de adquisición del piso.
+    com_hip = p.get('comHip', 0.0) * max(F3, 0)
+    com_pre = p.get('comPre', 0.0) * max(H3, 0)
+    com = com_hip + com_pre
 
     def desglosar(ini, fin, cuota_anual):
         """Interés y principal de un año, por diferencia de saldo."""
@@ -97,8 +102,8 @@ def correr(p):
     filas = []
     G_prev = I_prev = None
     L_prev = 0.0
-    aportado_acum = C13
-    flujos = [-C13]
+    aportado_acum = C13 + com
+    flujos = [-(C13 + com)]
     for n in range(1, p['horizonte']+1):
         # La caja acumulada se reparte en un solo sentido: primero la deuda con el tipo más
         # alto y sólo el sobrante contra la otra. Lo que no se gaste sigue acumulado.
@@ -123,7 +128,16 @@ def correr(p):
         cuota_pre = C23*12 if H > 0 else 0
         int_hip = desglosar(F, G, cuota_hip)[0]
         int_pre = desglosar(H, I, cuota_pre)[0]
-        K = regimen(int_hip + int_pre, cuota_hip + cuota_pre)[1] / (2 if n == 1 else 1)
+        imp_full, caja_full = regimen(int_hip + int_pre, cuota_hip + cuota_pre)
+        mitad = 0.5 if n == 1 else 1.0
+        K = caja_full * mitad
+        irpf = imp_full * mitad
+        if n == 1 and com > 0:
+            # La comisión se deduce entera en el primer año, contra la base de esa media
+            # anualidad, y nunca deja un impuesto negativo.
+            base_full = C30*12 - C32 - (int_hip + int_pre) - C33
+            irpf = max((base_full*mitad - com)*tasa, 0)
+            K += imp_full*mitad - irpf
         base = sobrante
         # Un año en pérdidas se cubre con la caja acumulada y, si no llega, con dinero nuevo.
         disponible = base + K
@@ -142,11 +156,11 @@ def correr(p):
         imp_venta = impuesto_ganancia(ganancia)
         neto = precio - gastos_venta - imp_venta - G - I + L
         MV = TIR(flujos[:n] + [flujos[n] + neto]) if C13 else None
-        filas.append({'n':n,'hipIni':F,'hipFin':G,'preIni':H,'preFin':I,'patrimonio':J,'cajaAno':K,
+        filas.append({'n':n,'irpf':irpf,'hipIni':F,'hipFin':G,'preIni':H,'preFin':I,'patrimonio':J,'cajaAno':K,
                       'aportacion':aportacion,'cajaAcum':L,'anualizada':M,'aportadoAcum':aportado_acum,
                       'gananciaFiscal':ganancia,'impuestoVenta':imp_venta,'netoVenta':neto,'tirVenta':MV})
         G_prev, I_prev, L_prev = G, I, L
-    return {'escalares':{'gastosCompra':C9,'desembolso':C12,'aportado':C13,'cuotaHip':C18,'cuotaPre':C23,
+    return {'escalares':{'gastosCompra':C9,'desembolso':C12,'aportado':C13 + com,'comision':com,'cuotaHip':C18,'cuotaPre':C23,
             'gastosAnuales':C32,'amortizacion':C33,'impConPrestamo':C36,'cajaConPrestamo':C37,
             'impConHipoteca':C38,'cajaConHipoteca':C39,'impSinDeuda':C40,'cajaSinDeuda':C41,
             'costeTotal':C4+C9+C10}, 'filas':filas}
@@ -163,6 +177,8 @@ ESC = {
  'pre_no_acel':   {'C13':100000,'C24':'No'},
  'barato':        {'C2':120000,'C3':120000,'C4':120000,'C11':20000,'C13':32000,'C30':900},
  'sin_entrada':   {'C11':0,'C13':51000},
+ # Comisión de apertura del 1 % en la hipoteca y del 2 % en el préstamo personal.
+ 'comision':      {'C13':100000,'comHip':0.01,'comPre':0.02},
 }
 res = {}
 for nombre, cambios in ESC.items():

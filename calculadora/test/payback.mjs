@@ -17,23 +17,27 @@ const celdas = await p.$$('#tblProyeccion td.cell-payback');
 check('hay una sola celda marcada', celdas.length === 1, String(celdas.length));
 const fila = await p.evaluate(() => {
   const c = document.querySelector('#tblProyeccion td.cell-payback');
-  return { ano: +c.closest('tr').children[0].textContent, col: [...c.parentNode.children].indexOf(c), titulo: c.title };
+  const cab = [...document.querySelectorAll('#proyeccionTab thead th')].findIndex(h => h.dataset.i18n === 'colCajaAcum');
+  return { ano: +c.closest('tr').children[0].textContent, col: [...c.parentNode.children].indexOf(c), cab, titulo: c.title };
 });
 check('está en el año del payback', fila.ano === dato.n, `año ${fila.ano}`);
-check('y en la columna de caja acumulada', fila.col === 9, `columna ${fila.col}`);
+check('y en la columna de caja acumulada', fila.col === fila.cab && fila.cab > 0, `columna ${fila.col}`);
 check('el globo nombra el importe y el año',
   fila.titulo.includes(String(dato.n)) && /\d{3}/.test(fila.titulo), fila.titulo.slice(0, 60) + '…');
 check('ya no queda el filete azul', (await p.$$('.row-payback')).length === 0);
 
-// Más verde que la fila sin deuda, y encima de ella cuando coinciden.
+// La celda se ve (tiene fondo propio) y los años sin deuda ya no pintan la fila entera de verde:
+// se marcan en la celda de deuda, así que el verde de la celda del payback es el único.
 const colores = await p.evaluate(() => {
   const c = document.querySelector('#tblProyeccion td.cell-payback');
-  const paid = document.querySelector('#tblProyeccion tr.row-paid td:nth-child(10)');
   const alfa = (s) => { const m = s.match(/rgba?\([^)]*?([\d.]+)\)/); return m && s.includes('rgba') ? +m[1] : 1; };
-  return { celda: getComputedStyle(c).backgroundColor, paid: paid ? getComputedStyle(paid).backgroundColor : null,
-           a: alfa(getComputedStyle(c).backgroundColor), b: paid ? alfa(getComputedStyle(paid).backgroundColor) : 0 };
+  const otra = document.querySelector('#tblProyeccion tr:first-child td:nth-child(3)');
+  return { celda: getComputedStyle(c).backgroundColor, a: alfa(getComputedStyle(c).backgroundColor),
+           filaPintada: !!document.querySelector('#tblProyeccion tr.row-paid'),
+           otra: alfa(getComputedStyle(otra).backgroundColor) };
 });
-check('más intenso que el verde de sin deuda', colores.a > colores.b, `${colores.celda} vs ${colores.paid}`);
+check('la celda del payback tiene fondo propio', colores.a > 0.05 && colores.a < 0.3, colores.celda);
+check('y la fila sin deuda ya no se rellena de verde', !colores.filaPintada && colores.otra === 0);
 
 // El mismo año sin deuda: la celda debe seguir ganando el fondo.
 await p.evaluate(() => { document.getElementById('hipotecaAcelerada').checked = true; render(); });
@@ -41,13 +45,10 @@ await p.waitForTimeout(200);
 const dobles = await p.evaluate(() => {
   const c = document.querySelector('#tblProyeccion td.cell-payback');
   if (!c) return null;
-  return { enFilaVerde: c.closest('tr').classList.contains('row-paid'), fondo: getComputedStyle(c).backgroundColor };
+  return { fondo: getComputedStyle(c).backgroundColor };
 });
-if (dobles && dobles.enFilaVerde) {
-  check('gana a la fila verde cuando coinciden', /0\.3/.test(dobles.fondo), dobles.fondo);
-} else {
-  console.log('info  el payback no cae en un año sin deuda en este escenario');
-}
+if (dobles) check('la celda conserva su fondo con la deuda acelerada', /0\.1/.test(dobles.fondo), dobles.fondo);
+else console.log('info  el payback no cae en este escenario');
 
 await p.evaluate(() => { document.getElementById('hipotecaAcelerada').checked = false; render(); });
 await p.waitForTimeout(200);

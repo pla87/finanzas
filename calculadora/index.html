@@ -59,18 +59,38 @@
     .val-pos { color: rgb(var(--brand-emerald)); }
     .val-neg { color: rgb(var(--brand-rose)); }
     .val-muted { color: rgb(var(--brand-textMuted)); }
-    .row-paid td { background-color: rgb(var(--brand-emerald) / 0.10); }
+    /* Tabla «Año a año». Los números van en el color normal del texto: el verde de todas las
+       cifras positivas lo volvía todo del mismo tono y no dejaba ver qué importaba. Rojo sólo
+       para lo negativo, y las columnas en euros de hoy, atenuadas y con un tinte azul muy leve
+       para que se vea de un vistazo que la inflación se come una parte. */
+    .tbl-ano th, .tbl-ano td { white-space: nowrap; }
+    .tbl-ano th { vertical-align: bottom; line-height: 1.25; }
+    .tbl-ano .col-hoy { color: rgb(var(--brand-textMuted)); background-color: rgb(var(--brand-accent) / 0.06); }
+    .tbl-ano .col-hoy.val-neg { color: rgb(var(--brand-rose)); }
+    .tbl-ano th.col-hoy { color: rgb(var(--brand-textMuted)); }
+    .tbl-ano th[data-sub]::after {
+      content: attr(data-sub); display: block; font-size: 10px; font-weight: 500;
+      color: rgb(var(--brand-accent)); text-transform: none; letter-spacing: 0;
+    }
+    /* El año se queda a la vista al desplazar la tabla en un móvil. El fondo es opaco porque
+       si no, las cifras que pasan por debajo se verían a través. */
+    .tbl-ano th:first-child, .tbl-ano td:first-child {
+      position: sticky; left: 0; z-index: 1; background-color: rgb(var(--brand-card)); padding-right: 12px;
+    }
+    /* Año sin deuda viva: sin relleno, que era un verde que competía con todo lo demás. Se marca
+       en la celda de deuda, y el año en que se salda lleva además su sello. */
+    .tbl-ano .fin-deuda { font-size: 10px; font-weight: 600; color: rgb(var(--brand-emerald)); }
     /* El año en que la caja acumulada alcanza a lo aportado. Se marca la celda de esa caja, que
        es la cifra de la que habla, y no la fila entera: antes era un filete azul en la primera
-       columna que parecía un cursor perdido junto al número del año. Va después de .row-paid
-       para ganarle el fondo cuando el año además ya no tiene deuda. */
+       columna que parecía un cursor perdido junto al número del año. Va después de las
+       reglas de fila para ganarles el fondo. */
     td.cell-payback {
-      background-color: rgb(var(--brand-emerald) / 0.32);
-      box-shadow: inset 0 0 0 1px rgb(var(--brand-emerald) / 0.55);
+      background-color: rgb(var(--brand-emerald) / 0.16);
+      box-shadow: inset 0 0 0 1px rgb(var(--brand-emerald) / 0.45);
       font-weight: 700;
     }
     /* Un año que no se paga solo y hay que cubrir del bolsillo. */
-    .row-aporta td { background-color: rgb(var(--brand-rose) / 0.08); }
+    .row-aporta td { background-image: linear-gradient(rgb(var(--brand-rose) / 0.06), rgb(var(--brand-rose) / 0.06)); }
     .cell-now { outline: 2px solid rgb(var(--brand-accent)); outline-offset: -2px; font-weight: 700; }
     .y-bad { background-color: rgb(var(--brand-rose) / 0.16); }
     .y-low { background-color: rgb(var(--brand-amber) / 0.16); }
@@ -441,6 +461,10 @@
             <label for="tipoHipoteca" data-i18n="tipoInteres">Tipo de interés</label>
             <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoHipoteca" value="2,80" data-dec="2" class="campo"></div>
           </div>
+          <div class="fila">
+            <label for="aperturaHip" class="tooltip-help"><span data-i18n="apertura">Comisión apertura</span> <span id="outAperturaHip" class="empty:hidden opacity-70"></span></label>
+            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="aperturaHip" value="0,00" data-dec="2" class="campo"></div>
+          </div>
           <!-- Principal, cuota y el tipo al que la caja del primer año se queda en cero, en una sola
                caja. Ese tipo es el margen ante una subida: no hace falta simular una hipoteca
                variable para saber dónde está la raya. -->
@@ -471,6 +495,10 @@
           <div class="fila">
             <div class="etq-doble"><label for="tipoPrestamo" id="lblTipoPrestamo" data-i18n="tipoInteres">Tipo de interés</label><span id="altoPrestamo" class="hidden val-neg font-bold">(<span data-i18n="alto">ALTO</span>)</span></div>
             <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoPrestamo" value="9,00" data-dec="2" class="campo"></div>
+          </div>
+          <div class="fila">
+            <label for="aperturaPre" class="tooltip-help"><span data-i18n="apertura">Comisión apertura</span> <span id="outAperturaPre" class="empty:hidden opacity-70"></span></label>
+            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="aperturaPre" value="0,00" data-dec="2" class="campo"></div>
           </div>
           <div class="salida"><span data-i18n="cuotaMensual">Cuota mensual</span><span id="outCuotaPrestamo">--</span></div>
         </div>
@@ -608,24 +636,9 @@
           <p class="text-[11px] text-brand-textMuted" data-i18n="leyendaTabla">Fondo verde: sin deuda viva. Verde intenso en la caja acumulada: el año en que recuperas lo aportado.</p>
         </div>
         <div class="overflow-x-auto scrollbar-thin">
-          <table class="w-full text-xs num">
-            <thead>
-              <tr class="text-brand-textMuted border-b border-brand-border text-left">
-                <th class="py-2 pr-3 font-semibold" data-i18n="colAno">Año</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colHipIni" data-i18n-title="colHipIniTip">Hipoteca inicial</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colHipFin" data-i18n-title="colHipFinTip">Hipoteca final</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colPreIni" data-i18n-title="colPreIniTip">Préstamo inicial</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colPreFin" data-i18n-title="colPreFinTip">Préstamo final</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colPatrimonio" data-i18n-title="colPatrimonioTip">Patrimonio neto</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colPatrimonioReal" data-i18n-title="colPatrimonioRealTip">Patrimonio de hoy</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colCajaAno" data-i18n-title="colCajaAnoTip">Caja del año</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colAportacion" data-i18n-title="colAportacionTip">Aportación extra</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colCajaAcum" data-i18n-title="colCajaAcumTip">Caja acumulada</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colRentab" data-i18n-title="colRentabTip">Rentab. anualizada</th>
-                <th class="py-2 px-3 font-semibold text-right tooltip-help" data-i18n="colNetoVenta" data-i18n-title="colNetoVentaTip">Neto si vendes</th>
-                <th class="py-2 pl-3 font-semibold text-right tooltip-help" data-i18n="colTirVenta" data-i18n-title="colTirVentaTip">Anualizada vendiendo</th>
-              </tr>
-            </thead>
+          <table class="w-full text-xs num tbl-ano">
+            <!-- La cabecera la pinta renderProyeccion: la columna de aportación sólo existe si hay alguna. -->
+            <thead id="theadProyeccion"></thead>
             <tbody id="tblProyeccion" class="divide-y divide-brand-border"></tbody>
           </table>
         </div>
@@ -835,7 +848,7 @@
         compGanancia: 'Ganancia neta al año {0}',
         compGananciaTip: 'Piso menos deuda, más la caja acumulada, menos todo lo que has puesto de tu bolsillo\n(liquidez inicial y aportaciones). Es lo que has ganado sobre el papel, sin vender.\n\nEl patrimonio a secas no sirve para comparar financiaciones: a ese año la deuda puede\nestar pagada en todas y saldría igual.',
         compNomHip: 'Hipoteca {0} % · {1} a · {2} %', compNomPre: '+ préstamo {0} al {1} %', compNomPreSolo: 'Préstamo {0} al {1} %',
-        compNomAcel: 'acelerada', compNomHipAcel: 'hipoteca acelerada', compNomPreAcel: 'préstamo acelerado', compNomSin: 'Sin financiación',
+        compNomApertura: 'apertura {0} %', compNomAcel: 'acelerada', compNomHipAcel: 'hipoteca acelerada', compNomPreAcel: 'préstamo acelerado', compNomSin: 'Sin financiación',
         compartirTextoAcel: 'Piso de {0} alquilado a {1}/mes: rentabilidad bruta {2}, caja {3}/mes ({6}/mes van a amortizar deuda), anualizada a {4} años {5}.',
         kpiDeuda: 'FIN DE DEUDA',
         kpiDeudaTip: 'Año en el que se cancela toda la deuda: hipoteca y préstamo personal.\nCon amortización acelerada, la caja acumulada se destina a reducir principal y se adelanta.',
@@ -872,13 +885,15 @@
         pctFinanciado: 'Porcentaje financiado', pctFinanciadoTip: 'Parte del precio del piso que cubre la hipoteca. Los gastos de compra no se financian.',
         importePrestamo: 'Importe', importePrestamoTip: 'Tope: lo que quede por cubrir del coste total una vez aplicada la hipoteca.',
         plazo: 'Plazo', tipoInteres: 'Tipo de interés', aceleradaCorta: 'amort. acelerada',
+        apertura: 'Comisión apertura',
+        aperturaTip: 'Porcentaje del principal de esta deuda que cobra el banco al firmar. Se paga de tu bolsillo, así que suma a la liquidez aportada.\n\nFiscalmente es un gasto de financiación, como los intereses: se deduce entera en el primer año del alquiler. No forma parte del valor de adquisición del piso.',
         aceleradaHipTip: 'Amortización acelerada. Si está marcada, cada año la caja acumulada se destina a reducir el principal de la hipoteca\nen lugar de quedarse en tu bolsillo. Cancela la deuda mucho antes.\n\nCon las dos aceleradas, el dinero va primero a la deuda con el tipo más alto.',
         aceleradaPreTip: 'Amortización acelerada. Si está marcada, la caja acumulada amortiza este préstamo.\n\nCon las dos aceleradas, el dinero va primero a la deuda con el tipo más alto\ny sólo lo que sobre a la otra.',
         cuotaMensual: 'Cuota mensual', cuota: 'Cuota', principal: 'Principal', sinHipoteca: 'Sin hipoteca', sinPrestamo: 'Sin préstamo',
         rupturaCaja: 'Caja a 0 al',
         rupturaCajaTip: 'Tipo de hipoteca al que la caja del primer año se queda en cero. Por encima de ahí el\npiso deja de pagarse solo y hay que ponerle dinero todos los meses.\n\nEs el margen que tienes ante una subida de tipos sin necesidad de simular una hipoteca\nvariable: si tu tipo ya está por encima, la cifra sale en rojo.',
         rupturaNunca: 'nunca',
-        liquidez: 'Liquidez aportada', liquidezTip: 'Lo que pones de tu bolsillo: el coste total menos la hipoteca y el préstamo personal.\nNo se elige, es lo que queda por cubrir.',
+        liquidez: 'Liquidez aportada', liquidezTip: 'Lo que pones de tu bolsillo: el coste total menos la hipoteca y el préstamo personal, más la comisión de apertura si la hay.\nNo se elige, es lo que queda por cubrir.',
         tope: 'máx.',
         explotacionTitulo: 'Explotación del alquiler', explotacionBadge: 'Ingresos',
         inflacion: 'Inflación', inflacionTip: 'Ritmo al que suben cada año el alquiler y los gastos recurrentes, si la indexación\nestá activada en Parámetros. Las cuotas de la deuda no suben: son a tipo fijo.',
@@ -919,20 +934,24 @@
         graficaPatrimonio: 'Patrimonio, deuda y caja', graficaRentabilidad: 'Rentabilidad anualizada acumulada',
         serieGanancia: 'Ganancia sobre lo invertido', serieDeuda: 'Deuda viva', serieCaja: 'Caja acumulada',
         serieRentabilidad: 'Rentabilidad anualizada', anoAAno: 'Año a año',
-        leyendaTabla: 'Fondo verde: sin deuda viva. Verde intenso en la caja acumulada: el año en que recuperas lo aportado.',
-        celdaPaybackTip: 'Aquí recuperas lo puesto. En el año {1} la caja acumulada del alquiler alcanza por fin los {0} que has aportado: la liquidez del día uno más el dinero de los años que no se pagaron solos.\n\nNo es el año en que se salda la deuda -ése lleva la fila entera en verde claro-, sino aquel a partir del cual el piso te ha devuelto en efectivo todo lo que le metiste.',
-        colAno: 'Año', colHipIni: 'Hipoteca inicial', colHipIniTip: 'Saldo de la hipoteca al empezar el año.',
-        colHipFin: 'Hipoteca final', colHipFinTip: 'Saldo de la hipoteca tras las doce cuotas del año.',
-        colPreIni: 'Préstamo inicial', colPreIniTip: 'Saldo del préstamo personal al empezar el año.',
-        colPreFin: 'Préstamo final', colPreFinTip: 'Saldo del préstamo personal al terminar el año.',
+        leyendaTabla: 'Columnas «€ de hoy»: con la inflación descontada. Rojo: negativo. Fila rosada: año en que pones dinero. Celda verde: el año en que recuperas lo aportado.',
+        celdaPaybackTip: 'Aquí recuperas lo puesto. En el año {1} la caja acumulada del alquiler alcanza por fin los {0} que has aportado: la liquidez del día uno más el dinero de los años que no se pagaron solos.\n\nNo es el año en que se salda la deuda -ése lleva su sello en la columna de deuda-, sino aquel a partir del cual el piso te ha devuelto en efectivo todo lo que le metiste.',
+        colAno: 'Año',
+        colDeuda: 'Deuda pendiente', colDeudaTip: 'Lo que debes al acabar el año: hipoteca más préstamo personal.\nSi tienes las dos vivas, pasa por encima de la cifra para ver cuánto es de cada una.',
+        celdaDeudaTip: 'Hipoteca {0} · Préstamo {1}',
+        deudaSaldada: 'saldada', celdaSaldadaTip: 'En este año se salda la última deuda.',
+        subHoy: '€ de hoy', subReal: 'real',
         colPatrimonio: 'Patrimonio neto', colPatrimonioTip: 'Valor del inmueble revalorizado al ritmo que hayas puesto, menos toda la deuda viva.\nVa en euros de ese año, no de hoy.',
-        colPatrimonioReal: 'Patrimonio de hoy',
-        colPatrimonioRealTip: 'El mismo patrimonio neto traído a euros de hoy, dividiendo por la inflación acumulada\nhasta ese año. Es lo que compraría ese dinero si lo tuvieras ahora mismo.\n\nA treinta años y al 3%, un euro de entonces son 41 céntimos de ahora: la mayor parte\nde lo que crece la columna de al lado es la propia inflación, no riqueza nueva.',
+        colPatrimonioReal: 'Patrimonio neto',
+        colPatrimonioRealTip: 'En euros de hoy: el mismo patrimonio neto de la columna anterior, dividido por la inflación\nacumulada hasta ese año. Es lo que compraría ese dinero si lo tuvieras ahora mismo.\n\nA treinta años y al 3%, un euro de entonces son 41 céntimos de ahora: la mayor parte\nde lo que crece la columna de al lado es la propia inflación, no riqueza nueva.',
         colCajaAno: 'Caja del año', colCajaAnoTip: 'Caja neta generada durante el año. El primer año cuenta a medias: se supone media anualidad de explotación.',
         colCajaAcum: 'Caja acumulada', colCajaAcumTip: 'Caja acumulada sin gastar. Con amortización acelerada se vacía cada vez que se destina a reducir deuda.',
-        colRentab: 'Rentab. anualizada', colRentabTip: 'Rentabilidad anual compuesta desde el día de la compra hasta el final de ese año,\nsuponiendo que conservas el piso: cuenta el patrimonio a precio de mercado, sin vender.',
         colNetoVenta: 'Neto si vendes',
         colNetoVentaTip: 'Lo que te quedaría en la cuenta si vendieras al acabar ese año: precio de mercado, menos\nlos gastos de venta, menos cancelar la deuda viva, menos el IRPF de la ganancia, más la\ncaja que llevases acumulada.\n\nOjo con la ganancia fiscal: la amortización que te has ido deduciendo cada año resta del\nvalor de adquisición, así que al vender vuelve a tributar.',
+        colNetoVentaReal: 'Neto si vendes',
+        colNetoVentaRealTip: 'En euros de hoy: el neto de la venta de la columna anterior, dividido por la inflación\nacumulada hasta ese año.',
+        colTirVentaReal: 'Anualizada vendiendo',
+        colTirVentaRealTip: 'En términos reales: la anualizada vendiendo, descontada la inflación,\n(1 + tasa) / (1 + inflación) − 1. Es lo que ganas por encima de la subida de precios.',
         colTirVenta: 'Anualizada vendiendo',
         colTirVentaTip: 'La misma rentabilidad anualizada, pero cobrando de verdad: sobre el neto de la venta en\nvez de sobre el patrimonio a precio de mercado.\n\nLa diferencia con la columna de al lado es lo que se lleva vender: agencia, impuestos y\nlo que devuelves de amortizaciones.',
         regimenesTitulo: 'Los tres regímenes de caja',
@@ -1054,7 +1073,7 @@
         compGanancia: 'Net gain at year {0}',
         compGananciaTip: 'Property less debt, plus accumulated cash, less everything you put in yourself\n(initial cash and top-ups). It is what you have gained on paper, without selling.\n\nNet worth alone does not compare financing options: by that year the debt may be\npaid off in all of them and it would come out the same.',
         compNomHip: 'Mortgage {0}% · {1} y · {2}%', compNomPre: '+ loan {0} at {1}%', compNomPreSolo: 'Loan {0} at {1}%',
-        compNomAcel: 'accelerated', compNomHipAcel: 'mortgage accelerated', compNomPreAcel: 'loan accelerated', compNomSin: 'No financing',
+        compNomApertura: 'fee {0}%', compNomAcel: 'accelerated', compNomHipAcel: 'mortgage accelerated', compNomPreAcel: 'loan accelerated', compNomSin: 'No financing',
         compartirTextoAcel: '{0} flat rented at {1}/month: gross yield {2}, cash flow {3}/month ({6}/month goes to pay down debt), annualised over {4} years {5}.',
         kpiDeuda: 'DEBT CLEARED',
         kpiDeudaTip: 'The year all debt is repaid: mortgage and personal loan.\nWith accelerated repayment the accumulated cash pays down principal and brings this forward.',
@@ -1091,13 +1110,15 @@
         pctFinanciado: 'Loan to value', pctFinanciadoTip: "Share of the flat's price covered by the mortgage. Purchase costs are not financed.",
         importePrestamo: 'Amount', importePrestamoTip: 'Capped at whatever of the total cost the mortgage leaves uncovered.',
         plazo: 'Term', tipoInteres: 'Interest rate', aceleradaCorta: 'accelerated',
+        apertura: 'Arrangement fee',
+        aperturaTip: 'Percentage of this debt\u2019s principal that the bank charges at signing. You pay it out of pocket, so it adds to the cash you put in.\n\nFor tax it is a financing expense, like interest: it is deducted in full in the first rental year. It is not part of the flat\u2019s acquisition value.',
         aceleradaHipTip: 'Accelerated repayment. If ticked, each year the accumulated cash pays down mortgage principal instead of\nstaying in your pocket. It clears the debt far sooner.\n\nWith both accelerated, the money goes first to whichever debt carries the higher rate.',
         aceleradaPreTip: 'Accelerated repayment. If ticked, accumulated cash pays down this loan.\n\nWith both accelerated, the money goes first to whichever debt carries the higher\nrate, and only the remainder to the other.',
         cuotaMensual: 'Monthly instalment', cuota: 'Instalment', principal: 'Principal', sinHipoteca: 'No mortgage', sinPrestamo: 'No loan',
         rupturaCaja: 'Cash at 0 at',
         rupturaCajaTip: 'The mortgage rate at which first-year cash reaches zero. Above it the flat stops paying\nfor itself and you feed it every month.\n\nIt is your headroom against a rate rise without simulating a variable mortgage: if your\nrate is already past it, the figure turns red.',
         rupturaNunca: 'never',
-        liquidez: 'Cash you put in', liquidezTip: 'What comes out of your own pocket: total cost less mortgage and personal loan.\nIt is not a choice, it is whatever is left to cover.',
+        liquidez: 'Cash you put in', liquidezTip: 'What comes out of your own pocket: total cost less mortgage and personal loan, plus any arrangement fee.\nIt is not a choice, it is whatever is left to cover.',
         tope: 'max',
         explotacionTitulo: 'Letting the flat', explotacionBadge: 'Income',
         inflacion: 'Inflation', inflacionTip: 'The rate at which rent and running costs rise each year, if indexation is on in\nParameters. Debt instalments do not rise: they are fixed rate.',
@@ -1138,20 +1159,24 @@
         graficaPatrimonio: 'Net worth, debt and cash', graficaRentabilidad: 'Cumulative annualised return',
         serieGanancia: 'Gain on capital invested', serieDeuda: 'Debt outstanding', serieCaja: 'Accumulated cash',
         serieRentabilidad: 'Annualised return', anoAAno: 'Year by year',
-        leyendaTabla: 'Green row: debt free. Deeper green on the accumulated cash: the year you get your cash back.',
-        celdaPaybackTip: 'This is where you get your money back. In year {1} the accumulated rental cash finally reaches the {0} you have put in: the cash of day one plus whatever the loss-making years asked of you.\n\nIt is not the year the debt clears — that one has the whole row in pale green — but the year from which the flat has returned every euro you fed it.',
-        colAno: 'Year', colHipIni: 'Mortgage start', colHipIniTip: 'Mortgage balance at the start of the year.',
-        colHipFin: 'Mortgage end', colHipFinTip: "Mortgage balance after the year's twelve instalments.",
-        colPreIni: 'Loan start', colPreIniTip: 'Personal loan balance at the start of the year.',
-        colPreFin: 'Loan end', colPreFinTip: 'Personal loan balance at the end of the year.',
+        leyendaTabla: 'Columns tagged “today’s €” are net of inflation. Red: negative. Pink row: a year you put money in. Green cell: the year you get your cash back.',
+        celdaPaybackTip: 'This is where you get your money back. In year {1} the accumulated rental cash finally reaches the {0} you have put in: the cash of day one plus whatever the loss-making years asked of you.\n\nIt is not the year the debt clears — that one carries its tick in the debt column — but the year from which the flat has returned every euro you fed it.',
+        colAno: 'Year',
+        colDeuda: 'Debt outstanding', colDeudaTip: 'What you owe at the end of the year: mortgage plus personal loan.\nIf both are alive, hover over the figure to see how much is each.',
+        celdaDeudaTip: 'Mortgage {0} · Loan {1}',
+        deudaSaldada: 'cleared', celdaSaldadaTip: 'The last debt is cleared this year.',
+        subHoy: 'today\u2019s €', subReal: 'real',
         colPatrimonio: 'Net worth', colPatrimonioTip: 'Property value uprated at the appreciation rate you set, less all debt outstanding.\nIn that year\u2019s euros, not today\u2019s.',
-        colPatrimonioReal: 'Net worth today',
-        colPatrimonioRealTip: 'The same net worth in today\u2019s euros, divided by inflation compounded to that year.\nIt is what that money would buy if you held it right now.\n\nOver thirty years at 3%, a euro back then is 41 cents now: most of the growth in the\ncolumn next door is inflation itself, not new wealth.',
+        colPatrimonioReal: 'Net worth',
+        colPatrimonioRealTip: 'In today\u2019s euros: the same net worth as the column before, divided by inflation compounded to that year.\nIt is what that money would buy if you held it right now.\n\nOver thirty years at 3%, a euro back then is 41 cents now: most of the growth in the\ncolumn next door is inflation itself, not new wealth.',
         colCajaAno: 'Cash this year', colCajaAnoTip: 'Net cash generated during the year. Year one counts half, assuming a mid-year purchase.',
         colCajaAcum: 'Accumulated cash', colCajaAcumTip: 'Cash kept rather than spent. With accelerated repayment it empties whenever it pays down debt.',
-        colRentab: 'Annualised return', colRentabTip: 'Compound annual return from the purchase date to the end of that year, assuming you keep\nthe flat: it counts net worth at market value, without selling.',
         colNetoVenta: 'Net if you sell',
         colNetoVentaTip: 'What would land in your account if you sold at the end of that year: market price, less\nselling costs, less clearing the outstanding debt, less capital gains tax, plus whatever\ncash you had accumulated.\n\nMind the taxable gain: the depreciation you have been deducting each year comes off the\nacquisition value, so it is taxed again on sale.',
+        colNetoVentaReal: 'Net if you sell',
+        colNetoVentaRealTip: 'In today\u2019s euros: the net proceeds of the column before, divided by inflation\ncompounded to that year.',
+        colTirVentaReal: 'Annualised if sold',
+        colTirVentaRealTip: 'In real terms: the annualised return if sold, net of inflation,\n(1 + rate) / (1 + inflation) − 1. It is what you earn above the rise in prices.',
         colTirVenta: 'Annualised if sold',
         colTirVentaTip: 'The same annualised return, but actually cashed in: on the net proceeds of the sale rather\nthan on net worth at market value.\n\nThe gap with the column next door is what selling takes: agency, tax and the depreciation\nyou hand back.',
         regimenesTitulo: 'The three cash regimes',
@@ -1670,8 +1695,17 @@
       const cuotaPre = pmt(tipoPre / 12, plazoPre * 12, principalPre);
       const preAcelerado = yes('prestamoAcelerado');
 
+      // La comisión de apertura se paga al firmar, como porcentaje del principal de cada deuda, y
+      // sale de la liquidez del día uno: el banco no la financia. No entra en costeTotal porque no
+      // es precio ni gasto de adquisición del inmueble -no revaloriza ni amortiza ni resta del
+      // valor de adquisición al vender-; es gasto de financiación y se deduce como los intereses.
+      const pctApertura = (id, activa) => activa ? Math.min(Math.max(num(id), 0), 100) / 100 : 0;
+      const comisionHip = principalHip * pctApertura('aperturaHip', usarHipoteca);
+      const comisionPre = principalPre * pctApertura('aperturaPre', usarPrestamo);
+      const comisionApertura = comisionHip + comisionPre;
+
       // Lo que no cubre la deuda lo pone el comprador. No se elige: es el resto.
-      const aportado = Math.max(costeTotal - principalHip - principalPre, 0);
+      const aportado = Math.max(costeTotal + comisionApertura - principalHip - principalPre, 0);
 
       const alquiler = num('alquiler');
       const alquilerAnualBruto = alquiler * 12;
@@ -1847,11 +1881,21 @@
         const dp = desglosarCuota(preIni, preFin, cuotaPreAno);
         const reg = regimen(dh.interes + dp.interes, cuotaHipAno + cuotaPreAno, n);
         const mitad = n === 1 ? 0.5 : 1;
-        const cajaAno = reg.caja * mitad;
+        let cajaAno = reg.caja * mitad;
+        let irpfAno = reg.impuestos * mitad;
+        // La comisión de apertura se deduce entera en el año en que se paga, el primero. Como ese
+        // año cuenta a medias, la deducción se resta de la base de esa media anualidad -no de la
+        // anual, que la haría valer la mitad- y nunca deja un impuesto negativo: si no cabe en la
+        // base, el sobrante se pierde. El motor no modela el tope de intereses y reparaciones
+        // frente a los ingresos íntegros (art. 23.1.a LIRPF), así que tampoco se aplica aquí.
+        if (n === 1 && comisionApertura > 0) {
+          irpfAno = Math.max((reg.base * mitad - comisionApertura) * tipoEfectivo, 0);
+          cajaAno += reg.impuestos * mitad - irpfAno;
+        }
 
         ingresosAcum += reg.ingresos * mitad;
         reparto.gastos += reg.gastos * mitad;
-        reparto.irpf += reg.impuestos * mitad;
+        reparto.irpf += irpfAno;
         reparto.intereses += (dh.interes + dp.interes) * mitad;
         // El principal amortizado suma lo que va en la cuota y lo que se adelanta con la caja.
         reparto.amortizacion += (dh.principal + dp.principal) * mitad + (cajaPrev - sobrante);
@@ -1893,8 +1937,14 @@
         const netoVenta = precioVenta - gastosVenta - impuestoVenta - hipFin - preFin + cajaAcum;
         const tirVenta = tir([...flujos.slice(0, n), flujos[n] + netoVenta]);
 
-        filas.push({ n, hipIni, hipFin, preIni, preFin, patrimonio, cajaAno, aportacion, cajaAcum,
+        // La misma rentabilidad vendiendo, descontada la inflación: (1 + tir) / (1 + inflación) − 1.
+        // Con una inflación de -100% o peor no hay deflactor y se deja la nominal, como en aHoy.
+        const tirVentaReal = tirVenta === null ? null
+          : (1 + inflacion > 0 ? (1 + tirVenta) / (1 + inflacion) - 1 : tirVenta);
+        filas.push({ n, hipIni, hipFin, preIni, preFin, deuda: hipFin + preFin, patrimonio, cajaAno, irpf: irpfAno,
+          aportacion, cajaAcum,
           patrimonioReal: aHoy(patrimonio, n), cajaAcumReal: aHoy(cajaAcum, n),
+          netoVentaReal: aHoy(netoVenta, n), tirVentaReal,
           precioVenta, gastosVenta, gananciaFiscal, impuestoVenta, netoVenta, tirVenta,
           anualizada, ganancia, aportadoAcum });
         hipFinPrev = hipFin; preFinPrev = preFin; cajaPrev = cajaAcum;
@@ -1947,6 +1997,7 @@
       return {
         precioAnunciado, oferta, valor, superficie, reforma, comision, obraNueva, region,
         pctImpuestos, pctNotaria, gastosCompra, costeTotal, aportado,
+        comisionHip, comisionPre, comisionApertura,
         usarHipoteca, pctFinanciado, principalHip, cuotaHip, plazoHip,
         usarPrestamo, topePrestamo, principalPre, cuotaPre, plazoPre,
         alquiler, alquilerAnual, comunidad, ibi, seguroHogar, seguroImpagos, mantenimiento, gastosAnuales,
@@ -2021,6 +2072,9 @@
       el('outTopePrestamo').textContent = fmt(d.topePrestamo);
       el('outCuotaPrestamo').textContent = d.principalPre > 0 ? fmt(d.cuotaPre) : t('sinPrestamo');
       el('outLiquidez').textContent = fmt(d.aportado);
+      // El importe de la comisión sólo se enseña cuando hay: a cero el campo no necesita explicación.
+      el('outAperturaHip').textContent = d.comisionHip > 0 ? `(${fmt(d.comisionHip)})` : '';
+      el('outAperturaPre').textContent = d.comisionPre > 0 ? `(${fmt(d.comisionPre)})` : '';
       el('outAlquilerAnual').textContent = d.mesesVacios > 0
         ? `${fmt(d.alquilerAnual)} · ${fmtPct(d.ocupacion)}`
         : fmt(d.alquilerAnual);
@@ -2094,6 +2148,7 @@
         filaResumen(t('costeTotal'), fmt(d.costeTotal), { clase: 'text-brand-amber' }),
         filaResumen(t('hipoteca'), d.principalHip > 0 ? '− ' + fmt(d.principalHip) : '—', { clase: d.principalHip > 0 ? 'val-pos' : 'val-muted' }),
         filaResumen(t('prestamo'), d.principalPre > 0 ? '− ' + fmt(d.principalPre) : '—', { clase: d.principalPre > 0 ? 'val-pos' : 'val-muted' }),
+        ...(d.comisionApertura > 0 ? [filaResumen(t('apertura'), '+ ' + fmt(d.comisionApertura), { clase: 'val-neg', titulo: t('aperturaTip') })] : []),
         filaResumen(t('liquidez'), fmt(d.aportado), { clase: 'text-brand-accent' })
       ].join('');
 
@@ -2151,30 +2206,57 @@
       guardar();
     }
 
+    // Número en el color normal del texto; rojo sólo si es negativo y gris si es cero. El verde de
+    // todo lo positivo (val-pos) se quedó fuera de esta tabla a propósito: ver .tbl-ano en el CSS.
+    const signoTabla = (v) => v < 0 ? 'val-neg' : (v === 0 ? 'val-muted' : '');
+
     function renderProyeccion(d) {
+      // La aportación extra sólo se pinta si en el horizonte hay alguna: sin ella la columna es
+      // una fila de rayas que roba ancho, y en móvil cada columna cuenta.
+      const hayAportacion = d.filas.some(f => f.aportacion > 0);
+      // Cada columna lleva su cabecera y su celda juntas, para que una no pueda aparecer sin la
+      // otra. `sub` es la etiqueta pequeña bajo el nombre que marca las columnas en euros de hoy.
+      const columnas = [
+        { k: 'colDeuda', celda: (f) => celdaDeuda(f, d) },
+        { k: 'colPatrimonio', celda: (f) => `<td class="py-1.5 px-2.5 text-right font-semibold ${signoTabla(f.patrimonio)}">${fmt(f.patrimonio)}</td>` },
+        { k: 'colPatrimonioReal', sub: 'subHoy', hoy: true, celda: (f) => `<td class="py-1.5 px-2.5 text-right col-hoy ${f.patrimonioReal < 0 ? 'val-neg' : ''}">${fmt(f.patrimonioReal)}</td>` },
+        { k: 'colCajaAno', celda: (f) => `<td class="py-1.5 px-2.5 text-right ${signoTabla(f.cajaAno)}">${fmt(f.cajaAno)}</td>` },
+        ...(hayAportacion ? [{ k: 'colAportacion', celda: (f) => `<td class="py-1.5 px-2.5 text-right ${f.aportacion > 0 ? 'val-neg font-semibold' : 'val-muted'}">${f.aportacion > 0 ? fmt(f.aportacion) : '—'}</td>` }] : []),
+        { k: 'colCajaAcum', celda: (f) => {
+          // La celda de caja acumulada del año del payback se explica sola al pasar por encima.
+          const esPayback = d.payback && f.n === d.payback.n;
+          const marca = esPayback
+            ? ` cell-payback tooltip-help" title="${tf('celdaPaybackTip', fmt(f.aportadoAcum), f.n).replace(/"/g, '&quot;')}`
+            : '';
+          return `<td class="py-1.5 px-2.5 text-right ${signoTabla(f.cajaAcum)}${marca}">${fmt(f.cajaAcum)}</td>`;
+        } },
+        { k: 'colNetoVenta', celda: (f) => `<td class="py-1.5 px-2.5 text-right ${signoTabla(f.netoVenta)}">${fmt(f.netoVenta)}</td>` },
+        { k: 'colNetoVentaReal', sub: 'subHoy', hoy: true, celda: (f) => `<td class="py-1.5 px-2.5 text-right col-hoy ${f.netoVentaReal < 0 ? 'val-neg' : ''}">${fmt(f.netoVentaReal)}</td>` },
+        { k: 'colTirVenta', celda: (f) => `<td class="py-1.5 px-2.5 text-right font-semibold ${f.tirVenta === null ? 'val-muted' : signoTabla(f.tirVenta)}">${fmtPct(f.tirVenta)}</td>` },
+        { k: 'colTirVentaReal', sub: 'subReal', hoy: true, celda: (f) => `<td class="py-1.5 pl-2.5 text-right col-hoy ${f.tirVentaReal < 0 ? 'val-neg' : ''}">${fmtPct(f.tirVentaReal)}</td>` }
+      ];
+      el('theadProyeccion').innerHTML = `<tr class="text-brand-textMuted border-b border-brand-border text-left">
+        <th class="py-2 pr-3 font-semibold" data-i18n="colAno">${t('colAno')}</th>${columnas.map(c =>
+          `<th class="py-2 px-2.5 font-semibold text-right tooltip-help${c.hoy ? ' col-hoy' : ''}" data-i18n="${c.k}" data-i18n-title="${c.k}Tip"${c.sub ? ` data-sub="${escapar(t(c.sub))}"` : ''} title="${escapar(t(c.k + 'Tip'))}">${t(c.k)}</th>`).join('')}
+      </tr>`;
       el('tblProyeccion').innerHTML = d.filas.map(f => {
         const clases = [];
-        if (f.hipFin <= 0 && f.preFin <= 0) clases.push('row-paid');
         if (f.aportacion > 0) clases.push('row-aporta');
-        const celda = (v, extra = '') => `<td class="py-1.5 px-3 text-right ${v > 0 ? extra : 'val-muted'}">${v > 0 ? fmt(v) : '—'}</td>`;
-        // La celda de caja acumulada del año del payback se explica sola al pasar por encima.
-        const esPayback = d.payback && f.n === d.payback.n;
-        const marcaCaja = esPayback
-          ? ` cell-payback tooltip-help" title="${tf('celdaPaybackTip', fmt(f.aportadoAcum), f.n).replace(/"/g, '&quot;')}`
-          : '';
-        return `<tr class="${clases.join(' ')}">
-          <td class="py-1.5 pr-3 font-semibold">${f.n}</td>
-          ${celda(f.hipIni)}${celda(f.hipFin)}${celda(f.preIni)}${celda(f.preFin)}
-          <td class="py-1.5 px-3 text-right font-semibold ${signo(f.patrimonio)}">${fmt(f.patrimonio)}</td>
-          <td class="py-1.5 px-3 text-right ${signo(f.patrimonioReal)}">${fmt(f.patrimonioReal)}</td>
-          <td class="py-1.5 px-3 text-right ${signo(f.cajaAno)}">${fmt(f.cajaAno)}</td>
-          <td class="py-1.5 px-3 text-right ${f.aportacion > 0 ? 'val-neg font-semibold' : 'val-muted'}">${f.aportacion > 0 ? fmt(f.aportacion) : '—'}</td>
-          <td class="py-1.5 px-3 text-right ${signo(f.cajaAcum)}${marcaCaja}">${fmt(f.cajaAcum)}</td>
-          <td class="py-1.5 px-3 text-right ${f.anualizada === null ? 'val-muted' : signo(f.anualizada)}">${fmtPct(f.anualizada)}</td>
-          <td class="py-1.5 px-3 text-right ${signo(f.netoVenta)}">${fmt(f.netoVenta)}</td>
-          <td class="py-1.5 pl-3 text-right font-semibold ${f.tirVenta === null ? 'val-muted' : signo(f.tirVenta)}">${fmtPct(f.tirVenta)}</td>
-        </tr>`;
+        return `<tr class="${clases.join(' ')}"><td class="py-1.5 pr-3 font-semibold">${f.n}</td>${columnas.map(c => c.celda(f)).join('')}</tr>`;
       }).join('');
+    }
+
+    // Deuda viva al acabar el año, hipoteca más préstamo. Con las dos vivas, el desglose va en el
+    // globo. Sin deuda, una raya; y el año en que se salda lleva un sello, que sustituye al fondo
+    // verde de toda la fila.
+    function celdaDeuda(f, d) {
+      if (f.deuda <= 0) {
+        const salda = d.sinDeuda && f.n === d.sinDeuda.n;
+        return `<td class="py-1.5 px-2.5 text-right val-muted">${salda ? `<span class="fin-deuda tooltip-help" title="${escapar(t('celdaSaldadaTip'))}">✓ ${t('deudaSaldada')}</span>` : '—'}</td>`;
+      }
+      const ambas = f.hipFin > 0 && f.preFin > 0;
+      const globo = ambas ? ` tooltip-help" title="${escapar(tf('celdaDeudaTip', fmt(f.hipFin), fmt(f.preFin)))}` : '';
+      return `<td class="py-1.5 px-2.5 text-right${globo}">${fmt(f.deuda)}</td>`;
     }
 
     function renderRegimenes(d) {
@@ -2519,8 +2601,8 @@
 
     const CAMPOS = ['precioAnunciado', 'descuentoOferta', 'oferta', 'valor', 'superficie', 'obraNueva', 'ccaa',
       'pctImpuestos', 'pctNotaria', 'comision', 'reforma',
-      'pctFinanciado', 'plazoHipoteca', 'tipoHipoteca',
-      'importePrestamo', 'plazoPrestamo', 'tipoPrestamo',
+      'pctFinanciado', 'plazoHipoteca', 'tipoHipoteca', 'aperturaHip',
+      'importePrestamo', 'plazoPrestamo', 'tipoPrestamo', 'aperturaPre',
       'alquiler', 'mesesVacios', 'comunidad', 'ibi', 'seguroHogar', 'seguroImpagos', 'mantenimiento',
       'tasaIbi', 'tasaComunidad', 'tasaSeguroHogar', 'tasaImpagos', 'tasaMantenimiento',
       'tipoMarginal', 'baseTributable', 'pctConstruccion', 'tasaAmortizacion',
@@ -2589,6 +2671,7 @@
     const leerFinanciacion = () => ({
       usarHipoteca: el('usarHipoteca').checked, pctFinanciado: r2(num('pctFinanciado')),
       plazoHipoteca: r2(num('plazoHipoteca')), tipoHipoteca: r2(num('tipoHipoteca')),
+      aperturaHip: r2(num('aperturaHip')), aperturaPre: r2(num('aperturaPre')),
       hipotecaAcelerada: el('hipotecaAcelerada').checked,
       usarPrestamo: el('usarPrestamo').checked, importePrestamo: Math.round(num('importePrestamo')),
       plazoPrestamo: r2(num('plazoPrestamo')), tipoPrestamo: r2(num('tipoPrestamo')),
@@ -2600,11 +2683,13 @@
       fijar('pctFinanciado', f.pctFinanciado, 2);
       fijar('plazoHipoteca', f.plazoHipoteca, 2);
       fijar('tipoHipoteca', f.tipoHipoteca, 2, 2);
+      fijar('aperturaHip', f.aperturaHip, 2, 2);
       el('hipotecaAcelerada').checked = f.hipotecaAcelerada;
       el('usarPrestamo').checked = f.usarPrestamo;
       fijar('importePrestamo', f.importePrestamo, 0);
       fijar('plazoPrestamo', f.plazoPrestamo, 2);
       fijar('tipoPrestamo', f.tipoPrestamo, 2, 2);
+      fijar('aperturaPre', f.aperturaPre, 2, 2);
       el('prestamoAcelerado').checked = f.prestamoAcelerado;
     }
 
@@ -2613,8 +2698,8 @@
     const hayHip = (f) => f.usarHipoteca && f.pctFinanciado > 0;
     const hayPre = (f) => f.usarPrestamo && f.importePrestamo > 0;
     const claveFinanciacion = (f) => JSON.stringify([
-      hayHip(f) ? [f.pctFinanciado, f.plazoHipoteca, f.tipoHipoteca, f.hipotecaAcelerada] : 0,
-      hayPre(f) ? [f.importePrestamo, f.plazoPrestamo, f.tipoPrestamo, f.prestamoAcelerado] : 0
+      hayHip(f) ? [f.pctFinanciado, f.plazoHipoteca, f.tipoHipoteca, f.hipotecaAcelerada, f.aperturaHip] : 0,
+      hayPre(f) ? [f.importePrestamo, f.plazoPrestamo, f.tipoPrestamo, f.prestamoAcelerado, f.aperturaPre] : 0
     ]);
 
     const fmtMax = (v) => new Intl.NumberFormat(t('locale'), { maximumFractionDigits: 2 }).format(v);
@@ -2624,7 +2709,10 @@
       const hip = hayHip(f), pre = hayPre(f);
       const piezas = [];
       if (hip) piezas.push(tf('compNomHip', fmtMax(f.pctFinanciado), fmtMax(f.plazoHipoteca), fmtNum(f.tipoHipoteca, 2)));
+      // La comisión de apertura sólo se nombra cuando existe, y justo detrás de su deuda.
+      if (hip && f.aperturaHip > 0) piezas.push(tf('compNomApertura', fmtMax(f.aperturaHip)));
       if (pre) piezas.push(tf(hip ? 'compNomPre' : 'compNomPreSolo', fmt(f.importePrestamo), fmtMax(f.tipoPrestamo)));
+      if (pre && f.aperturaPre > 0) piezas.push(tf('compNomApertura', fmtMax(f.aperturaPre)));
       const aHip = hip && f.hipotecaAcelerada, aPre = pre && f.prestamoAcelerado;
       if (aHip || aPre) {
         // Con las dos deudas vivas y una sola acelerada hay que decir cuál; si no, basta «acelerada».
@@ -2833,9 +2921,9 @@
         vistas.add(o.letra);
         limpias.push({ letra: o.letra, nombre: limpiarNombre(o.nombre),
           usarHipoteca: o.usarHipoteca === true, pctFinanciado: Math.min(n(o.pctFinanciado), 100),
-          plazoHipoteca: Math.max(n(o.plazoHipoteca), 1), tipoHipoteca: n(o.tipoHipoteca), hipotecaAcelerada: o.hipotecaAcelerada === true,
+          plazoHipoteca: Math.max(n(o.plazoHipoteca), 1), tipoHipoteca: n(o.tipoHipoteca), aperturaHip: Math.min(n(o.aperturaHip), 100), hipotecaAcelerada: o.hipotecaAcelerada === true,
           usarPrestamo: o.usarPrestamo === true, importePrestamo: n(o.importePrestamo),
-          plazoPrestamo: Math.max(n(o.plazoPrestamo), 1), tipoPrestamo: n(o.tipoPrestamo), prestamoAcelerado: o.prestamoAcelerado === true });
+          plazoPrestamo: Math.max(n(o.plazoPrestamo), 1), tipoPrestamo: n(o.tipoPrestamo), aperturaPre: Math.min(n(o.aperturaPre), 100), prestamoAcelerado: o.prestamoAcelerado === true });
       }
       return limpias.sort((a, b) => a.letra.localeCompare(b.letra));
     }
@@ -2897,8 +2985,8 @@
     const CLAVES_CORTAS = {
       precioAnunciado: 'p', descuentoOferta: 'd', oferta: 'o', valor: 'v', superficie: 's',
       obraNueva: 'nu', ccaa: 'c', pctImpuestos: 'im', pctNotaria: 'no', comision: 'k', reforma: 'r',
-      pctFinanciado: 'f', plazoHipoteca: 'h', tipoHipoteca: 't',
-      importePrestamo: 'i', plazoPrestamo: 'l', tipoPrestamo: 'e',
+      pctFinanciado: 'f', plazoHipoteca: 'h', tipoHipoteca: 't', aperturaHip: 'ch',
+      importePrestamo: 'i', plazoPrestamo: 'l', tipoPrestamo: 'e', aperturaPre: 'cp',
       alquiler: 'a', mesesVacios: 'm',
       comunidad: 'u', ibi: 'b', seguroHogar: 'g', seguroImpagos: 'sm', mantenimiento: 'mn',
       tasaIbi: 'xb', tasaComunidad: 'xu', tasaSeguroHogar: 'xg', tasaImpagos: 'xi', tasaMantenimiento: 'xm',

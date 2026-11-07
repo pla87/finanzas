@@ -1,6 +1,6 @@
 # Pruebas
 
-Diecisiete suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
+Diecinueve suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
 No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba donde vive.
 
 ## Correrlas
@@ -9,7 +9,7 @@ No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba dond
 cd test
 npm install            # sólo la primera vez
 npx playwright install chromium   # idem, salvo en contenedores que ya lo traen
-npm test               # las diecisiete
+npm test               # las diecinueve
 npm test -- verificar cruzar      # sólo algunas
 ```
 
@@ -24,8 +24,8 @@ Las dos primeras son la red de seguridad de verdad; las demás cuidan comportami
 guardados en `esperado.json`.
 
 **`cruzar`** — el motor contra `modelo.py`, una transcripción independiente del modelo escrita
-en Python a partir de las mismas fórmulas, en siete escenarios (con y sin préstamo personal, con
-una y otra amortización acelerada, piso barato, sin entrada). Dos implementaciones escritas por
+en Python a partir de las mismas fórmulas, en ocho escenarios (con y sin préstamo personal, con
+una y otra amortización acelerada, piso barato, sin entrada, comisión de apertura). Dos implementaciones escritas por
 separado que coinciden al céntimo es lo que da confianza en las ramas que el escenario por
 defecto no toca. `modelo.py` genera `modelo.json`, que está versionado para que las pruebas
 corran sin Python; el ejecutor lo regenera si `python3` está disponible.
@@ -58,7 +58,7 @@ exigiendo igualdad exacta al céntimo.
 | Suite | Qué defiende |
 |---|---|
 | `verificar` | paridad con la hoja original |
-| `cruzar` | paridad con la transcripción en Python, siete escenarios |
+| `cruzar` | paridad con la transcripción en Python, ocho escenarios |
 | `repro2` | los siete defectos de la primera auditoría siguen corregidos |
 | `prioridad` | la caja amortiza la deuda cara antes que la barata |
 | `orden` | y el orden lo deciden los tipos, no el tipo de préstamo |
@@ -74,6 +74,7 @@ exigiendo igualdad exacta al céntimo.
 | `v3` | comunidades autónomas y detalles de la interfaz |
 | `repaso` | escenarios viejos que migran, guardado que va y vuelve, móvil y tema oscuro |
 | `compartir` | no recalcula con la cifra a medio escribir, casillas de IVA y amortización, el enlace de claves cortas y el texto que lo acompaña, el aviso de tipo alto, la horquilla de revalorización y el sexto indicador |
+| `apertura` | la comisión de apertura: sube lo aportado, se deduce en el año 1, y viaja por guardado, enlace y comparador |
 
 ## Escribirlas
 

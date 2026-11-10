@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07T02:25:52+00:00",
+  "generatedAt": "2026-11-10T04:24:23+00:00",
   "staleRates": [],
   "staleTickers": [],
   "euribor": {
@@ -9,12 +9,12 @@
   },
   "rates": {
     "EUR": 1.0,
-    "USD": 1.1228,
-    "JPY": 176.821,
-    "GBP": 0.8344,
-    "CHF": 0.9156,
-    "HKD": 8.7357,
-    "PHP": 70.509
+    "USD": 1.1225,
+    "JPY": 177.302,
+    "GBP": 0.8347,
+    "CHF": 0.9196,
+    "HKD": 8.8007,
+    "PHP": 70.797
   },
   "tickers": {
     "IBEX": [
@@ -22,96 +22,96 @@
         "ticker": "ANA",
         "rawSymbol": "ANA.MC",
         "name": "ACCIONA, S.A.",
-        "price": 218.0,
-        "divYield": 2.68,
+        "price": 221.8,
+        "divYield": 2.64,
         "currency": "EUR"
       },
       {
         "ticker": "ACX",
         "rawSymbol": "ACX.MC",
         "name": "ACERINOX, S.A.",
-        "price": 14.94,
-        "divYield": 4.0,
+        "price": 15.3,
+        "divYield": 4.15,
         "currency": "EUR"
       },
       {
         "ticker": "ACS",
         "rawSymbol": "ACS.MC",
         "name": "ACS,ACTIVIDADES DE CONSTRUCCION",
-        "price": 87.0,
-        "divYield": 2.73,
+        "price": 88.35,
+        "divYield": 2.63,
         "currency": "EUR"
       },
       {
         "ticker": "AENA",
         "rawSymbol": "AENA.MC",
         "name": "AENA, S.M.E., S.A.",
-        "price": 28.28,
-        "divYield": 3.85,
+        "price": 28.74,
+        "divYield": 3.79,
         "currency": "EUR"
       },
       {
         "ticker": "AMS",
         "rawSymbol": "AMS.MC",
         "name": "AMADEUS IT GROUP, S.A.",
-        "price": 60.52,
-        "divYield": 2.58,
+        "price": 60.58,
+        "divYield": 2.54,
         "currency": "EUR"
       },
       {
         "ticker": "BBVA",
         "rawSymbol": "BBVA.MC",
         "name": "BANCO BILBAO VIZCAYA ARGENTARIA",
-        "price": 22.73,
-        "divYield": 4.24,
+        "price": 23.29,
+        "divYield": 4.16,
         "currency": "EUR"
       },
       {
         "ticker": "SAB",
         "rawSymbol": "SAB.MC",
         "name": "BANCO DE SABADELL",
-        "price": 3.6,
-        "divYield": 1.94,
+        "price": 3.69,
+        "divYield": 1.95,
         "currency": "EUR"
       },
       {
         "ticker": "SAN",
         "rawSymbol": "SAN.MC",
         "name": "BANCO SANTANDER S.A.",
-        "price": 10.7,
-        "divYield": 2.35,
+        "price": 11.07,
+        "divYield": 2.37,
         "currency": "EUR"
       },
       {
         "ticker": "BKT",
         "rawSymbol": "BKT.MC",
         "name": "BANKINTER, S.A.",
-        "price": 14.41,
-        "divYield": 4.23,
+        "price": 14.78,
+        "divYield": 4.18,
         "currency": "EUR"
       },
       {
         "ticker": "CABK",
         "rawSymbol": "CABK.MC",
         "name": "CAIXABANK, S.A.",
-        "price": 11.76,
-        "divYield": 4.35,
+        "price": 12.12,
+        "divYield": 4.39,
         "currency": "EUR"
       },
       {
         "ticker": "CLNX",
         "rawSymbol": "CLNX.MC",
         "name": "CELLNEX TELECOM, S.A.",
-        "price": 26.68,
-        "divYield": 2.78,
+        "price": 26.77,
+        "divYield": 2.82,
         "currency": "EUR"
       },
       {
         "ticker": "ENG",
         "rawSymbol": "ENG.MC",
         "name": "ENAGAS,S.A.",
-        "price": 17.8,
-        "divYield": 5.6,
+        "price": 17.91,
+        "divYield": 5.62,
         "currency": "EUR"
       },
       {
@@ -119,30 +119,30 @@
         "rawSymbol": "ELE.MC",
         "name": "ENDESA,S.A.",
         "price": 44.2,
-        "divYield": 3.53,
+        "divYield": 3.58,
         "currency": "EUR"
       },
       {
         "ticker": "FER",
         "rawSymbol": "FER.MC",
         "name": "FERROVIAL N.V.",
-        "price": 52.78,
-        "divYield": 3.77,
+        "price": 54.04,
+        "divYield": 3.69,
         "currency": "EUR"
       },
       {
         "ticker": "FDR",
         "rawSymbol": "FDR.MC",
         "name": "FLUIDRA, S.A.",
-        "price": 19.32,
-        "divYield": 3.34,
+        "price": 19.5,
+        "divYield": 3.38,
         "currency": "EUR"
       },
       {
         "ticker": "GRF",
         "rawSymbol": "GRF.MC",
         "name": "GRIFOLS S.A.",
-        "price": 11.24,
+        "price": 11.38,
         "divYield": 0.73,
         "currency": "EUR"
       },
@@ -150,127 +150,127 @@
         "ticker": "IAG",
         "rawSymbol": "IAG.MC",
         "name": "INTL CONSOLIDATED AIRLINES GROU",
-        "price": 5.19,
-        "divYield": 1.91,
+        "price": 5.39,
+        "divYield": 1.82,
         "currency": "EUR"
       },
       {
         "ticker": "IBE",
         "rawSymbol": "IBE.MC",
         "name": "ACCIONES IBERDROLA",
-        "price": 22.65,
-        "divYield": 2.99,
+        "price": 22.96,
+        "divYield": 3.0,
         "currency": "EUR"
       },
       {
         "ticker": "IDR",
         "rawSymbol": "IDR.MC",
         "name": "INDRA SISTEMAS S.A., SERIE A",
-        "price": 56.76,
-        "divYield": 0.52,
+        "price": 59.12,
+        "divYield": 0.51,
         "currency": "EUR"
       },
       {
         "ticker": "ITX",
         "rawSymbol": "ITX.MC",
         "name": "INDUSTRIA DE DISE...O TEXTIL S.",
-        "price": 59.04,
-        "divYield": 1.08,
+        "price": 59.66,
+        "divYield": 1.09,
         "currency": "EUR"
       },
       {
         "ticker": "COL",
         "rawSymbol": "COL.MC",
         "name": "COLONIAL SFL, SOCIMI. S.A.",
-        "price": 5.27,
-        "divYield": 6.11,
+        "price": 5.29,
+        "divYield": 6.07,
         "currency": "EUR"
       },
       {
         "ticker": "LOG",
         "rawSymbol": "LOG.MC",
         "name": "COMPA...IA DE DISTRIBUCION INTE",
-        "price": 36.6,
-        "divYield": 5.56,
+        "price": 36.94,
+        "divYield": 5.55,
         "currency": "EUR"
       },
       {
         "ticker": "MAP",
         "rawSymbol": "MAP.MC",
         "name": "MAPFRE, S.A.",
-        "price": 4.13,
-        "divYield": 4.3,
+        "price": 4.18,
+        "divYield": 4.32,
         "currency": "EUR"
       },
       {
         "ticker": "MEL",
         "rawSymbol": "MEL.MC",
         "name": "MELIA HOTELS INTERNATIONAL, S.A",
-        "price": 10.8,
-        "divYield": 1.62,
+        "price": 11.04,
+        "divYield": 1.57,
         "currency": "EUR"
       },
       {
         "ticker": "MRL",
         "rawSymbol": "MRL.MC",
         "name": "MERLIN PROPERTIES SOCIMI, S.A.",
-        "price": 11.6,
-        "divYield": 1.91,
+        "price": 11.7,
+        "divYield": 1.84,
         "currency": "EUR"
       },
       {
         "ticker": "NTGY",
         "rawSymbol": "NTGY.MC",
         "name": "NATURGY ENERGY GROUP, S.A.",
-        "price": 29.54,
-        "divYield": 7.97,
+        "price": 29.84,
+        "divYield": 7.94,
         "currency": "EUR"
       },
       {
         "ticker": "PUIG",
         "rawSymbol": "PUIG.MC",
         "name": "PUIG BRANDS, S.A. CLASE B",
-        "price": 19.84,
-        "divYield": 2.1,
+        "price": 19.96,
+        "divYield": 2.12,
         "currency": "EUR"
       },
       {
         "ticker": "RED",
         "rawSymbol": "RED.MC",
         "name": "REDEIA CORPORACION, S.A.",
-        "price": 15.66,
-        "divYield": 5.09,
+        "price": 15.67,
+        "divYield": 5.11,
         "currency": "EUR"
       },
       {
         "ticker": "REP",
         "rawSymbol": "REP.MC",
         "name": "REPSOL,  S.A.",
-        "price": 29.9,
-        "divYield": 3.48,
+        "price": 29.36,
+        "divYield": 3.58,
         "currency": "EUR"
       },
       {
         "ticker": "ROVI",
         "rawSymbol": "ROVI.MC",
         "name": "LABORATORIOS FARMACEUTICOS ROVI",
-        "price": 68.6,
-        "divYield": 1.5,
+        "price": 69.45,
+        "divYield": 1.4,
         "currency": "EUR"
       },
       {
         "ticker": "SCYR",
         "rawSymbol": "SCYR.MC",
         "name": "SACYR, S.A.",
-        "price": 4.05,
-        "divYield": 4.95,
+        "price": 4.2,
+        "divYield": 4.94,
         "currency": "EUR"
       },
       {
         "ticker": "SLR",
         "rawSymbol": "SLR.MC",
         "name": "SOLARIA ENERGIA Y MEDIO AMBIENT",
-        "price": 16.15,
+        "price": 16.86,
         "divYield": 0.0,
         "currency": "EUR"
       },
@@ -278,16 +278,16 @@
         "ticker": "TEF",
         "rawSymbol": "TEF.MC",
         "name": "TELEFONICA,S.A.",
-        "price": 3.38,
-        "divYield": 4.35,
+        "price": 3.41,
+        "divYield": 4.43,
         "currency": "EUR"
       },
       {
         "ticker": "UNI",
         "rawSymbol": "UNI.MC",
         "name": "UNICAJA BANCO, S.A.",
-        "price": 3.31,
-        "divYield": 5.74,
+        "price": 3.39,
+        "divYield": 5.78,
         "currency": "EUR"
       }
     ],
@@ -296,7 +296,7 @@
         "ticker": "AAPL",
         "rawSymbol": "AAPL",
         "name": "Apple Inc.",
-        "price": 342.37,
+        "price": 350.69,
         "divYield": 0.31,
         "currency": "USD"
       },
@@ -304,23 +304,23 @@
         "ticker": "MSFT",
         "rawSymbol": "MSFT",
         "name": "Microsoft Corporation",
-        "price": 530.61,
-        "divYield": 0.73,
+        "price": 545.18,
+        "divYield": 0.74,
         "currency": "USD"
       },
       {
         "ticker": "NVDA",
         "rawSymbol": "NVDA",
         "name": "NVIDIA Corporation",
-        "price": 186.64,
-        "divYield": 0.55,
+        "price": 178.67,
+        "divYield": 0.56,
         "currency": "USD"
       },
       {
         "ticker": "GOOGL",
         "rawSymbol": "GOOGL",
         "name": "Alphabet Inc.",
-        "price": 284.78,
+        "price": 288.15,
         "divYield": 0.31,
         "currency": "USD"
       },
@@ -328,7 +328,7 @@
         "ticker": "AMZN",
         "rawSymbol": "AMZN",
         "name": "Amazon.com, Inc.",
-        "price": 259.3,
+        "price": 266.93,
         "divYield": 0.0,
         "currency": "USD"
       },
@@ -336,15 +336,15 @@
         "ticker": "META",
         "rawSymbol": "META",
         "name": "Meta Platforms, Inc.",
-        "price": 610.15,
-        "divYield": 0.35,
+        "price": 641.37,
+        "divYield": 0.33,
         "currency": "USD"
       },
       {
         "ticker": "AVGO",
         "rawSymbol": "AVGO",
         "name": "Broadcom Inc.",
-        "price": 293.69,
+        "price": 319.48,
         "divYield": 0.89,
         "currency": "USD"
       },
@@ -352,7 +352,7 @@
         "ticker": "TSLA",
         "rawSymbol": "TSLA",
         "name": "Tesla, Inc.",
-        "price": 358.22,
+        "price": 378.05,
         "divYield": 0.0,
         "currency": "USD"
       },
@@ -360,7 +360,7 @@
         "ticker": "COST",
         "rawSymbol": "COST",
         "name": "Costco Wholesale Corporation",
-        "price": 1053.56,
+        "price": 1066.18,
         "divYield": 0.55,
         "currency": "USD"
       },
@@ -368,8 +368,8 @@
         "ticker": "ASML",
         "rawSymbol": "ASML",
         "name": "ASML Holding N.V. - New York Re",
-        "price": 1424.75,
-        "divYield": 0.69,
+        "price": 1513.25,
+        "divYield": 0.62,
         "currency": "USD"
       }
     ],
@@ -378,7 +378,7 @@
         "ticker": "BRK-B",
         "rawSymbol": "BRK-B",
         "name": "Berkshire Hathaway Inc. New",
-        "price": 570.89,
+        "price": 575.25,
         "divYield": 0.0,
         "currency": "USD"
       },
@@ -386,15 +386,15 @@
         "ticker": "JPM",
         "rawSymbol": "JPM",
         "name": "JP Morgan Chase & Co.",
-        "price": 334.49,
-        "divYield": 1.96,
+        "price": 342.08,
+        "divYield": 1.93,
         "currency": "USD"
       },
       {
         "ticker": "V",
         "rawSymbol": "V",
         "name": "Visa Inc.",
-        "price": 422.65,
+        "price": 422.16,
         "divYield": 0.74,
         "currency": "USD"
       },
@@ -402,15 +402,15 @@
         "ticker": "WMT",
         "rawSymbol": "WMT",
         "name": "Walmart Inc.",
-        "price": 125.52,
-        "divYield": 0.78,
+        "price": 125.66,
+        "divYield": 0.79,
         "currency": "USD"
       },
       {
         "ticker": "MA",
         "rawSymbol": "MA",
         "name": "Mastercard Incorporated",
-        "price": 652.7,
+        "price": 655.81,
         "divYield": 0.53,
         "currency": "USD"
       },
@@ -418,40 +418,40 @@
         "ticker": "UNH",
         "rawSymbol": "UNH",
         "name": "UnitedHealth Group Incorporated",
-        "price": 394.15,
-        "divYield": 2.35,
+        "price": 397.62,
+        "divYield": 2.33,
         "currency": "USD"
       },
       {
         "ticker": "PG",
         "rawSymbol": "PG",
         "name": "Procter & Gamble Company (The)",
-        "price": 165.4,
-        "divYield": 2.61,
+        "price": 168.32,
+        "divYield": 2.59,
         "currency": "USD"
       },
       {
         "ticker": "JNJ",
         "rawSymbol": "JNJ",
         "name": "Johnson & Johnson",
-        "price": 276.22,
-        "divYield": 1.97,
+        "price": 282.11,
+        "divYield": 1.9,
         "currency": "USD"
       },
       {
         "ticker": "HD",
         "rawSymbol": "HD",
         "name": "Home Depot, Inc. (The)",
-        "price": 343.47,
-        "divYield": 2.66,
+        "price": 353.42,
+        "divYield": 2.64,
         "currency": "USD"
       },
       {
         "ticker": "XOM",
         "rawSymbol": "XOM",
         "name": "ExxonMobil Holdings Corporation",
-        "price": 165.87,
-        "divYield": 2.59,
+        "price": 164.73,
+        "divYield": 2.6,
         "currency": "USD"
       }
     ],
@@ -460,80 +460,80 @@
         "ticker": "MC",
         "rawSymbol": "MC.PA",
         "name": "LVMH",
-        "price": 408.75,
-        "divYield": 3.12,
+        "price": 402.45,
+        "divYield": 3.18,
         "currency": "EUR"
       },
       {
         "ticker": "OR",
         "rawSymbol": "OR.PA",
         "name": "L'OREAL",
-        "price": 449.8,
-        "divYield": 1.62,
+        "price": 446.8,
+        "divYield": 1.61,
         "currency": "EUR"
       },
       {
         "ticker": "RMS",
         "rawSymbol": "RMS.PA",
         "name": "HERMES INTL",
-        "price": 1362.5,
-        "divYield": 1.31,
+        "price": 1353.5,
+        "divYield": 1.32,
         "currency": "EUR"
       },
       {
         "ticker": "SAP",
         "rawSymbol": "SAP.DE",
         "name": "SAP SE                        I",
-        "price": 210.75,
-        "divYield": 1.17,
+        "price": 211.65,
+        "divYield": 1.19,
         "currency": "EUR"
       },
       {
         "ticker": "SIE",
         "rawSymbol": "SIE.DE",
         "name": "SIEMENS AG                    N",
-        "price": 263.65,
-        "divYield": 1.94,
+        "price": 271.0,
+        "divYield": 2.03,
         "currency": "EUR"
       },
       {
         "ticker": "TTE",
         "rawSymbol": "TTE.PA",
         "name": "TOTALENERGIES",
-        "price": 79.73,
-        "divYield": 4.41,
+        "price": 78.75,
+        "divYield": 4.52,
         "currency": "EUR"
       },
       {
         "ticker": "AIR",
         "rawSymbol": "AIR.PA",
         "name": "AIRBUS SE",
-        "price": 196.4,
-        "divYield": 1.6,
+        "price": 206.0,
+        "divYield": 1.55,
         "currency": "EUR"
       },
       {
         "ticker": "SAN",
         "rawSymbol": "SAN.PA",
         "name": "SANOFI",
-        "price": 83.74,
-        "divYield": 4.9,
+        "price": 85.76,
+        "divYield": 4.8,
         "currency": "EUR"
       },
       {
         "ticker": "ALV",
         "rawSymbol": "ALV.DE",
         "name": "Allianz SE                    v",
-        "price": 451.1,
-        "divYield": 3.73,
+        "price": 457.0,
+        "divYield": 3.79,
         "currency": "EUR"
       },
       {
         "ticker": "BNP",
         "rawSymbol": "BNP.PA",
         "name": "BNP PARIBAS ACT.A",
-        "price": 91.93,
-        "divYield": 7.04,
+        "price": 93.98,
+        "divYield": 6.87,
         "currency": "EUR"
       }
     ],
@@ -542,47 +542,47 @@
         "ticker": "AZN",
         "rawSymbol": "AZN.L",
         "name": "ASTRAZENECA PLC ORD SHS $0.25",
-        "price": 139.3,
-        "divYield": 1.7,
+        "price": 140.66,
+        "divYield": 1.72,
         "currency": "GBP"
       },
       {
         "ticker": "SHEL",
         "rawSymbol": "SHEL.L",
         "name": "SHELL PLC ORD EUR0.07",
-        "price": 37.23,
-        "divYield": 3.06,
+        "price": 37.01,
+        "divYield": 3.12,
         "currency": "GBP"
       },
       {
         "ticker": "HSBA",
         "rawSymbol": "HSBA.L",
         "name": "HSBC HOLDINGS PLC ORD $0.50 (UK",
-        "price": 13.05,
-        "divYield": 2.27,
+        "price": 13.37,
+        "divYield": 2.28,
         "currency": "GBP"
       },
       {
         "ticker": "ULVR",
         "rawSymbol": "ULVR.L",
         "name": "UNILEVER PLC ORD 3.5P",
-        "price": 49.3,
-        "divYield": 3.11,
+        "price": 49.16,
+        "divYield": 3.17,
         "currency": "GBP"
       },
       {
         "ticker": "BP",
         "rawSymbol": "BP.L",
         "name": "BP PLC $0.25",
-        "price": 5.59,
-        "divYield": 4.42,
+        "price": 5.57,
+        "divYield": 4.48,
         "currency": "GBP"
       },
       {
         "ticker": "GSK",
         "rawSymbol": "GSK.L",
         "name": "GSK PLC ORD 31 1/4P",
-        "price": 18.9,
+        "price": 19.05,
         "divYield": 3.6,
         "currency": "GBP"
       },
@@ -590,32 +590,32 @@
         "ticker": "RIO",
         "rawSymbol": "RIO.L",
         "name": "RIO TINTO PLC ORD 10P",
-        "price": 62.81,
-        "divYield": 5.56,
+        "price": 64.16,
+        "divYield": 5.55,
         "currency": "GBP"
       },
       {
         "ticker": "REL",
         "rawSymbol": "REL.L",
         "name": "RELX PLC ORD 14 51/116P",
-        "price": 30.16,
-        "divYield": 2.23,
+        "price": 29.74,
+        "divYield": 2.28,
         "currency": "GBP"
       },
       {
         "ticker": "DGE",
         "rawSymbol": "DGE.L",
         "name": "DIAGEO PLC ORD 28 101/108P",
-        "price": 18.82,
-        "divYield": 2.38,
+        "price": 18.8,
+        "divYield": 2.37,
         "currency": "GBP"
       },
       {
         "ticker": "BATS",
         "rawSymbol": "BATS.L",
         "name": "BRITISH AMERICAN TOBACCO PLC OR",
-        "price": 45.67,
-        "divYield": 5.19,
+        "price": 44.77,
+        "divYield": 5.37,
         "currency": "GBP"
       }
     ],
@@ -624,39 +624,39 @@
         "ticker": "7203",
         "rawSymbol": "7203.T",
         "name": "TOYOTA MOTOR CORP",
-        "price": 3338.0,
-        "divYield": 2.83,
+        "price": 3410.0,
+        "divYield": 2.86,
         "currency": "JPY"
       },
       {
         "ticker": "6758",
         "rawSymbol": "6758.T",
         "name": "SONY GROUP CORPORATION",
-        "price": 4142.0,
-        "divYield": 0.83,
+        "price": 4225.0,
+        "divYield": 0.81,
         "currency": "JPY"
       },
       {
         "ticker": "8306",
         "rawSymbol": "8306.T",
         "name": "MITSUBISHI UFJ FINANCIAL GROUP ",
-        "price": 3224.0,
-        "divYield": 2.78,
+        "price": 3442.0,
+        "divYield": 2.98,
         "currency": "JPY"
       },
       {
         "ticker": "9984",
         "rawSymbol": "9984.T",
         "name": "SOFTBANK GROUP CORP",
-        "price": 3549.0,
-        "divYield": 0.28,
+        "price": 3891.0,
+        "divYield": 0.32,
         "currency": "JPY"
       },
       {
         "ticker": "6861",
         "rawSymbol": "6861.T",
         "name": "KEYENCE CORP",
-        "price": 69750.0,
+        "price": 74260.0,
         "divYield": 0.18,
         "currency": "JPY"
       },
@@ -664,31 +664,31 @@
         "ticker": "8035",
         "rawSymbol": "8035.T",
         "name": "TOKYO ELECTRON",
-        "price": 8263.0,
-        "divYield": 1.78,
+        "price": 8888.0,
+        "divYield": 1.83,
         "currency": "JPY"
       },
       {
         "ticker": "6501",
         "rawSymbol": "6501.T",
         "name": "HITACHI",
-        "price": 4542.0,
-        "divYield": 1.34,
+        "price": 4859.0,
+        "divYield": 1.41,
         "currency": "JPY"
       },
       {
         "ticker": "4063",
         "rawSymbol": "4063.T",
         "name": "SHIN-ETSU CHEMICAL CO",
-        "price": 5312.0,
-        "divYield": 2.04,
+        "price": 5648.0,
+        "divYield": 2.13,
         "currency": "JPY"
       },
       {
         "ticker": "9432",
         "rawSymbol": "9432.T",
         "name": "NTT INC",
-        "price": 160.2,
+        "price": 165.9,
         "divYield": 3.27,
         "currency": "JPY"
       },
@@ -696,8 +696,8 @@
         "ticker": "6902",
         "rawSymbol": "6902.T",
         "name": "DENSO CORP",
-        "price": 1860.5,
-        "divYield": 3.84,
+        "price": 1917.5,
+        "divYield": 3.83,
         "currency": "JPY"
       }
     ]

@@ -63,8 +63,14 @@ for (const [nombre, esc] of Object.entries(modelo)) {
 const montar = (p) => {
   // IVA y amortización acelerada son casillas: 'si'/'no' las marca o desmarca.
   const set = (id, v) => { const e = document.getElementById(id); e.disabled = false; if (e.type === 'checkbox') e.checked = (v === 'si' || v === true); else e.value = v; };
-  for (const c of ['autoComunidad','autoIbi','autoSeguroHogar','autoSeguroImpagos','autoMantenimiento','autoPctImpuestos','autoPctNotaria','autoValor','autoRevalorizacion'])
+  // Con p.estimados los gastos se dejan estimados (candados cerrados): así el motor usa las tasas
+  // por defecto de la página, que son lo que ese escenario contrasta con la transcripción.
+  // La página es la misma para todos los escenarios, así que se fija el estado de los candados
+  // en cada uno: abiertos los del escenario que escribe sus gastos, cerrados el que los estima.
+  for (const c of ['autoPctImpuestos','autoPctNotaria','autoValor','autoRevalorizacion'])
     document.getElementById(c).checked = false;
+  for (const c of ['autoComunidad','autoIbi','autoSeguroHogar','autoSeguroImpagos','autoMantenimiento'])
+    document.getElementById(c).checked = !!p.estimados;
   set('pctImpuestos', 10);
   // La hoja cobraba 1.000 € fijos de notaría; el modelo nuevo la lleva en porcentaje, así que
   // se traduce al tipo que da ese mismo importe para el precio de cada escenario.
@@ -86,8 +92,10 @@ const montar = (p) => {
   set('plazoPrestamo', p.C21); set('tipoPrestamo', p.C22 * 100);
   set('prestamoAcelerado', p.C24 === 'Sí' ? 'si' : 'no');
   set('alquiler', p.C30); set('mesesVacios', 0);
-  set('comunidad', p.C27); set('ibi', p.C26); set('seguroHogar', p.C28);
-  set('seguroImpagos', p.C30 / 2); set('mantenimiento', p.C31);
+  if (!p.estimados) {
+    set('comunidad', p.C27); set('ibi', p.C26); set('seguroHogar', p.C28);
+    set('seguroImpagos', p.C30 / 2); set('mantenimiento', p.C31);
+  }
   set('inflacion', p.C49 * 100); set('revalorizacion', p.C49 * 100); set('horizonte', p.horizonte);
   set('indexar', 'no');
   set('tipoMarginal', 45); set('baseTributable', 40);

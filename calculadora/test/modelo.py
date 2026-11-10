@@ -179,6 +179,11 @@ ESC = {
  'sin_entrada':   {'C11':0,'C13':51000},
  # Comisión de apertura del 1 % en la hipoteca y del 2 % en el préstamo personal.
  'comision':      {'C13':100000,'comHip':0.01,'comPre':0.02},
+ # Gastos ESTIMADOS con las tasas por defecto de la herramienta, en vez de cifras escritas a mano:
+ # IBI 0,2 % del precio, comunidad 1,2 €/m²·mes, seguro de hogar 2,5 €/m²·año, impagos 0,5
+ # mensualidades y mantenimiento 2 % del alquiler anual (la superficie de estos escenarios es de
+ # 100 m²). Si alguien cambia una tasa por defecto sin tocar esto, motor y transcripción divergen.
+ 'estimados':     {'estimados':True, 'C26':0.002*500000, 'C27':1.2*100, 'C28':2.5*100, 'C31':0.02*2000*12},
 }
 res = {}
 for nombre, cambios in ESC.items():

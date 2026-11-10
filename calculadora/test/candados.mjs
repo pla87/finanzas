@@ -20,17 +20,17 @@ const est = await p.evaluate(() => ({
   gastos: document.getElementById('outGastosAnuales').textContent, peso: document.getElementById('outPesoGastos').textContent }));
 console.log('estimados:', est);
 check('comunidad = 1,2 €/m²·mes x 80', est.comunidad === 96, String(est.comunidad));
-check('IBI = 0,24% x 247.000', est.ibi === 593, String(est.ibi));
+check('IBI = 0,2% x 247.000', est.ibi === 494, String(est.ibi));
 check('seguro hogar = 2,5 €/m² x 80', est.seguroHogar === 200, String(est.seguroHogar));
 check('impagos = 0,5 x 1.250', est.seguroImpagos === 625, String(est.seguroImpagos));
-check('mantenimiento = 5% x 15.000', est.mantenimiento === 750, String(est.mantenimiento));
+check('mantenimiento = 2% x 15.000', est.mantenimiento === 300, String(est.mantenimiento));
 check('todos deshabilitados con candado cerrado',
   await p.evaluate(() => ['comunidad','ibi','seguroHogar','seguroImpagos','mantenimiento'].every(i => document.getElementById(i).disabled)));
 
 // Los estimados siguen a sus impulsores
 await p.evaluate(() => { document.getElementById('superficie').value = 200; document.getElementById('alquiler').value = 3000; render(); });
 check('comunidad sigue a los m²', (await n('comunidad')) === 240, await val('comunidad'));
-check('mantenimiento sigue al alquiler', (await n('mantenimiento')) === 1800, await val('mantenimiento'));
+check('mantenimiento sigue al alquiler', (await n('mantenimiento')) === 720, await val('mantenimiento'));
 
 // Abrir un candado: el campo se vuelve editable y deja de recalcularse
 await p.click('#lockIbi');
@@ -53,7 +53,7 @@ check('el valor manual se guarda', (await n('ibi')) === 777, await val('ibi'));
 await p.click('text=Reestimar todo'); await p.waitForTimeout(200);
 check('reestimar cierra todos los candados',
   await p.evaluate(() => ['comunidad','ibi','seguroHogar','seguroImpagos','mantenimiento'].every(i => document.getElementById(i).disabled)));
-check('reestimar recalcula el IBI', (await n('ibi')) === Math.round(0.24/100*855000), await val('ibi'));
+check('reestimar recalcula el IBI', (await n('ibi')) === Math.round(0.2/100*855000), await val('ibi'));
 
 check('sin errores de consola', errs.length === 0, errs[0] ?? '');
 await p.evaluate(() => resetDefaults()); await p.waitForTimeout(300);

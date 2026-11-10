@@ -51,14 +51,14 @@ check('el enlace lleva solo lo que cambia, con claves cortas',
 // ni coincidir con el nombre largo de otro (que también se acepta al leer).
 const tabla = await p.evaluate(() => ({ t: CLAVES_CORTAS, ids: [...CAMPOS, ...CASILLAS] }));
 const cortas = Object.values(tabla.t);
-check('toda entrada tiene clave corta de 1 o 2 letras', tabla.ids.every(id => /^[a-z]{1,2}$/.test(tabla.t[id] ?? '')),
-  tabla.ids.filter(id => !/^[a-z]{1,2}$/.test(tabla.t[id] ?? '')).join());
+check('toda entrada tiene clave corta de 1 a 3 letras', tabla.ids.every(id => /^[a-z]{1,3}$/.test(tabla.t[id] ?? '')),
+  tabla.ids.filter(id => !/^[a-z]{1,3}$/.test(tabla.t[id] ?? '')).join());
 // Una letra siempre que quepa: las 26 letras se reparten entre los campos más tocados.
 check('hay 26 claves de una letra (todas las que caben)', cortas.filter(k => k.length === 1).length === 26, String(cortas.filter(k => k.length === 1).length));
 const antiguas = await p.evaluate(() => CLAVES_ANTIGUAS);
 // Los campos nacidos después de la primera versión no tienen clave antigua: nunca hubo un enlace
 // que las llevara. Se lista cada uno para que añadir otro sea una decisión y no un descuido.
-const POSTERIORES = ['aperturaHip', 'aperturaPre'];
+const POSTERIORES = ['aperturaHip', 'aperturaPre', 'aperturaHipEur', 'aperturaPreEur'];
 check('las claves antiguas cubren todos los ids anteriores a ellas', tabla.ids.filter(id => !POSTERIORES.includes(id)).every(id => antiguas[id]));
 check('y los campos posteriores no inventan una', POSTERIORES.every(id => !(id in antiguas)));
 const todasAnt = Object.values(antiguas);
@@ -147,7 +147,7 @@ const compartido = await p.evaluate(async () => {
   return { calculos, herramienta, copiado };
 });
 check('con cálculos, el mensaje lleva las cifras y el enlace va aparte',
-  /247\.000.*1\.250.*bruta 5,3%.*caja.*\/mes.*anualizada a 30 años 6,8%/.test(compartido.calculos.text) && compartido.calculos.url.startsWith('https://pacolucena.com/calculadora/'),
+  /247\.000.*1\.250.*bruta 5,3%.*caja.*\/mes.*anualizada a 30 años 6,9%/.test(compartido.calculos.text) && compartido.calculos.url.startsWith('https://pacolucena.com/calculadora/'),
   compartido.calculos.text);
 check('la herramienta sola lleva un texto genérico y su dirección',
   /alquiler residencial/.test(compartido.herramienta.text) && compartido.herramienta.url === 'https://pacolucena.com/calculadora/', compartido.herramienta.text);

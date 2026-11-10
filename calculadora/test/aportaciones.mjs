@@ -25,17 +25,18 @@ check('el escenario base no pide dinero extra', base.aportaciones === 0 && base.
 check('sin aportaciones, TIR = rentabilidad compuesta', Math.abs(base.tir - base.compuesta) < 1e-9,
   `${(base.tir*100).toFixed(6)}% vs ${(base.compuesta*100).toFixed(6)}%`);
 
-// 2) Un escenario que sí pide dinero: 95% de LTV
+// 2) Un escenario que sí pide dinero: 100% de LTV. (Antes bastaba el 95%; con los gastos por
+//    defecto más bajos -IBI al 0,2% y mantenimiento al 2%- hace falta financiarlo todo.)
 const alto = await p.evaluate(() => {
   document.getElementById('mesesVacios').value = '0,5';
-  document.getElementById('pctFinanciado').value = '95'; render();
+  document.getElementById('pctFinanciado').value = '100'; render();
   const d = calcular();
   const conAporte = d.filas.filter(f => f.aportacion > 0);
   return { aportaciones: d.aportacionesExtra, nAnos: conAporte.length, primer: conAporte[0]?.n,
     aportado: d.aportado, aportadoAcum: d.ultima.aportadoAcum, tir: d.ultima.anualizada,
     cajaMin: Math.min(...d.filas.map(f => f.cajaAcum)) };
 });
-console.log(`   al 95% de LTV: ${alto.nAnos} años piden dinero, ${Math.round(alto.aportaciones).toLocaleString('es-ES')} € en total`);
+console.log(`   al 100% de LTV: ${alto.nAnos} años piden dinero, ${Math.round(alto.aportaciones).toLocaleString('es-ES')} € en total`);
 check('hay años que piden dinero', alto.nAnos > 0, `${alto.nAnos} años, el primero el ${alto.primer}`);
 check('la caja nunca se queda en negativo', alto.cajaMin >= 0, `mínimo ${Math.round(alto.cajaMin)}`);
 check('el capital total sube con las aportaciones', Math.abs(alto.aportadoAcum - alto.aportado - alto.aportaciones) < 1,
@@ -65,7 +66,7 @@ check('una aportación temprana penaliza más que una tardía', tiempo.pronto < 
   `año 1: ${(tiempo.pronto*100).toFixed(2)}% | año 9: ${(tiempo.tarde*100).toFixed(2)}%`);
 
 // 5) La columna aparece y la fila va marcada
-await p.evaluate(() => { document.getElementById('pctFinanciado').value = '95'; render(); });
+await p.evaluate(() => { document.getElementById('pctFinanciado').value = '100'; render(); });
 const tabla = await p.evaluate(() => {
   const filaRoja = document.querySelector('#tblProyeccion tr.row-aporta');
   // La columna se busca por su cabecera: así una columna nueva en medio no rompe la prueba.

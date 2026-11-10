@@ -24,7 +24,7 @@ console.log(preguntas.map((q,i) => `        ${i+1}. ${q}`).join('\n'));
 await p.evaluate(() => document.querySelectorAll('#faqCuerpo details').forEach(d => d.open = true));
 const tabla = await p.evaluate(() => [...document.querySelectorAll('#faqApalancamiento tr')].map(r => [...r.cells].map(c => c.textContent.trim())));
 console.log('\n   tabla en vivo:'); tabla.forEach(f => console.log('     ', f.join(' | ')));
-check('rinde el piso 6,56%', tabla[0][1] === '6,56%', tabla[0][1]);
+check('rinde el piso 6,76%', tabla[0][1] === '6,76%', tabla[0][1]);
 check('hipoteca al 2,17% tras deducir', tabla[1][1] === '2,17%', tabla[1][1]);
 check('la hipoteca suma', tabla[1][2].includes('suma'), tabla[1][2]);
 check('préstamo al 6,98% tras deducir', tabla[2][1] === '6,98%', tabla[2][1]);

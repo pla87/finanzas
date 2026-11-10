@@ -279,6 +279,26 @@
     @media (min-width: 1024px) and (max-width: 1279px) {
       .kpi-rotulo-anual { font-size: 9.5px; letter-spacing: -0.01em; gap: 3px; }
     }
+    /* Conmutador %/€ de la comisión de apertura. Ocupa el sitio de la unidad: enseña las dos
+       opciones y resalta la que está activa, así no hay que adivinar en qué unidad se escribe. */
+    .unidad:has(.modo-btn) { display: flex; justify-content: flex-end; }
+    .modo-btn { display: inline-flex; align-items: stretch; margin: 0; padding: 0; font: inherit; font-size: 11px; line-height: 1;
+      border: 1px solid rgb(var(--brand-border)); border-radius: 6px; overflow: hidden; background: rgb(var(--brand-bg));
+      color: rgb(var(--brand-textMuted)); cursor: pointer; }
+    .modo-btn span { padding: 4px 6px; }
+    .modo-btn[aria-pressed="false"] span:first-child, .modo-btn[aria-pressed="true"] span:last-child {
+      background: rgb(var(--brand-accent)); color: #fff; font-weight: 700; }
+    .modo-btn:hover { border-color: rgb(var(--brand-accent)); }
+    .modo-btn:focus-visible { outline: 2px solid rgb(var(--brand-accent) / 0.6); outline-offset: 1px; }
+    .modo-btn:disabled { opacity: .6; cursor: default; }
+    /* Aviso de recorte: discreto, junto al campo y fugaz. El ámbar es el color de «ojo» de la
+       herramienta; el rojo se reserva para los valores que se dejan tal cual pero preocupan. */
+    .aviso-limite { position: fixed; z-index: 9998; max-width: min(86vw, 22rem);
+      background: rgb(var(--brand-card)); color: rgb(var(--brand-text));
+      border: 1px solid rgb(var(--brand-amber) / 0.6); border-radius: 8px; padding: 6px 10px;
+      font-size: 11px; line-height: 1.4; box-shadow: 0 8px 24px rgba(15,23,42,.18); pointer-events: none; }
+    .aviso-limite[hidden] { display: none; }
+    html[data-theme="dark"] .aviso-limite { box-shadow: 0 8px 24px rgba(0,0,0,.45); }
     .faq-tabla { width: 100%; margin: 4px 0 10px; font-variant-numeric: tabular-nums; }
     .faq-tabla td { padding: 4px 0; border-bottom: 1px solid rgb(var(--brand-border)); }
     .faq-tabla td:nth-child(2) { text-align: right; font-weight: 700; padding-right: 10px; }
@@ -498,8 +518,9 @@
             <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoHipoteca" value="2,80" data-dec="2" class="campo"></div>
           </div>
           <div class="fila">
-            <label for="aperturaHip" class="tooltip-help"><span data-i18n="apertura">Comisión apertura</span> <span id="outAperturaHip" class="empty:hidden opacity-70"></span></label>
-            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="aperturaHip" value="0,00" data-dec="2" class="campo"></div>
+            <label for="aperturaHip" class="tooltip-help" data-i18n-title="aperturaTip"><span data-i18n="apertura">Comisión apertura</span> <span id="outAperturaHip" class="empty:hidden opacity-70"></span></label>
+            <div class="control"><span class="hueco-candado"></span><span class="unidad"><button type="button" class="modo-btn" id="modoAperturaHip" onclick="alternarModoApertura('Hip')" aria-pressed="false"><span>%</span><span>€</span></button></span><input type="text" inputmode="decimal" id="aperturaHip" value="0,00" data-dec="2" data-dec-max="6" class="campo"></div>
+            <input type="checkbox" id="aperturaHipEur" class="hidden">
           </div>
           <!-- Principal, cuota y el tipo al que la caja del primer año se queda en cero, en una sola
                caja. Ese tipo es el margen ante una subida: no hace falta simular una hipoteca
@@ -533,8 +554,9 @@
             <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="tipoPrestamo" value="9,00" data-dec="2" class="campo"></div>
           </div>
           <div class="fila">
-            <label for="aperturaPre" class="tooltip-help"><span data-i18n="apertura">Comisión apertura</span> <span id="outAperturaPre" class="empty:hidden opacity-70"></span></label>
-            <div class="control"><span class="hueco-candado"></span><span class="unidad">%</span><input type="text" inputmode="decimal" id="aperturaPre" value="0,00" data-dec="2" class="campo"></div>
+            <label for="aperturaPre" class="tooltip-help" data-i18n-title="aperturaTip"><span data-i18n="apertura">Comisión apertura</span> <span id="outAperturaPre" class="empty:hidden opacity-70"></span></label>
+            <div class="control"><span class="hueco-candado"></span><span class="unidad"><button type="button" class="modo-btn" id="modoAperturaPre" onclick="alternarModoApertura('Pre')" aria-pressed="false"><span>%</span><span>€</span></button></span><input type="text" inputmode="decimal" id="aperturaPre" value="0,00" data-dec="2" data-dec-max="6" class="campo"></div>
+            <input type="checkbox" id="aperturaPreEur" class="hidden">
           </div>
           <div class="salida"><span data-i18n="cuotaMensual">Cuota mensual</span><span id="outCuotaPrestamo">--</span></div>
         </div>
@@ -576,7 +598,7 @@
 
         <div class="fila">
           <label for="ibi" class="tooltip-help" data-i18n-title="ibiTip"><span data-i18n="ibi">IBI</span> <span class="opacity-70">(<span data-i18n="anual">anual</span>)</span></label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('ibi')" id="lockIbi"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="ibi" value="593" class="campo"></div>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('ibi')" id="lockIbi"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="ibi" value="494" class="campo"></div>
         </div>
         <input type="checkbox" id="autoIbi" checked class="hidden">
 
@@ -594,7 +616,7 @@
 
         <div class="fila">
           <label for="mantenimiento" class="tooltip-help" data-i18n-title="mantenimientoTip"><span data-i18n="mantenimiento">Mantenimiento</span> <span class="opacity-70">(<span data-i18n="anual">anual</span>)</span></label>
-          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('mantenimiento')" id="lockMantenimiento"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="mantenimiento" value="750" class="campo"></div>
+          <div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('mantenimiento')" id="lockMantenimiento"></button><span class="unidad">€</span><input type="text" inputmode="decimal" data-money id="mantenimiento" value="300" class="campo"></div>
         </div>
         <input type="checkbox" id="autoMantenimiento" checked class="hidden">
 
@@ -743,11 +765,11 @@
         <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
           <h3 class="text-sm font-bold border-b border-brand-border pb-3" data-i18n="paramsMultiplicadores">Multiplicadores de gasto</h3>
           <p class="text-[10px] text-brand-textMuted leading-snug" data-i18n="paramsMultiplicadoresAyuda">Reglas del pulgar para estimar cada gasto recurrente.</p>
-          <div class="fila"><label for="tasaIbi" class="tooltip-help" data-i18n="ibi" data-i18n-title="ibiTip">IBI</label><div class="control"><span class="unidad">% precio</span><input type="text" inputmode="decimal" id="tasaIbi" value="0.24" class="campo"></div></div>
+          <div class="fila"><label for="tasaIbi" class="tooltip-help" data-i18n="ibi" data-i18n-title="ibiTip">IBI</label><div class="control"><span class="unidad">% precio</span><input type="text" inputmode="decimal" id="tasaIbi" value="0.2" class="campo"></div></div>
           <div class="fila"><label for="tasaComunidad" class="tooltip-help" data-i18n="comunidad" data-i18n-title="comunidadTip">Comunidad</label><div class="control"><span class="unidad">€/m²·mes</span><input type="text" inputmode="decimal" id="tasaComunidad" value="1.2" class="campo"></div></div>
           <div class="fila"><label for="tasaSeguroHogar" data-i18n="seguroHogar">Seguro de hogar</label><div class="control"><span class="unidad">€/m²·año</span><input type="text" inputmode="decimal" id="tasaSeguroHogar" value="2.5" class="campo"></div></div>
           <div class="fila"><label for="tasaImpagos" class="tooltip-help" data-i18n="seguroImpagos" data-i18n-title="seguroImpagosTip">Seguro de impagos</label><div class="control"><span class="unidad">mensualid.</span><input type="text" inputmode="decimal" id="tasaImpagos" value="0.5" class="campo"></div></div>
-          <div class="fila"><label for="tasaMantenimiento" class="tooltip-help" data-i18n="mantenimiento" data-i18n-title="mantenimientoTip">Mantenimiento</label><div class="control"><span class="unidad">% alquiler</span><input type="text" inputmode="decimal" id="tasaMantenimiento" value="5" class="campo"></div></div>
+          <div class="fila"><label for="tasaMantenimiento" class="tooltip-help" data-i18n="mantenimiento" data-i18n-title="mantenimientoTip">Mantenimiento</label><div class="control"><span class="unidad">% alquiler</span><input type="text" inputmode="decimal" id="tasaMantenimiento" value="2" class="campo"></div></div>
         </div>
 
         <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
@@ -831,6 +853,10 @@
     </div>
   </footer>
 
+  <!-- Aviso breve cuando un campo se recorta al rango permitido. Vive fuera de las tarjetas, fijo,
+       para que ningún overflow lo corte; lo coloca avisarRecorte() junto al campo. -->
+  <div id="avisoLimite" class="aviso-limite" role="status" aria-live="polite" hidden></div>
+
   <script>
     const STORAGE_KEY = 'calc_pisos_v2';
     const THEME_KEY = 'calc_pisos_theme';
@@ -883,6 +909,47 @@
         compAnosDeuda: 'Años hasta liquidar la deuda', compIntereses: 'Intereses pagados en el horizonte',
         compNomHip: 'Hipoteca {0} % · {1} a · {2} %', compNomPre: '+ préstamo {0} al {1} %', compNomPreSolo: 'Préstamo {0} al {1} %',
         compNomApertura: 'apertura {0} %', compNomAcel: 'acelerada', compNomHipAcel: 'hipoteca acelerada', compNomPreAcel: 'préstamo acelerado', compNomSin: 'Sin financiación',
+        compNomAperturaEur: 'apertura {0}',
+        // Límites de los campos: el aviso fugaz cuando se recorta, y los globos rojos de los valores
+        // posibles pero preocupantes. Los umbrales de los textos son los de LIMITES y AVISOS.
+        limiteRecorte: 'Ajustado al rango permitido: de {0} a {1}{2}.',
+        limiteSufEntero: ' (solo enteros)', limiteSufPaso: ' (de {0} en {0})',
+        limiteUnidadAnos: 'años', limiteUnidadMeses: 'meses',
+        deshecho: 'Deshecho', rehecho: 'Rehecho', nadaQueDeshacer: 'Nada que deshacer', nadaQueRehacer: 'Nada que rehacer',
+        modoAperturaTip: 'Escribir la comisión de apertura en porcentaje del principal o en euros. Al cambiar, el importe en euros no varía.',
+        modoAperturaPct: 'Comisión de apertura en porcentaje del principal (pulsa para pasar a euros)',
+        modoAperturaEur: 'Comisión de apertura en euros (pulsa para pasar a porcentaje)',
+        avisoOfertaMayor: 'La oferta supera el precio anunciado: pagarías más de lo que pide el vendedor. Comprueba que no sea un error.',
+        avisoDescuento: 'Un descuento del {0} sobre el precio anunciado es muy difícil de conseguir (lo normal queda por debajo del 30 %). Mira si la oferta es realista.',
+        avisoEurM2Bajo: 'Sale a {0} por m², por debajo de 300 €/m²: es raro. Revisa el precio o la superficie.',
+        avisoEurM2Alto: 'Sale a {0} por m², por encima de 15.000 €/m²: es muy alto. Revisa el precio o la superficie.',
+        avisoImpuestoCompra: 'Por encima del 12 % sólo llegan los últimos tramos de alguna escala autonómica (ITP habitual del 6 al 10 %; en obra nueva, IVA del 10 % más AJD). Revísalo.',
+        avisoNotaria: 'Notaría, registro y gestoría rara vez pasan del 3 % del precio.',
+        avisoComision: 'La comisión supone el {0} del precio de la oferta: lo habitual es no pasar del 5 %.',
+        avisoReforma: 'La reforma ({0}) cuesta más que el propio piso ({1}). Comprueba la cifra.',
+        avisoFinanciado: 'Los bancos rara vez financian más del 80 % del precio: lo que falta, y los gastos de compra, los pones tú.',
+        avisoPlazoHipoteca: 'Más de 30 años es un plazo largo: los intereses totales crecen mucho y la edad del titular suele limitarlo.',
+        avisoTipoHipoteca: 'Un tipo por encima del 6 % es muy alto para una hipoteca: la caja del primer año se resiente. Comprueba la cifra.',
+        avisoPlazoPrestamo: 'Más de 10 años es un plazo muy largo para un préstamo personal.',
+        avisoTipoPrestamo: 'Tipo alto: un préstamo personal del 10 % o más se come buena parte de lo que rinde el piso.',
+        avisoApertura: 'La comisión de apertura es el {0} del principal, por encima del 10 %: está muy por encima de lo habitual.',
+        avisoRentBaja: 'Rentabilidad bruta del {0}: por debajo del 2 % el alquiler apenas cubre el coste del piso. Revisa el alquiler o el precio.',
+        avisoRentAlta: 'Rentabilidad bruta del {0}: por encima del 15 % casi nunca es real en un alquiler residencial. Comprueba el alquiler.',
+        avisoMesesVacios: 'Más de 3 meses al año sin inquilino es mucho: el piso pasaría vacío más de un cuarto del tiempo.',
+        avisoGastos: 'Los gastos anuales ({0}) se llevan el {1} del alquiler cobrado, más de la mitad. Revisa las cifras.',
+        avisoInflacionNeg: 'Una inflación negativa (deflación) haría bajar cada año el alquiler y los gastos: es poco habitual.',
+        avisoInflacionAlta: 'Una inflación sostenida por encima del 6 % durante todo el horizonte es un supuesto extremo.',
+        avisoRevalAlta: 'Revalorizar más de un 7 % anual año tras año es un supuesto muy optimista.',
+        avisoRevalBaja: 'Una revalorización por debajo del −3 % anual supone que el piso pierde valor todos los años: muy pesimista.',
+        avisoTasaIbi: 'Más del 1,5 % del precio al año de IBI queda muy por encima de lo habitual.',
+        avisoTasaComunidad: 'Más de 3 €/m² al mes de comunidad es mucho.',
+        avisoTasaSeguroHogar: 'Más de 6 €/m² al año de seguro de hogar es mucho.',
+        avisoTasaImpagos: 'Más de 2 mensualidades al año de seguro de impagos es mucho: suele costar una fracción de una sola.',
+        avisoTasaMantenimiento: 'Más del 15 % del alquiler en mantenimiento es mucho.',
+        avisoTipoMarginal: 'Por encima del 54 % queda fuera de lo que aplica el IRPF: revisa el tipo marginal.',
+        avisoTasaAmortizacion: 'El máximo fiscal de amortización de un inmueble es el 3 % anual: por encima Hacienda no lo admite.',
+        avisoGastosVenta: 'Más del 10 % del precio en gastos de venta es mucho más de lo habitual (agencia, plusvalía municipal y gestiones suelen rondar el 5 %).',
+        avisoGananciaVenta: 'Por encima del 28 % no hay ningún tramo de la escala del ahorro del IRPF (el último es el 28 %).',
         compartirTextoAcel: 'Piso de {0} alquilado a {1}/mes: rentabilidad bruta {2}, caja {3}/mes ({6}/mes van a amortizar deuda), anualizada a {4} años {5}.',
         kpiDeuda: 'FIN DE DEUDA',
         kpiDeudaTip: 'Año en el que se cancela toda la deuda: hipoteca y préstamo personal.\nCon amortización acelerada, la caja acumulada se destina a reducir principal y se adelanta.',
@@ -891,7 +958,7 @@
         anoRefTip: 'Año hasta el que se mide. No recorta la proyección: la tabla y las gráficas siguen\nllegando al horizonte que tengas puesto en Parámetros.',
         kpiSobre: 'Sobre', kpiAportados: 'aportados',
         kpiSinLiquidez: 'Sin liquidez aportada', kpiMesConDeuda: '/mes con la deuda viva', kpiMesSinDeuda: '/mes sin deuda',
-        kpiDeudaInicial: 'Deuda inicial', kpiQuedan: 'Quedan', kpiAlAno: 'al año', kpiAnos: 'años',
+        kpiDeudaInicial: 'Deuda inicial', kpiQuedan: 'Quedan', kpiAlAno: 'al año', kpiAnos: 'años', kpiAno: 'año', kpiAnualizadaAno: 'AÑO',
         kpiRecuperas: 'Caja recuperada en {1} años',
         kpiRecuperasTip: 'Recuperas los {0} aportados en el año {1}, sólo con la caja que va dejando el alquiler y sin vender el piso.',
         kpiNoRecuperaAcel: 'La caja va a amortizar deuda',
@@ -1106,6 +1173,45 @@
         compAnosDeuda: 'Years until debt-free', compIntereses: 'Interest paid over the horizon',
         compNomHip: 'Mortgage {0}% · {1} y · {2}%', compNomPre: '+ loan {0} at {1}%', compNomPreSolo: 'Loan {0} at {1}%',
         compNomApertura: 'fee {0}%', compNomAcel: 'accelerated', compNomHipAcel: 'mortgage accelerated', compNomPreAcel: 'loan accelerated', compNomSin: 'No financing',
+        compNomAperturaEur: 'fee {0}',
+        limiteRecorte: 'Adjusted to the allowed range: {0} to {1}{2}.',
+        limiteSufEntero: ' (whole numbers only)', limiteSufPaso: ' (in steps of {0})',
+        limiteUnidadAnos: 'years', limiteUnidadMeses: 'months',
+        deshecho: 'Undone', rehecho: 'Redone', nadaQueDeshacer: 'Nothing to undo', nadaQueRehacer: 'Nothing to redo',
+        modoAperturaTip: 'Enter the arrangement fee as a percentage of the principal or as an amount in euros. Switching keeps the euro amount unchanged.',
+        modoAperturaPct: 'Arrangement fee as a percentage of the principal (press to switch to euros)',
+        modoAperturaEur: 'Arrangement fee in euros (press to switch to a percentage)',
+        avisoOfertaMayor: 'The offer is above the asking price: you would pay more than the seller asks. Check it is not a mistake.',
+        avisoDescuento: 'A {0} discount on the asking price is very hard to get (normally it stays below 30%). Check the offer is realistic.',
+        avisoEurM2Bajo: 'That comes to {0} per m², below 300 €/m²: unusual. Check the price or the floor area.',
+        avisoEurM2Alto: 'That comes to {0} per m², above 15,000 €/m²: very high. Check the price or the floor area.',
+        avisoImpuestoCompra: 'Above 12% only the top bands of some regional scales get there (usual transfer tax of 6 to 10%; on new builds, 10% VAT plus stamp duty). Check it.',
+        avisoNotaria: 'Notary, registry and paperwork rarely go above 3% of the price.',
+        avisoComision: 'The fee is {0} of the offer price: it is usually no more than 5%.',
+        avisoReforma: 'The renovation ({0}) costs more than the flat itself ({1}). Check the figure.',
+        avisoFinanciado: 'Banks rarely finance more than 80% of the price: the rest, plus the purchase costs, is yours to pay.',
+        avisoPlazoHipoteca: 'More than 30 years is a long term: total interest grows a lot and the holder’s age often caps it.',
+        avisoTipoHipoteca: 'A rate above 6% is very high for a mortgage: first-year cash flow suffers. Check the figure.',
+        avisoPlazoPrestamo: 'More than 10 years is a very long term for a personal loan.',
+        avisoTipoPrestamo: 'High rate: a personal loan at 10% or more eats a good part of what the flat earns.',
+        avisoApertura: 'The arrangement fee is {0} of the principal, above 10%: far above what is usual.',
+        avisoRentBaja: 'Gross yield of {0}: below 2% the rent barely covers the cost of the flat. Check the rent or the price.',
+        avisoRentAlta: 'Gross yield of {0}: above 15% is almost never real for a residential let. Check the rent.',
+        avisoMesesVacios: 'More than 3 months a year without a tenant is a lot: the flat would sit empty over a quarter of the time.',
+        avisoGastos: 'Annual expenses ({0}) take {1} of the rent collected, more than half. Check the figures.',
+        avisoInflacionNeg: 'Negative inflation (deflation) would lower rent and expenses every year: it is unusual.',
+        avisoInflacionAlta: 'Inflation sustained above 6% for the whole horizon is an extreme assumption.',
+        avisoRevalAlta: 'Appreciation above 7% a year, year after year, is a very optimistic assumption.',
+        avisoRevalBaja: 'Appreciation below −3% a year means the flat loses value every year: very pessimistic.',
+        avisoTasaIbi: 'More than 1.5% of the price a year in property tax is far above what is usual.',
+        avisoTasaComunidad: 'More than 3 €/m² a month in community fees is a lot.',
+        avisoTasaSeguroHogar: 'More than 6 €/m² a year for home insurance is a lot.',
+        avisoTasaImpagos: 'More than 2 months’ rent a year for rent-default insurance is a lot: it usually costs a fraction of one.',
+        avisoTasaMantenimiento: 'More than 15% of the rent on maintenance is a lot.',
+        avisoTipoMarginal: 'Above 54% is outside what income tax applies: check the marginal rate.',
+        avisoTasaAmortizacion: 'The tax limit for depreciating a property is 3% a year: above that the tax office does not accept it.',
+        avisoGastosVenta: 'More than 10% of the price in selling costs is well above usual (agency, municipal capital-gains tax and paperwork tend to be around 5%).',
+        avisoGananciaVenta: 'Above 28% there is no band in the income-tax savings scale (the top one is 28%).',
         compartirTextoAcel: '{0} flat rented at {1}/month: gross yield {2}, cash flow {3}/month ({6}/month goes to pay down debt), annualised over {4} years {5}.',
         kpiDeuda: 'DEBT CLEARED',
         kpiDeudaTip: 'The year all debt is repaid: mortgage and personal loan.\nWith accelerated repayment the accumulated cash pays down principal and brings this forward.',
@@ -1114,7 +1220,7 @@
         anoRefTip: 'The year the return is measured to. It does not shorten the projection: the table and the\ncharts still run to the horizon set in Parameters.',
         kpiSobre: 'On', kpiAportados: 'put in',
         kpiSinLiquidez: 'No cash put in', kpiMesConDeuda: '/month while in debt', kpiMesSinDeuda: '/month debt free',
-        kpiDeudaInicial: 'Debt at purchase', kpiQuedan: 'Still', kpiAlAno: 'in year', kpiAnos: 'years',
+        kpiDeudaInicial: 'Debt at purchase', kpiQuedan: 'Still', kpiAlAno: 'in year', kpiAnos: 'years', kpiAno: 'year', kpiAnualizadaAno: 'YEAR',
         kpiRecuperas: 'Cash recovered in {1} years',
         kpiRecuperasTip: 'You get your {0} back in year {1}, on the cash the letting throws off alone and without selling the flat.',
         kpiNoRecuperaAcel: 'Cash goes to paying down debt',
@@ -1479,7 +1585,10 @@
 
     let IDIOMA = 'es';
     const t = (clave) => (TEXTOS[IDIOMA][clave] ?? TEXTOS.es[clave] ?? clave);
-    const tf = (clave, ...args) => t(clave).replace(/\{(\d)\}/g, (_, i) => args[i]);
+    // «1 años» se lee mal: un plazo o un horizonte de un año va en singular. Se arregla aquí, en el
+    // texto ya compuesto, para no duplicar cada plantilla; el lookbehind deja en paz «11 años» y «1,1 años».
+    const singular = (s) => s.replace(/(?<![\d.,])1 años\b/g, '1 año').replace(/(?<![\d.,])1 years\b/g, '1 year');
+    const tf = (clave, ...args) => singular(t(clave).replace(/\{(\d)\}/g, (_, i) => args[i]));
 
     /* ---------- Formato ---------- */
 
@@ -1495,24 +1604,31 @@
     // Los campos monetarios son de texto para poder llevar separador de miles, así que hay que
     // deshacer el formato al leerlos. Un separador de miles se quita siempre; la coma es
     // decimal en español y el punto lo es en inglés, y ambos se aceptan en cualquier idioma.
-    function parseNum(bruto) {
+    //
+    // Un único separador con tres cifras detrás es ambiguo: «1.250» son mil doscientos cincuenta
+    // en un importe, pero «2,375» en un tipo de interés son dos y pico, no dos mil. Por eso los
+    // campos que no son importes (`decimal`) leen un único separador como decimal siempre; en un
+    // importe sigue siendo de miles, salvo que la parte entera sea 0 («0,125» no es 125).
+    function parseNum(bruto, decimal = false) {
       let s = String(bruto ?? '').replace(/[\s\u00a0\u202f]/g, '');
       if (!s) return 0;
       const coma = s.lastIndexOf(','), punto = s.lastIndexOf('.');
+      const miles = (sep, re) => s.split(sep).length > 2 || (!decimal && re.test(s) && !/^[-+]?0[.,]/.test(s));
       if (coma >= 0 && punto >= 0) {
         // El último que aparece manda: es el separador decimal.
         s = coma > punto ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
       } else if (coma >= 0) {
-        // Con tres cifras detrás y más de una coma es separador de miles, no decimal.
-        s = (s.split(',').length > 2 || /,\d{3}$/.test(s)) ? s.replace(/,/g, '') : s.replace(',', '.');
+        s = miles(',', /,\d{3}$/) ? s.replace(/,/g, '') : s.replace(',', '.');
       } else if (punto >= 0) {
-        if (s.split('.').length > 2 || /\.\d{3}$/.test(s)) s = s.replace(/\./g, '');
+        if (miles('.', /\.\d{3}$/)) s = s.replace(/\./g, '');
       }
       const v = parseFloat(s);
       return isFinite(v) ? v : 0;
     }
 
-    const num = (id) => parseNum(el(id).value);
+    // Cada campo se lee según lo que es: los importes llevan separador de miles, el resto no.
+    const parseCampo = (id, texto) => parseNum(texto, !esMoneda(id));
+    const num = (id) => parseCampo(id, el(id).value);
     // Sí/no: las casillas (IVA de la comisión, amortización acelerada) por su marca; los
     // desplegables que quedan (obra nueva), por su valor.
     const yes = (id) => { const e = el(id); return e.type === 'checkbox' ? e.checked : e.value === 'si'; };
@@ -1531,11 +1647,11 @@
 
     // Se reformatea al salir del campo y no mientras se teclea: hacerlo en cada pulsación
     // mueve el cursor de sitio y es imposible escribir.
-    function formatearCampos() {
+    function formatearCampos(tambienActivo = false) {
       document.querySelectorAll('[data-money], [data-dec]').forEach(e => {
-        if (document.activeElement === e) return;
-        const d = e.hasAttribute('data-dec') ? +e.dataset.dec : 0;
-        fijar(e.id, parseNum(e.value), d, d);
+        if (!tambienActivo && document.activeElement === e) return;
+        const [dmax, dmin] = decimalesCampo(e.id);
+        fijar(e.id, parseCampo(e.id, e.value), dmax, dmin);
       });
     }
 
@@ -1614,7 +1730,7 @@
       const cb = el('auto' + capitalizar(campo));
       cb.checked = !cb.checked;
       pintarCandado(campo);
-      render();
+      confirmarCambio();
       if (!cb.checked) { el(campo).focus(); el(campo).select(); }
     }
 
@@ -1622,7 +1738,7 @@
     // pegar la oferta al precio anunciado sin avisar sería tirar el escenario del usuario.
     function reestimarTodo() {
       [...GASTOS_ESTIMADOS, ...TIPOS_COMPRA].forEach(c => { el('auto' + capitalizar(c)).checked = true; pintarCandado(c); });
-      render();
+      confirmarCambio();
     }
 
     function pintarFuente(fuente) {
@@ -1633,14 +1749,246 @@
       boton.title = activa ? t('fuenteOn') : t('fuenteOff');
       const bloque = el('bloque' + capitalizar(fuente));
       bloque.classList.toggle('fuente-off', !activa);
-      bloque.querySelectorAll('input, select').forEach(e => { e.disabled = !activa; });
+      bloque.querySelectorAll('input, select, button').forEach(e => { e.disabled = !activa; });
     }
 
     function alternarFuente(fuente) {
       const cb = el('usar' + capitalizar(fuente));
       cb.checked = !cb.checked;
       pintarFuente(fuente);
-      render();
+      confirmarCambio();
+    }
+
+    /* ---------- Límites de los campos ---------- */
+
+    // Dos niveles. El límite DURO recorta el valor al rango y lo redondea al paso cuando se
+    // confirma el campo (change/blur, nunca mientras se escribe: recortar en cada pulsación haría
+    // imposible teclear un 12 camino de un 120). El AVISO (más abajo, avisosDe) no toca nada: marca
+    // en rojo, con su explicación en el title, un valor posible pero preocupante.
+    //
+    // Cada entrada: min, max, paso (el valor se redondea al múltiplo más cercano), dec (decimales
+    // con que se escribe el campo, y a la vez con que se enseña el rango), u (unidad, sólo para
+    // contar el rango en el aviso) y avisaPaso (el redondeo al paso se anuncia: 0,3 meses → 0,5 es
+    // una sorpresa; 1.250,6 € → 1.251 € no lo es).
+    const MAX_IMPORTE = 20000000;
+    const LIMITES = {
+      precioAnunciado: { min: 10000, max: MAX_IMPORTE, paso: 1, dec: 0, u: '€' },
+      descuentoOferta: { min: 0, max: 90, paso: 0.01, dec: 2, u: '%' },
+      oferta: { min: 1000, max: MAX_IMPORTE, paso: 1, dec: 0, u: '€' },
+      valor: { min: 1000, max: MAX_IMPORTE, paso: 1, dec: 0, u: '€' },
+      superficie: { min: 10, max: 5000, paso: 1, dec: 0, u: 'm²' },
+      pctImpuestos: { min: 0, max: 15, paso: 0.01, dec: 2, u: '%' },
+      pctNotaria: { min: 0, max: 5, paso: 0.01, dec: 2, u: '%' },
+      comision: { min: 0, max: MAX_IMPORTE, paso: 1, dec: 0, u: '€' },
+      reforma: { min: 0, max: MAX_IMPORTE, paso: 1, dec: 0, u: '€' },
+      pctFinanciado: { min: 0, max: 100, paso: 0.01, dec: 2, u: '%' },
+      plazoHipoteca: { min: 1, max: 40, paso: 1, dec: 0, u: 'anos', avisaPaso: true },
+      tipoHipoteca: { min: 0, max: 20, paso: 0.01, dec: 2, u: '%' },
+      // La comisión de apertura cambia de rango con el modo (% o €): lo resuelve limiteDe().
+      aperturaHip: { min: 0, max: 100, paso: 0.000001, dec: 6, decMin: 2, u: '%' },
+      aperturaPre: { min: 0, max: 100, paso: 0.000001, dec: 6, decMin: 2, u: '%' },
+      // El tope del préstamo depende de la compra (coste total menos hipoteca): también dinámico.
+      importePrestamo: { min: 0, max: MAX_IMPORTE, paso: 1, dec: 0, u: '€' },
+      plazoPrestamo: { min: 1, max: 15, paso: 1, dec: 0, u: 'anos', avisaPaso: true },
+      tipoPrestamo: { min: 0, max: 30, paso: 0.01, dec: 2, u: '%' },
+      alquiler: { min: 0, max: 500000, paso: 1, dec: 0, u: '€' },
+      mesesVacios: { min: 0, max: 12, paso: 0.5, dec: 1, u: 'meses', avisaPaso: true },
+      comunidad: { min: 0, max: 100000, paso: 1, dec: 0, u: '€' },
+      ibi: { min: 0, max: 1000000, paso: 1, dec: 0, u: '€' },
+      seguroHogar: { min: 0, max: 1000000, paso: 1, dec: 0, u: '€' },
+      seguroImpagos: { min: 0, max: 1000000, paso: 1, dec: 0, u: '€' },
+      mantenimiento: { min: 0, max: 1000000, paso: 1, dec: 0, u: '€' },
+      inflacion: { min: -5, max: 20, paso: 0.01, dec: 2, u: '%' },
+      revalorizacion: { min: -10, max: 20, paso: 0.01, dec: 2, u: '%' },
+      tasaIbi: { min: 0, max: 100, paso: 0.01, dec: 2, u: '%' },
+      tasaComunidad: { min: 0, max: 50, paso: 0.01, dec: 2, u: '€/m²·mes' },
+      tasaSeguroHogar: { min: 0, max: 100, paso: 0.01, dec: 2, u: '€/m²·año' },
+      tasaImpagos: { min: 0, max: 12, paso: 0.01, dec: 2, u: 'mensualid.' },
+      tasaMantenimiento: { min: 0, max: 100, paso: 0.01, dec: 2, u: '%' },
+      tipoMarginal: { min: 0, max: 100, paso: 0.01, dec: 2, u: '%' },
+      baseTributable: { min: 0, max: 100, paso: 0.01, dec: 2, u: '%' },
+      pctConstruccion: { min: 0, max: 100, paso: 0.01, dec: 2, u: '%' },
+      tasaAmortizacion: { min: 0, max: 10, paso: 0.01, dec: 2, u: '%' },
+      pctGastosVenta: { min: 0, max: 100, paso: 0.01, dec: 2, u: '%' },
+      pctGananciaVenta: { min: 0, max: 100, paso: 0.01, dec: 2, u: '%' },
+      horizonte: { min: 1, max: 60, paso: 1, dec: 0, u: 'anos', avisaPaso: true }
+    };
+
+    // La comisión de apertura de cada deuda: qué casilla guarda su modo, de qué principal cuelga.
+    const APERTURAS = {
+      aperturaHip: { modo: 'aperturaHipEur', sufijo: 'Hip', principal: (d) => d.principalHip },
+      aperturaPre: { modo: 'aperturaPreEur', sufijo: 'Pre', principal: (d) => d.principalPre }
+    };
+
+    // Mientras se carga el escenario (arranque, enlace) o se restaura una instantánea, los ajustes
+    // son en silencio: nadie ha escrito nada que merezca un aviso.
+    let CARGANDO = true, RESTAURANDO = false;
+
+    // Redondeo al paso sin la cola de coma flotante (0,1 + 0,2): el resultado lleva como mucho
+    // diez decimales, que es más de lo que ningún paso necesita.
+    const redondearAlPaso = (v, paso) => +(Math.round(v / paso) * paso).toFixed(10);
+
+    // El rango de un campo, con lo dinámico resuelto. Lo dinámico necesita el motor, y calcular()
+    // reescribe algunos campos (el préstamo por encima de su tope): quien necesite el valor tal
+    // como lo escribió el usuario tiene que leerlo ANTES de llamar aquí.
+    function limiteDe(id, d) {
+      const base = LIMITES[id];
+      if (!base) return null;
+      if (id === 'importePrestamo') return { ...base, max: Math.round((d || calcular()).topePrestamo) };
+      const ap = APERTURAS[id];
+      if (ap && el(ap.modo).checked) {
+        const principal = ap.principal(d || calcular());
+        return { min: 0, max: Math.floor(principal * 100) / 100, paso: 0.01, dec: 2, decMin: 2, u: '€' };
+      }
+      return base;
+    }
+
+    // Recorte «estático», sin motor: para lo que llega de fuera (opciones del comparador guardadas
+    // o en un enlace) donde no hay un balance al que preguntar por el tope del préstamo.
+    function valorLimitado(id, v) {
+      const lim = LIMITES[id];
+      if (!lim) return v;
+      const dentro = (x) => Math.min(Math.max(x, lim.min), lim.max);
+      return dentro(lim.paso ? redondearAlPaso(dentro(v), lim.paso) : dentro(v));
+    }
+
+    // Decimales (máximo, mínimo) con que se escribe un campo. La comisión de apertura admite hasta
+    // seis decimales en % (para que pasar de euros a % y volver no cambie el importe) y dos en €.
+    function decimalesCampo(id) {
+      const e = el(id);
+      const min = e.hasAttribute('data-dec') ? +e.dataset.dec : 0;
+      if (APERTURAS[id] && el(APERTURAS[id].modo).checked) return [2, 2];
+      return [e.hasAttribute('data-dec-max') ? +e.dataset.decMax : min, min];
+    }
+
+    // Cómo se cuenta un extremo del rango, con su unidad.
+    function fmtLimite(v, lim) {
+      const maxDec = lim.u === '%' ? 4 : Math.min(lim.dec, 2);
+      const cifra = (x) => new Intl.NumberFormat(t('locale'), { maximumFractionDigits: maxDec, useGrouping: 'always' }).format(x);
+      if (lim.u === '€') return lim.dec > 0
+        ? new Intl.NumberFormat(t('locale'), { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: 'always' }).format(v)
+        : fmt(v);
+      if (lim.u === 'anos') return singular(`${cifra(v)} ${t('limiteUnidadAnos')}`);
+      if (lim.u === 'meses') return `${cifra(v)} ${t('limiteUnidadMeses')}`;
+      return `${cifra(v)} ${lim.u}`;
+    }
+
+    // El aviso fugaz de recorte, fijo y junto al campo (alineado a su borde derecho, que es donde
+    // están todas las cajas). Se esconde solo, y también al desplazar o cambiar de tamaño, porque
+    // una caja fija se quedaría colgada donde estaba el campo.
+    let avisoLimiteTimer = null;
+    function ocultarAvisoLimite() { clearTimeout(avisoLimiteTimer); el('avisoLimite').hidden = true; }
+    function avisarRecorte(id, lim) {
+      const campo = el(id), caja = el('avisoLimite');
+      const sufijo = !lim.avisaPaso ? ''
+        : lim.paso === 1 ? t('limiteSufEntero')
+        : tf('limiteSufPaso', new Intl.NumberFormat(t('locale'), { maximumFractionDigits: 2 }).format(lim.paso));
+      caja.textContent = tf('limiteRecorte', fmtLimite(lim.min, lim), fmtLimite(lim.max, lim), sufijo);
+      caja.hidden = false;
+      const r = campo.getBoundingClientRect();
+      caja.style.left = Math.max(8, Math.min(r.right - caja.offsetWidth, window.innerWidth - caja.offsetWidth - 8)) + 'px';
+      const debajo = r.bottom + 6;
+      caja.style.top = (debajo + caja.offsetHeight > window.innerHeight - 8 ? Math.max(8, r.top - caja.offsetHeight - 6) : debajo) + 'px';
+      clearTimeout(avisoLimiteTimer);
+      avisoLimiteTimer = setTimeout(ocultarAvisoLimite, 4500);
+    }
+    window.addEventListener('scroll', ocultarAvisoLimite, { passive: true });
+    window.addEventListener('resize', ocultarAvisoLimite);
+
+    // El límite duro de un campo: lo recorta y redondea si hace falta y devuelve si lo cambió.
+    // También se recortan los campos desactivados (una fuente apagada, un gasto estimado): lo que
+    // traiga un enlace en un bloque apagado no puede quedarse fuera de rango para cuando se encienda.
+    function limitarCampo(id, { silencio = false } = {}) {
+      const campo = el(id);
+      if (!LIMITES[id]) return false;
+      const bruto = parseCampo(id, campo.value);   // antes de limiteDe(): calcular() puede reescribir el campo
+      const lim = limiteDe(id);
+      const dentro = (x) => Math.min(Math.max(x, lim.min), lim.max);
+      const recortado = dentro(bruto) !== bruto;
+      const v = dentro(lim.paso ? redondearAlPaso(dentro(bruto), lim.paso) : bruto);
+      if (Math.abs(v - bruto) < 1e-9) return false;
+      const [dmax, dmin] = decimalesCampo(id);
+      fijar(id, v, dmax, dmin);
+      if (!silencio && !CARGANDO && !RESTAURANDO && (recortado || lim.avisaPaso)) avisarRecorte(id, lim);
+      return true;
+    }
+
+    // Lo que hay que hacer además de recortar: oferta y descuento van enlazados, y el precio
+    // anunciado arrastra a la oferta con el descuento que haya.
+    function limitarYEnlazar(id) {
+      if (!limitarCampo(id)) return false;
+      if (id === 'oferta') descuentoDesdeOferta();
+      else if (id === 'descuentoOferta' || id === 'precioAnunciado') ofertaDesdeDescuento();
+      return true;
+    }
+
+    // Avisos en rojo: cada valor posible pero preocupante pone su campo en rojo y deja la
+    // explicación en el title. Un campo que no avisa vuelve a su title de siempre. Nada se
+    // corrige: son valores posibles, y quien los escribe puede tener sus razones.
+    const IDS_AVISO = ['oferta', 'descuentoOferta', 'superficie', 'outEurM2', 'pctImpuestos', 'pctNotaria', 'comision', 'reforma',
+      'pctFinanciado', 'plazoHipoteca', 'tipoHipoteca', 'aperturaHip', 'plazoPrestamo', 'tipoPrestamo', 'aperturaPre',
+      'alquiler', 'mesesVacios', ...GASTOS_ESTIMADOS, 'inflacion', 'revalorizacion',
+      'tasaIbi', 'tasaComunidad', 'tasaSeguroHogar', 'tasaImpagos', 'tasaMantenimiento',
+      'tipoMarginal', 'tasaAmortizacion', 'pctGastosVenta', 'pctGananciaVenta'];
+
+    function avisosDe(d) {
+      const av = {};
+      const poner = (ids, texto) => { if (texto) [].concat(ids).forEach(id => { av[id] = av[id] || texto; }); };
+      poner('oferta', d.oferta > d.precioAnunciado + 0.5 && t('avisoOfertaMayor'));
+      poner('descuentoOferta', d.descuento > 0.3 + 1e-6 && tf('avisoDescuento', fmtPct(d.descuento, 1)));
+      if (d.superficie > 0) {
+        const m2 = d.oferta / d.superficie;
+        poner(['superficie', 'outEurM2'], m2 < 300 ? tf('avisoEurM2Bajo', fmt(m2)) : m2 > 15000 ? tf('avisoEurM2Alto', fmt(m2)) : '');
+      }
+      poner('pctImpuestos', num('pctImpuestos') > 12 && t('avisoImpuestoCompra'));
+      poner('pctNotaria', num('pctNotaria') > 3 && t('avisoNotaria'));
+      poner('comision', d.comision > 0.05 * d.oferta + 0.005 && tf('avisoComision', fmtPct(d.oferta > 0 ? d.comision / d.oferta : 0, 1)));
+      poner('reforma', d.reforma > d.oferta + 0.005 && tf('avisoReforma', fmt(d.reforma), fmt(d.oferta)));
+      poner('pctFinanciado', num('pctFinanciado') > 80 && t('avisoFinanciado'));
+      poner('plazoHipoteca', num('plazoHipoteca') > 30 && t('avisoPlazoHipoteca'));
+      poner('tipoHipoteca', num('tipoHipoteca') > 6 && t('avisoTipoHipoteca'));
+      poner('plazoPrestamo', num('plazoPrestamo') > 10 && t('avisoPlazoPrestamo'));
+      // El mismo umbral que el «(ALTO)» de la etiqueta: por encima de 9,99 (ver render).
+      poner('tipoPrestamo', num('tipoPrestamo') > 9.995 && t('avisoTipoPrestamo'));
+      // Más del 10 % del principal, en cualquiera de los dos modos. Sin principal no hay euros
+      // que medir, y se mira el porcentaje tal como está escrito.
+      for (const [id, ap] of Object.entries(APERTURAS)) {
+        const principal = ap.principal(d), eur = el(ap.modo).checked;
+        const comision = ap.sufijo === 'Hip' ? d.comisionHip : d.comisionPre;
+        const pct = principal > 0 ? comision / principal : (eur ? 0 : num(id) / 100);
+        poner(id, pct > 0.1 + 1e-9 && tf('avisoApertura', fmtPct(pct, 2)));
+      }
+      if (d.costeTotal > 0) {
+        const rb = d.rentabilidadBruta;
+        poner('alquiler', rb < 0.02 ? tf('avisoRentBaja', fmtPct(rb, 1)) : rb > 0.15 ? tf('avisoRentAlta', fmtPct(rb, 1)) : '');
+      }
+      poner('mesesVacios', num('mesesVacios') > 3 && t('avisoMesesVacios'));
+      const pesoGastos = d.alquilerAnual > 0 ? fmtPct(d.gastosAnuales / d.alquilerAnual, 0) : '—';
+      poner(GASTOS_ESTIMADOS, d.gastosAnuales > 0.5 * d.alquilerAnual + 0.005 && tf('avisoGastos', fmt(d.gastosAnuales), pesoGastos));
+      const infl = num('inflacion'), rev = num('revalorizacion');
+      poner('inflacion', infl < 0 ? t('avisoInflacionNeg') : infl > 6 ? t('avisoInflacionAlta') : '');
+      poner('revalorizacion', rev > 7 ? t('avisoRevalAlta') : rev < -3 ? t('avisoRevalBaja') : '');
+      poner('tasaIbi', num('tasaIbi') > 1.5 && t('avisoTasaIbi'));
+      poner('tasaComunidad', num('tasaComunidad') > 3 && t('avisoTasaComunidad'));
+      poner('tasaSeguroHogar', num('tasaSeguroHogar') > 6 && t('avisoTasaSeguroHogar'));
+      poner('tasaImpagos', num('tasaImpagos') > 2 && t('avisoTasaImpagos'));
+      poner('tasaMantenimiento', num('tasaMantenimiento') > 15 && t('avisoTasaMantenimiento'));
+      poner('tipoMarginal', num('tipoMarginal') > 54 && t('avisoTipoMarginal'));
+      poner('tasaAmortizacion', num('tasaAmortizacion') > 3 && t('avisoTasaAmortizacion'));
+      poner('pctGastosVenta', num('pctGastosVenta') > 10 && t('avisoGastosVenta'));
+      poner('pctGananciaVenta', num('pctGananciaVenta') > 28 && t('avisoGananciaVenta'));
+      return av;
+    }
+
+    function pintarAvisos(d) {
+      const av = avisosDe(d);
+      IDS_AVISO.forEach(id => {
+        const e = el(id), texto = av[id] || '';
+        e.classList.toggle('val-neg', !!texto);
+        e.classList.toggle('campo-aviso', !!texto);
+        const base = e.dataset.i18nTitle ? t(e.dataset.i18nTitle) : '';
+        if (texto || base) e.title = texto || base; else e.removeAttribute('title');
+      });
     }
 
     /* ---------- Motor ---------- */
@@ -1649,14 +1997,23 @@
     // devuelve el elegido. Recorta al horizonte: quien mira el año 30 y luego proyecta sólo 10
     // se quedaría apuntando a una fila que ya no existe.
     const ANO_REF_DEFECTO = 30;
+    let anoRefElegido = null, anoRefPuesto = null;
     function rellenarAnoRef(horizonte) {
       const sel = el('anoRef');
-      const pedido = parseInt(sel.value, 10) || ANO_REF_DEFECTO;
+      // Se pide el año que eligió el usuario (o el de defecto), no el que haya quedado en el select
+      // tras un recorte anterior: con horizonte 10 el select enseña 10, pero si luego sube a 30 el
+      // elegido sigue siendo 30. El recorte vale sólo para pintar.
+      // Si el select vale algo distinto de lo último que se le puso, lo ha cambiado alguien de fuera
+      // (el usuario, un guardado restaurado) y eso es lo elegido.
+      const actual = parseInt(sel.value, 10);
+      if (actual && actual !== anoRefPuesto) anoRefElegido = actual;
+      const pedido = anoRefElegido || ANO_REF_DEFECTO;
       const elegido = Math.min(Math.max(pedido, 1), horizonte);
       if (sel.options.length !== horizonte) {
         sel.innerHTML = Array.from({ length: horizonte }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
       }
       sel.value = elegido;
+      anoRefPuesto = elegido;
       sincronizarAnoRef();
       return elegido;
     }
@@ -1669,7 +2026,9 @@
       const sel = el('anoRef'), btn = el('anoRefBtn');
       if (!btn) return;
       el('anoRefTxt').textContent = sel.value;
-      const etq = `${t('kpiAnualizada')} ${sel.value} ${t('kpiAnualizadaAnos')}`;
+      const fin = t(sel.value === '1' ? 'kpiAnualizadaAno' : 'kpiAnualizadaAnos');
+      document.querySelector('.kpi-rotulo-fin').textContent = fin;
+      const etq = `${t('kpiAnualizada')} ${sel.value} ${fin}`;
       btn.setAttribute('aria-label', etq);
       anoRefLista().setAttribute('aria-label', etq);
       // Si la lista está abierta y el horizonte cambia, se rehace; cerrada, se hace al abrir.
@@ -1748,7 +2107,7 @@
       document.addEventListener('mousedown', (ev) => { if (!ul.hidden && !ul.contains(ev.target) && !btn.contains(ev.target)) cerrarAnoRef(false); });
       window.addEventListener('scroll', () => cerrarAnoRef(false), { passive: true });
       window.addEventListener('resize', () => cerrarAnoRef(false));
-      sel.addEventListener('change', sincronizarAnoRef);
+      sel.addEventListener('change', () => { anoRefElegido = parseInt(sel.value, 10) || null; sincronizarAnoRef(); });
     }
 
     // La oferta se escribe en euros o como descuento sobre el anunciado, y al tocar una se ajusta
@@ -1803,7 +2162,9 @@
       const usarHipoteca = el('usarHipoteca').checked;
       const pctFinanciado = usarHipoteca ? Math.min(Math.max(num('pctFinanciado'), 0), 100) : 0;
       const principalHip = pctFinanciado / 100 * oferta;
-      const plazoHip = Math.max(num('plazoHipoteca'), 1);
+      // Los plazos también se acotan aquí, no sólo en el campo: un «?h=1e6» de un enlace o una cifra a
+      // medio escribir no pueden alargar los bucles de la proyección.
+      const plazoHip = Math.min(Math.max(num('plazoHipoteca'), 1), LIMITES.plazoHipoteca.max);
       const tipoHip = num('tipoHipoteca') / 100;
       const cuotaHip = pmt(tipoHip / 12, plazoHip * 12, principalHip);
       const hipAcelerada = yes('hipotecaAcelerada');
@@ -1812,8 +2173,16 @@
       const usarPrestamo = el('usarPrestamo').checked;
       const topePrestamo = Math.max(costeTotal - principalHip, 0);
       let principalPre = usarPrestamo ? Math.min(Math.max(num('importePrestamo'), 0), topePrestamo) : 0;
-      if (usarPrestamo && num('importePrestamo') > topePrestamo) fijar('importePrestamo', topePrestamo);
-      const plazoPre = Math.max(num('plazoPrestamo'), 1);
+      // Lo que el motor recorta por su cuenta (el préstamo por encima de su tope, la comisión en
+      // euros por encima del principal) se anota para que render() lo avise: es un campo que
+      // cambia de valor sin que nadie lo haya tocado. La holgura de medio euro es el redondeo con
+      // que se enseña la cifra: sin ella el campo se «recortaría» en cada pasada.
+      const recortes = [];
+      if (usarPrestamo && num('importePrestamo') > topePrestamo) {
+        if (num('importePrestamo') > topePrestamo + 0.5) recortes.push('importePrestamo');
+        fijar('importePrestamo', topePrestamo);
+      }
+      const plazoPre = Math.min(Math.max(num('plazoPrestamo'), 1), LIMITES.plazoPrestamo.max);
       const tipoPre = num('tipoPrestamo') / 100;
       const cuotaPre = pmt(tipoPre / 12, plazoPre * 12, principalPre);
       const preAcelerado = yes('prestamoAcelerado');
@@ -1822,9 +2191,18 @@
       // sale de la liquidez del día uno: el banco no la financia. No entra en costeTotal porque no
       // es precio ni gasto de adquisición del inmueble -no revaloriza ni amortiza ni resta del
       // valor de adquisición al vender-; es gasto de financiación y se deduce como los intereses.
-      const pctApertura = (id, activa) => activa ? Math.min(Math.max(num(id), 0), 100) / 100 : 0;
-      const comisionHip = principalHip * pctApertura('aperturaHip', usarHipoteca);
-      const comisionPre = principalPre * pctApertura('aperturaPre', usarPrestamo);
+      //
+      // El campo se escribe en % del principal o en euros (casilla oculta «…Eur», que gobierna el
+      // conmutador). En euros no puede pasar del principal: no se cobra más de lo que se presta.
+      const aperturaDe = (id, principal, activa) => {
+        if (!activa) return 0;
+        const v = Math.max(num(id), 0);
+        if (!yes(id + 'Eur')) return principal * Math.min(v, 100) / 100;
+        if (v > principal + 0.005) { fijar(id, principal, 2, 2); recortes.push(id); }
+        return Math.min(v, principal);
+      };
+      const comisionHip = aperturaDe('aperturaHip', principalHip, usarHipoteca);
+      const comisionPre = aperturaDe('aperturaPre', principalPre, usarPrestamo);
       const comisionApertura = comisionHip + comisionPre;
 
       // Lo que no cubre la deuda lo pone el comprador. No se elige: es el resto.
@@ -1862,7 +2240,9 @@
       const inflacion = num('inflacion') / 100;
       // El piso puede correr a un ritmo distinto del de los precios. Cerrado, va a la par.
       const revalorizacion = sonda ? forzarReval : estimado('revalorizacion', num('inflacion'), 2) / 100;
-      const horizonte = Math.max(Math.round(num('horizonte')), 1);
+      // El tope no es sólo del campo: mientras se escribe (y antes de que el límite duro actúe al
+      // salir) un «300» o un «99999999» a medias no puede poner a proyectar siglos.
+      const horizonte = Math.min(Math.max(Math.round(num('horizonte')), 1), LIMITES.horizonte.max);
       const indexar = yes('indexar');
       const indice = (n) => indexar ? Math.pow(1 + inflacion, n - 1) : 1;
       // Euros del año n traídos a euros de hoy. La guarda es para una inflación de -100% o peor,
@@ -2120,7 +2500,7 @@
       return {
         precioAnunciado, oferta, valor, superficie, reforma, comision, obraNueva, region,
         pctImpuestos, pctNotaria, gastosCompra, costeTotal, aportado,
-        comisionHip, comisionPre, comisionApertura,
+        comisionHip, comisionPre, comisionApertura, recortes,
         usarHipoteca, pctFinanciado, principalHip, cuotaHip, plazoHip,
         usarPrestamo, topePrestamo, principalPre, cuotaPre, plazoPre,
         alquiler, alquilerAnual, comunidad, ibi, seguroHogar, seguroImpagos, mantenimiento, gastosAnuales,
@@ -2172,6 +2552,10 @@
 
     function render() {
       const d = calcular();
+      // Lo que el motor ha recortado por su cuenta (tope del préstamo, comisión en € por encima del
+      // principal) se avisa aquí, que es donde se sabe que la pasada es de verdad y no una sonda.
+      if (!CARGANDO && !RESTAURANDO) d.recortes.forEach(id => avisarRecorte(id, limiteDe(id, d)));
+      pintarModosApertura();
 
       el('outEurM2').textContent = d.superficie > 0 ? fmt(d.oferta / d.superficie) + '/m²' : '—';
       // Las comunidades con escala por tramos traen en la tabla el tipo del primero: quien compre
@@ -2196,8 +2580,10 @@
       el('outCuotaPrestamo').textContent = d.principalPre > 0 ? fmt(d.cuotaPre) : t('sinPrestamo');
       el('outLiquidez').textContent = fmt(d.aportado);
       // El importe de la comisión sólo se enseña cuando hay: a cero el campo no necesita explicación.
-      el('outAperturaHip').textContent = d.comisionHip > 0 ? `(${fmt(d.comisionHip)})` : '';
-      el('outAperturaPre').textContent = d.comisionPre > 0 ? `(${fmt(d.comisionPre)})` : '';
+      // El paréntesis gris enseña lo que el campo no enseña: en modo % el importe, en modo € el %.
+      const otroValor = (com, principal, eur) => com <= 0 ? '' : eur ? `(${fmtPct(principal > 0 ? com / principal : 0, 2)})` : `(${fmt(com)})`;
+      el('outAperturaHip').textContent = otroValor(d.comisionHip, d.principalHip, el('aperturaHipEur').checked);
+      el('outAperturaPre').textContent = otroValor(d.comisionPre, d.principalPre, el('aperturaPreEur').checked);
       el('outAlquilerAnual').textContent = d.mesesVacios > 0
         ? `${fmt(d.alquilerAnual)} · ${fmtPct(d.ocupacion)}`
         : fmt(d.alquilerAnual);
@@ -2215,9 +2601,9 @@
       // se ponen en rojo y aparece «(ALTO)». Al bajar de ahí todo vuelve a su sitio. El umbral es
       // «por encima de 9,99»: con 9.995 se absorbe el redondeo a dos decimales de la caja, para
       // que un 10,00 escrito a mano no se quede justo por debajo.
+      // La caja del tipo se pone en rojo con el resto de avisos (pintarAvisos), con el mismo umbral.
       const tipoPrestamoAlto = num('tipoPrestamo') > 9.995;
       el('lblTipoPrestamo').classList.toggle('val-neg', tipoPrestamoAlto);
-      el('tipoPrestamo').classList.toggle('val-neg', tipoPrestamoAlto);
       el('altoPrestamo').classList.toggle('hidden', !tipoPrestamoAlto);
 
       el('kpiBruta').textContent = fmtPct(d.rentabilidadBruta);
@@ -2240,7 +2626,9 @@
         : fmt(cj.generada / 12) + (hayDeuda ? t('kpiMesConDeuda') : t('kpiMesSinDeuda'));
       el('kpiCajaMes').title = cj.amortiza > 0 ? t('cajaAmortizarTip') : '';
 
-      el('kpiDeuda').textContent = !hayDeuda ? '—' : d.sinDeuda ? `${d.sinDeuda.n} ${t('kpiAnos')}` : `> ${d.horizonte} ${t('kpiAnos')}`;
+      el('kpiDeuda').textContent = !hayDeuda ? '—' : singular(d.sinDeuda ? `${d.sinDeuda.n} ${t('kpiAnos')}` : `> ${d.horizonte} ${t('kpiAnos')}`);
+      // La unidad junto a cada plazo sigue al número: «1 año», «2 años».
+      for (const id of ['plazoHipoteca', 'plazoPrestamo', 'horizonte']) el(id).closest('.control').querySelector('.unidad').textContent = t(num(id) === 1 ? 'kpiAno' : 'kpiAnos');
       el('kpiDeudaDetalle').textContent = d.sinDeuda || !hayDeuda
         ? `${t('kpiDeudaInicial')} ${fmt(d.principalHip + d.principalPre)}`
         : `${t('kpiQuedan')} ${fmt(d.ultima.hipFin + d.ultima.preFin)} ${t('kpiAlAno')} ${d.horizonte}`;
@@ -2325,8 +2713,39 @@
       renderTablas(d);
       renderFaqApalancamiento(d);
       renderCharts(d);
+      pintarAvisos(d);
       pintarComparacion();
       guardar();
+    }
+
+    // Una acción del usuario ya confirmada: recalcula y la apunta en el historial. Es lo que
+    // llaman los cambios de verdad (salir de un campo, un candado, una opción del comparador); las
+    // pasadas a medio escribir y los cambios de idioma o de tema llaman a render() a secas.
+    function confirmarCambio() { render(); registrar(); }
+
+    // El conmutador %/€ de cada comisión de apertura refleja su casilla oculta, que es la que
+    // guarda, comparte y restaura el modo.
+    function pintarModosApertura() {
+      for (const ap of Object.values(APERTURAS)) {
+        const eur = el(ap.modo).checked, boton = el('modo' + capitalizar(el(ap.modo).id.replace(/Eur$/, '')));
+        boton.setAttribute('aria-pressed', String(eur));
+        boton.title = boton.ariaLabel = t(eur ? 'modoAperturaEur' : 'modoAperturaPct');
+      }
+    }
+
+    // Pasa la comisión de % a € o al revés conservando el importe en euros: lo que cambia es la
+    // forma de escribirlo, no lo que se paga. Sin principal no hay importe que conservar y queda en 0.
+    function alternarModoApertura(sufijo) {
+      const id = 'apertura' + sufijo, casilla = el(id + 'Eur');
+      const aEuros = !casilla.checked;
+      const valor = Math.max(num(id), 0);          // se lee antes de que calcular() lo recorte
+      const principal = APERTURAS[id].principal(calcular());
+      let nuevo = 0;
+      if (principal > 0) nuevo = aEuros ? principal * Math.min(valor, 100) / 100 : Math.min(valor / principal * 100, 100);
+      casilla.checked = aEuros;
+      const [dmax, dmin] = decimalesCampo(id);
+      fijar(id, nuevo, dmax, dmin);
+      confirmarCambio();
     }
 
     // Número en el color normal del texto; rojo sólo si es negativo y gris si es cero. El verde de
@@ -2732,7 +3151,7 @@
       'pctGastosVenta', 'pctGananciaVenta',
       'inflacion', 'revalorizacion', 'horizonte', 'indexar', 'anoRef'];
     const CASILLAS = [...ESTIMABLES.map(c => 'auto' + capitalizar(c)), ...FUENTES.map(f => 'usar' + capitalizar(f)),
-      'ivaComision', 'hipotecaAcelerada', 'prestamoAcelerado'];
+      'ivaComision', 'hipotecaAcelerada', 'prestamoAcelerado', 'aperturaHipEur', 'aperturaPreEur'];
 
     const DEFECTOS = {};
     const leerEstado = () => {
@@ -2745,11 +3164,20 @@
     function aplicarEstado(estado) {
       // El desplegable del año necesita tener sus opciones antes de poder recibir el valor
       // guardado: asignar un value que no está entre las opciones no hace nada.
-      if (estado.horizonte !== undefined) rellenarAnoRef(Math.max(Math.round(parseNum(estado.horizonte)), 1));
+      if (estado.anoRef !== undefined) anoRefElegido = parseInt(estado.anoRef, 10) || null;
+      if (estado.horizonte !== undefined) rellenarAnoRef(valorLimitado('horizonte', Math.round(parseCampo('horizonte', estado.horizonte))));
       CAMPOS.forEach(id => { if (estado[id] !== undefined) el(id).value = estado[id]; });
       // Un escenario guardado antes de que IVA y amortización acelerada fueran casillas los trae
       // como 'si'/'no'; la cadena 'no' no puede contar como marcada.
       CASILLAS.forEach(id => { if (estado[id] !== undefined) el(id).checked = estado[id] === true || estado[id] === 'si'; });
+      // Lo que llega de fuera (guardado, enlace) pasa por los mismos límites duros que lo escrito
+      // a mano, pero en silencio y sin romper nada: se recorta y se sigue. Va después de poner todos
+      // los campos y casillas porque el rango de algunos depende de otros (modo de la apertura).
+      const cambio = (id) => estado[id] !== undefined && limitarCampo(id, { silencio: true });
+      const cDesc = cambio('descuentoOferta'), cOferta = cambio('oferta'), cPrecio = cambio('precioAnunciado');
+      CAMPOS.forEach(id => { if (id !== 'descuentoOferta' && id !== 'oferta' && id !== 'precioAnunciado') cambio(id); });
+      if (cDesc) ofertaDesdeDescuento();
+      else if (cOferta || cPrecio) descuentoDesdeOferta();
       if (estado.descuentoOferta === undefined && estado.oferta !== undefined) descuentoDesdeOferta();
       ESTIMABLES.forEach(pintarCandado);
       FUENTES.forEach(pintarFuente);
@@ -2759,6 +3187,16 @@
     // Qué dice el indicador la próxima vez que se guarde. Lo normal es «Guardado»; tras ♻️ debe
     // decir que los datos se han reseteado, porque ahí el usuario no ha guardado nada, lo ha
     // borrado. Se gasta al usarse: el guardado siguiente vuelve a decir «Guardado».
+    // El indicador de la cabecera lo comparten el guardado, el aviso de deshacer/rehacer y el de
+    // copiar el enlace: un solo temporizador, para que un aviso viejo no esconda uno nuevo.
+    let indicadorTimer = null;
+    function mostrarIndicador(texto, ms = 1200) {
+      const ind = el('saveIndicator');
+      ind.textContent = texto;
+      ind.classList.remove('opacity-0');
+      clearTimeout(indicadorTimer);
+      indicadorTimer = setTimeout(() => ind.classList.add('opacity-0'), ms);
+    }
     let avisoGuardado = 'guardado';
     let guardarTimer = null;
     function guardar() {
@@ -2768,16 +3206,96 @@
           // Las opciones de la comparación viajan con el resto del estado guardado, pero no en el
           // enlace de compartir: son una herramienta de trabajo, no parte del escenario.
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...leerEstado(), comparar: OPCIONES }));
-          const ind = el('saveIndicator');
-          ind.textContent = t(avisoGuardado);
+          mostrarIndicador(t(avisoGuardado));
           avisoGuardado = 'guardado';
-          ind.classList.remove('opacity-0');
-          setTimeout(() => ind.classList.add('opacity-0'), 1200);
         } catch (e) {}
       }, 600);
     }
 
-    function resetDefaults() { avisoGuardado = 'datosReseteados'; OPCIONES = []; aplicarEstado(DEFECTOS); render(); }
+    function resetDefaults() { avisoGuardado = 'datosReseteados'; OPCIONES = []; aplicarEstado(DEFECTOS); confirmarCambio(); }
+
+
+    /* ---------- Deshacer y rehacer ---------- */
+
+    // Historial a nivel de aplicación: instantáneas del estado completo (campos, candados, casillas,
+    // modos %/€ y las opciones del comparador con nombres y orden). No guarda el tema, el idioma ni
+    // la pestaña: son preferencias de quien mira, no parte del escenario.
+    //
+    // Se apunta una instantánea por cada cambio CONFIRMADO (confirmarCambio: salir de un campo,
+    // un candado, una opción del comparador…), nunca por tecla, y sin duplicar: dos estados con las
+    // mismas cifras son el mismo aunque el texto de un campo se escriba distinto («1250»/«1.250»).
+    // Máximo 100 pasos, es decir 101 instantáneas (la primera es el punto de partida).
+    const HISTORIAL_MAX = 100;
+    let HISTORIAL = [], HISTORIAL_I = -1;
+
+    function instantanea() {
+      const campos = leerEstado();
+      const opciones = JSON.parse(JSON.stringify(OPCIONES));
+      const cifras = CAMPOS.map(id => el(id).tagName === 'SELECT' ? campos[id] : String(parseCampo(id, campos[id])));
+      return { campos, opciones, clave: JSON.stringify([cifras, CASILLAS.map(id => campos[id]), opciones]) };
+    }
+
+    function registrar() {
+      if (CARGANDO || RESTAURANDO) return;
+      const nueva = instantanea();
+      const actual = HISTORIAL[HISTORIAL_I];
+      if (actual && actual.clave === nueva.clave) return;
+      // Un cambio nuevo tras deshacer borra lo que quedaba por rehacer.
+      HISTORIAL.splice(HISTORIAL_I + 1);
+      HISTORIAL.push(nueva);
+      if (HISTORIAL.length > HISTORIAL_MAX + 1) HISTORIAL.shift();
+      HISTORIAL_I = HISTORIAL.length - 1;
+    }
+
+    // Deshacer (-1) o rehacer (+1): restaura la instantánea y recalcula sin apuntar nada nuevo.
+    function moverHistorial(paso) {
+      const i = HISTORIAL_I + paso;
+      if (i < 0 || i >= HISTORIAL.length) { mostrarIndicador(t(paso < 0 ? 'nadaQueDeshacer' : 'nadaQueRehacer')); return; }
+      HISTORIAL_I = i;
+      const foto = HISTORIAL[i];
+      RESTAURANDO = true;
+      try {
+        OPCIONES = JSON.parse(JSON.stringify(foto.opciones));
+        ultimaTabla = null;
+        delete el('descuentoOferta').dataset.exacto;
+        aplicarEstado(foto.campos);
+        avisoGuardado = paso < 0 ? 'deshecho' : 'rehecho';
+        render();
+      } finally { RESTAURANDO = false; }
+      // El campo con el foco acaba de recibir un valor «confirmado»: se le da su formato (la
+      // instantánea puede traer el texto tal como se tecleó) y no cuenta como texto a medias.
+      formatearCampos(true);
+      const f = document.activeElement;
+      if (f && f.tagName === 'INPUT' && f.type === 'text') f.dataset.confirmado = f.value;
+      mostrarIndicador(t(avisoGuardado));
+    }
+
+    // Ctrl+Z deshace; Ctrl+Y o Ctrl+Mayús+Z rehacen (con Cmd en Mac). Mientras el campo con el foco
+    // tenga texto sin confirmar (distinto del valor con que se confirmó por última vez) la tecla es
+    // del navegador, que deshace lo tecleado DENTRO del campo; en cuanto no lo hay, o el foco está
+    // fuera de un campo de texto, manda el historial global. Así la tecla hace siempre lo que
+    // cabe esperar en ese momento y nunca se pisan las dos cosas.
+    document.addEventListener('focusin', (ev) => {
+      const f = ev.target;
+      if (f.tagName === 'INPUT' && f.type === 'text') f.dataset.confirmado = f.value;
+    });
+    for (const tipo of ['change', 'focusout']) {
+      document.addEventListener(tipo, (ev) => {
+        const f = ev.target;
+        if (f.tagName === 'INPUT' && f.type === 'text') f.dataset.confirmado = f.value;
+      });
+    }
+    document.addEventListener('keydown', (ev) => {
+      if (!(ev.ctrlKey || ev.metaKey) || ev.altKey || ev.isComposing) return;
+      const k = ev.key.toLowerCase();
+      const rehacer = k === 'y' || (k === 'z' && ev.shiftKey);
+      if (!rehacer && k !== 'z') return;
+      if (document.querySelector('[id$="Modal"].flex')) return;
+      const f = document.activeElement;
+      if (f && f.tagName === 'INPUT' && f.type === 'text' && f.value !== f.dataset.confirmado) return;
+      ev.preventDefault();
+      moverHistorial(rehacer ? 1 : -1);
+    });
 
     /* ---------- Comparar financiación ---------- */
 
@@ -2794,7 +3312,11 @@
     const leerFinanciacion = () => ({
       usarHipoteca: el('usarHipoteca').checked, pctFinanciado: r2(num('pctFinanciado')),
       plazoHipoteca: r2(num('plazoHipoteca')), tipoHipoteca: r2(num('tipoHipoteca')),
-      aperturaHip: r2(num('aperturaHip')), aperturaPre: r2(num('aperturaPre')),
+      // En % hasta cuatro decimales (para que pasar a € y volver no mueva el importe); en € dos.
+      aperturaHip: redondearAlPaso(num('aperturaHip'), el('aperturaHipEur').checked ? 0.01 : 0.000001),
+      aperturaHipEur: el('aperturaHipEur').checked,
+      aperturaPre: redondearAlPaso(num('aperturaPre'), el('aperturaPreEur').checked ? 0.01 : 0.000001),
+      aperturaPreEur: el('aperturaPreEur').checked,
       hipotecaAcelerada: el('hipotecaAcelerada').checked,
       usarPrestamo: el('usarPrestamo').checked, importePrestamo: Math.round(num('importePrestamo')),
       plazoPrestamo: r2(num('plazoPrestamo')), tipoPrestamo: r2(num('tipoPrestamo')),
@@ -2806,13 +3328,16 @@
       fijar('pctFinanciado', f.pctFinanciado, 2);
       fijar('plazoHipoteca', f.plazoHipoteca, 2);
       fijar('tipoHipoteca', f.tipoHipoteca, 2, 2);
-      fijar('aperturaHip', f.aperturaHip, 2, 2);
+      // El modo antes que el valor: de él depende cuántos decimales se escriben.
+      el('aperturaHipEur').checked = f.aperturaHipEur === true;
+      el('aperturaPreEur').checked = f.aperturaPreEur === true;
+      fijar('aperturaHip', f.aperturaHip, ...decimalesCampo('aperturaHip'));
       el('hipotecaAcelerada').checked = f.hipotecaAcelerada;
       el('usarPrestamo').checked = f.usarPrestamo;
       fijar('importePrestamo', f.importePrestamo, 0);
       fijar('plazoPrestamo', f.plazoPrestamo, 2);
       fijar('tipoPrestamo', f.tipoPrestamo, 2, 2);
-      fijar('aperturaPre', f.aperturaPre, 2, 2);
+      fijar('aperturaPre', f.aperturaPre, ...decimalesCampo('aperturaPre'));
       el('prestamoAcelerado').checked = f.prestamoAcelerado;
     }
 
@@ -2821,11 +3346,12 @@
     const hayHip = (f) => f.usarHipoteca && f.pctFinanciado > 0;
     const hayPre = (f) => f.usarPrestamo && f.importePrestamo > 0;
     const claveFinanciacion = (f) => JSON.stringify([
-      hayHip(f) ? [f.pctFinanciado, f.plazoHipoteca, f.tipoHipoteca, f.hipotecaAcelerada, f.aperturaHip] : 0,
-      hayPre(f) ? [f.importePrestamo, f.plazoPrestamo, f.tipoPrestamo, f.prestamoAcelerado, f.aperturaPre] : 0
+      hayHip(f) ? [f.pctFinanciado, f.plazoHipoteca, f.tipoHipoteca, f.hipotecaAcelerada, f.aperturaHip, !!f.aperturaHipEur] : 0,
+      hayPre(f) ? [f.importePrestamo, f.plazoPrestamo, f.tipoPrestamo, f.prestamoAcelerado, f.aperturaPre, !!f.aperturaPreEur] : 0
     ]);
 
     const fmtMax = (v) => new Intl.NumberFormat(t('locale'), { maximumFractionDigits: 2 }).format(v);
+    const fmtMax4 = (v) => new Intl.NumberFormat(t('locale'), { maximumFractionDigits: 6 }).format(v);
 
     // Nombre corto en piezas, una por línea en la cabecera de la tabla.
     function piezasOpcion(f) {
@@ -2833,9 +3359,9 @@
       const piezas = [];
       if (hip) piezas.push(tf('compNomHip', fmtMax(f.pctFinanciado), fmtMax(f.plazoHipoteca), fmtNum(f.tipoHipoteca, 2)));
       // La comisión de apertura sólo se nombra cuando existe, y justo detrás de su deuda.
-      if (hip && f.aperturaHip > 0) piezas.push(tf('compNomApertura', fmtMax(f.aperturaHip)));
+      if (hip && f.aperturaHip > 0) piezas.push(f.aperturaHipEur ? tf('compNomAperturaEur', fmt(f.aperturaHip)) : tf('compNomApertura', fmtMax4(f.aperturaHip)));
       if (pre) piezas.push(tf(hip ? 'compNomPre' : 'compNomPreSolo', fmt(f.importePrestamo), fmtMax(f.tipoPrestamo)));
-      if (pre && f.aperturaPre > 0) piezas.push(tf('compNomApertura', fmtMax(f.aperturaPre)));
+      if (pre && f.aperturaPre > 0) piezas.push(f.aperturaPreEur ? tf('compNomAperturaEur', fmt(f.aperturaPre)) : tf('compNomApertura', fmtMax4(f.aperturaPre)));
       const aHip = hip && f.hipotecaAcelerada, aPre = pre && f.prestamoAcelerado;
       if (aHip || aPre) {
         // Con las dos deudas vivas y una sola acelerada hay que decir cuál; si no, basta «acelerada».
@@ -2892,7 +3418,7 @@
       { id: 'anualizada', etq: (m) => tf('rentAnualizada', m.anoRef), tip: () => t('kpiAnualizadaTip'), v: m => m.anualizada, f: v => fmtPct(v, 1), mejor: 'max', r: v => Math.round(v * 1000) },
       { id: 'tirVenta', etq: (m) => tf('rentTirVenta', m.anoRef), tip: () => t('rentTirVentaTip'), v: m => m.tirVenta, f: v => fmtPct(v, 1), mejor: 'max', r: v => Math.round(v * 1000) },
       { id: 'anosDeuda', etq: () => t('compAnosDeuda'), v: m => m.anosDeuda, mejor: 'min', r: v => v,
-        f: (v, m) => v === 0 ? '—' : isFinite(v) ? `${v} ${t('kpiAnos')}` : `> ${m.horizonte} ${t('kpiAnos')}` },
+        f: (v, m) => v === 0 ? '—' : singular(isFinite(v) ? `${v} ${t('kpiAnos')}` : `> ${m.horizonte} ${t('kpiAnos')}`) },
       { id: 'intereses', etq: () => t('compIntereses'), v: m => m.intereses, f: fmt, mejor: 'min', r: Math.round }
     ];
 
@@ -2981,7 +3507,7 @@
       const cerrar = (guardarNombre) => {
         if (cerrado) return; cerrado = true;
         if (guardarNombre) o.nombre = limpiarNombre(campo.value);
-        campo.remove(); ultimaTabla = null; render();
+        campo.remove(); ultimaTabla = null; confirmarCambio();
       };
       campo.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); cerrar(true); }
@@ -3021,12 +3547,12 @@
       // añade otra, ésta recoge la letra B pero va la última).
       OPCIONES.push({ letra, nombre: '', ...f });
       avisarComparar(tf('compararAnadida', OPCIONES.length));
-      render();
+      confirmarCambio();
     }
 
     function quitarComparacion(letra) {
       OPCIONES = OPCIONES.filter(o => o.letra !== letra);
-      render();
+      confirmarCambio();
     }
 
     function cargarOpcion(letra) {
@@ -3034,7 +3560,7 @@
       if (!o) return;
       ponerFinanciacion(o);
       FUENTES.forEach(pintarFuente);
-      render();
+      confirmarCambio();
     }
 
     // Lo guardado puede venir de otra versión o estar manipulado: sólo se admite lo que tiene la
@@ -3045,12 +3571,19 @@
       for (const o of crudo) {
         if (!o || !LETRAS_OPCION.includes(o.letra) || vistas.has(o.letra) || limpias.length >= MAX_OPCIONES) continue;
         const n = (v) => Number.isFinite(Number(v)) ? Math.max(Number(v), 0) : 0;
+        // Con los mismos límites duros que los campos (los dinámicos, como el tope del préstamo,
+        // los aplica el motor al calcular). La apertura en € no tiene más techo estático que el general.
+        const lim = (id, v) => valorLimitado(id, n(v));
+        const eurH = o.aperturaHipEur === true, eurP = o.aperturaPreEur === true;
+        const apertura = (v, eur) => eur ? Math.min(redondearAlPaso(n(v), 0.01), MAX_IMPORTE) : lim('aperturaHip', v);
         vistas.add(o.letra);
         limpias.push({ letra: o.letra, nombre: limpiarNombre(o.nombre),
-          usarHipoteca: o.usarHipoteca === true, pctFinanciado: Math.min(n(o.pctFinanciado), 100),
-          plazoHipoteca: Math.max(n(o.plazoHipoteca), 1), tipoHipoteca: n(o.tipoHipoteca), aperturaHip: Math.min(n(o.aperturaHip), 100), hipotecaAcelerada: o.hipotecaAcelerada === true,
-          usarPrestamo: o.usarPrestamo === true, importePrestamo: n(o.importePrestamo),
-          plazoPrestamo: Math.max(n(o.plazoPrestamo), 1), tipoPrestamo: n(o.tipoPrestamo), aperturaPre: Math.min(n(o.aperturaPre), 100), prestamoAcelerado: o.prestamoAcelerado === true });
+          usarHipoteca: o.usarHipoteca === true, pctFinanciado: lim('pctFinanciado', o.pctFinanciado),
+          plazoHipoteca: lim('plazoHipoteca', o.plazoHipoteca), tipoHipoteca: lim('tipoHipoteca', o.tipoHipoteca),
+          aperturaHip: apertura(o.aperturaHip, eurH), aperturaHipEur: eurH, hipotecaAcelerada: o.hipotecaAcelerada === true,
+          usarPrestamo: o.usarPrestamo === true, importePrestamo: lim('importePrestamo', o.importePrestamo),
+          plazoPrestamo: lim('plazoPrestamo', o.plazoPrestamo), tipoPrestamo: lim('tipoPrestamo', o.tipoPrestamo),
+          aperturaPre: apertura(o.aperturaPre, eurP), aperturaPreEur: eurP, prestamoAcelerado: o.prestamoAcelerado === true });
       }
       // Se conserva el orden guardado: es el que ve el usuario.
       return limpias;
@@ -3077,7 +3610,7 @@
     document.addEventListener('click', (ev) => {
       if (burbuja) { burbuja.remove(); burbuja = null; }
       if (!window.matchMedia('(hover: none)').matches) return;
-      const destino = ev.target.closest('.tooltip-help');
+      const destino = ev.target.closest('.tooltip-help, .campo-aviso');
       if (!destino || !destino.title) return;
       burbuja = document.createElement('div');
       burbuja.className = 'touch-tip';
@@ -3115,6 +3648,7 @@
       obraNueva: 'nu', ccaa: 'c', pctImpuestos: 'im', pctNotaria: 'no', comision: 'k', reforma: 'r',
       pctFinanciado: 'f', plazoHipoteca: 'h', tipoHipoteca: 't', aperturaHip: 'ch',
       importePrestamo: 'i', plazoPrestamo: 'l', tipoPrestamo: 'e', aperturaPre: 'cp',
+      aperturaHipEur: 'chm', aperturaPreEur: 'cpm',
       alquiler: 'a', mesesVacios: 'm',
       comunidad: 'u', ibi: 'b', seguroHogar: 'g', seguroImpagos: 'sm', mantenimiento: 'mn',
       tasaIbi: 'xb', tasaComunidad: 'xu', tasaSeguroHogar: 'xg', tasaImpagos: 'xi', tasaMantenimiento: 'xm',
@@ -3151,6 +3685,15 @@
     // Son claves de tres y cuatro letras a propósito: ninguna clave corta ni antigua de un campo
     // las pisa, ni las que se añadan después (de una o dos letras).
     const CLAVE_TEMA = 'tema', CLAVE_OPCIONES = 'opc';
+    // Versión del enlace. Un enlace sólo lleva lo que difiere del escenario de ejemplo, así que
+    // cambiar un valor por defecto cambia lo que significa un enlace antiguo que lo omitía. «ver=2»
+    // (la v a secas es el valor del piso) marca los enlaces hechos con los defectos actuales; sin
+    // ella se leen con los de antes: IBI al 0,24 % del precio y mantenimiento al 5 % del alquiler
+    // (y las cifras que de ellos salían, por si el candado estaba abierto con ese mismo valor).
+    const CLAVE_VERSION = 'ver', VERSION_ENLACE = 2;
+    const DEFECTOS_V1 = { tasaIbi: '0.24', tasaMantenimiento: '5', ibi: '593', mantenimiento: '750' };
+    // El modo de la apertura viaja como «chm=e» / «cpm=e» (euros); sin la clave, es porcentaje.
+    const MODOS_EUR = ['aperturaHipEur', 'aperturaPreEur'];
     // Financiación de partida de una opción: la del escenario de ejemplo, que es la que tienen los
     // campos al arrancar. Una opción viaja sólo con lo que difiere de ella.
     let FIN_BASE = {};
@@ -3203,9 +3746,10 @@
       // Las cifras que se estiman solas (candado cerrado) no viajan: se vuelven a estimar al abrir.
       const estimada = (id) => ESTIMABLES.includes(id) && actual['auto' + capitalizar(id)];
       // Se comparan como números: «500.000» y «500000» son el mismo precio.
-      const valor = (v) => /\d/.test(String(v)) ? String(parseNum(v)) : String(v);
-      CAMPOS.forEach(id => { if (valor(actual[id]) !== valor(DEFECTOS[id]) && !estimada(id)) params.set(claveCorta(id), valor(actual[id]).slice(0, 40)); });
-      CASILLAS.forEach(id => { if (actual[id] !== DEFECTOS[id]) params.set(claveCorta(id), actual[id] ? '1' : '0'); });
+      const valor = (v, id) => /\d/.test(String(v)) ? String(parseCampo(id, v)) : String(v);
+      CAMPOS.forEach(id => { if (valor(actual[id], id) !== valor(DEFECTOS[id], id) && !estimada(id)) params.set(claveCorta(id), valor(actual[id], id).slice(0, 40)); });
+      CASILLAS.forEach(id => { if (actual[id] !== DEFECTOS[id]) params.set(claveCorta(id), actual[id] ? (MODOS_EUR.includes(id) ? 'e' : '1') : '0'); });
+      params.set(CLAVE_VERSION, String(VERSION_ENLACE));
       params.set(CLAVE_TEMA, document.documentElement.getAttribute('data-theme') === 'dark' ? 'd' : 'l');
       if (OPCIONES.length) params.set(CLAVE_OPCIONES, codificarOpciones(OPCIONES));
       const q = params.toString();
@@ -3219,13 +3763,15 @@
       // los nombres largos y las claves de la primera versión, que son las de los enlaces ya compartidos.
       const clave = (id) => [claveCorta(id), CLAVES_ANTIGUAS[id], id].find(k => k && params.has(k)) ?? null;
       CAMPOS.forEach(id => { const k = clave(id); if (k) estado[id] = params.get(k).slice(0, 40); });
-      CASILLAS.forEach(id => { const k = clave(id); if (k) estado[id] = params.get(k) === '1'; });
+      CASILLAS.forEach(id => { const k = clave(id); if (k) estado[id] = params.get(k) === '1' || (MODOS_EUR.includes(id) && params.get(k) === 'e'); });
       // Un enlace sin tema ni comparación (los de antes) no toca ni lo uno ni lo otro.
       const tema = params.get(CLAVE_TEMA);
       const hayOpciones = params.has(CLAVE_OPCIONES);
       if (!Object.keys(estado).length && !tema && !hayOpciones) return;
       if (tema === 'd' || tema === 'l') applyTheme(tema === 'd' ? 'dark' : 'light');
-      if (Object.keys(estado).length) aplicarEstado({ ...DEFECTOS, ...estado });
+      // Sin «ver», o con ver=1, el enlace es de antes de los defectos nuevos.
+      const defectos = (parseInt(params.get(CLAVE_VERSION), 10) || 1) >= 2 ? DEFECTOS : { ...DEFECTOS, ...DEFECTOS_V1 };
+      if (Object.keys(estado).length) aplicarEstado({ ...defectos, ...estado });
       // La comparación del enlace sustituye a la guardada, pasando por el mismo filtro que lo
       // guardado en el navegador: lo que no tenga la forma esperada se descarta.
       if (hayOpciones) OPCIONES = leerOpciones(decodificarOpciones(params.get(CLAVE_OPCIONES)));
@@ -3256,10 +3802,7 @@
       // Sin hoja de compartir se copia el mensaje y el enlace juntos, que es lo que se pegaría.
       const completo = text + '\n' + url;
       const avisar = () => {
-        const ind = el('saveIndicator');
-        ind.textContent = t('enlaceCopiado');
-        ind.classList.remove('opacity-0');
-        setTimeout(() => ind.classList.add('opacity-0'), 1800);
+        mostrarIndicador(t('enlaceCopiado'), 1800);
       };
       if (navigator.clipboard) navigator.clipboard.writeText(completo).then(avisar, () => window.prompt(t('copiaEnlace'), completo));
       else window.prompt(t('copiaEnlace'), completo);
@@ -3297,17 +3840,25 @@
       // No se recalcula en cada pulsación: con la cifra a medio escribir, los resultados saltan
       // por valores que nadie ha querido poner (un alquiler de 9 € camino de 950). Se recalcula
       // al salir del campo, y antes si ya hay cifras suficientes para ser un valor razonable.
+      //
+      // Salir del campo (change/blur) es cuando actúa el límite duro, antes de recalcular. El
+      // descuento sólo en change: su valor es derivado cuando la oferta supera el anunciado (sale
+      // negativo), y recortarlo por mero paso del foco destruiría ese estado sin que nadie lo escribiera.
       CAMPOS.forEach(id => {
         const campo = el(id);
-        if (campo.tagName === 'SELECT') { campo.addEventListener('change', render); return; }
+        if (campo.tagName === 'SELECT') { campo.addEventListener('change', confirmarCambio); return; }
         campo.addEventListener('input', () => { if (cifrasEscritas(campo) >= cifrasMinimas(id)) render(); });
-        campo.addEventListener('change', render);
+        campo.addEventListener('change', () => { limitarYEnlazar(id); confirmarCambio(); });
         if (campo.hasAttribute('data-money') || campo.hasAttribute('data-dec')) {
-          const d = decimalesFijos(id) ?? 0;
-          campo.addEventListener('blur', () => { fijar(id, num(id), d, d); render(); });
+          campo.addEventListener('blur', () => {
+            if (id !== 'descuentoOferta') limitarYEnlazar(id);
+            const [dmax, dmin] = decimalesCampo(id);
+            fijar(id, num(id), dmax, dmin);
+            confirmarCambio();
+          });
         }
       });
-      CASILLAS.forEach(id => el(id).addEventListener('change', render));
+      CASILLAS.forEach(id => el(id).addEventListener('change', confirmarCambio));
       for (const id of ['comparar', 'compararUna']) {
         el(id).addEventListener('mousedown', accionComparar);
         el(id).addEventListener('click', accionComparar);
@@ -3321,6 +3872,10 @@
       FUENTES.forEach(pintarFuente);
       formatearCampos();
       render();
+      // Fin de la carga: de aquí en adelante los ajustes avisan, y la instantánea inicial es el
+      // punto de partida al que se puede volver con Ctrl+Z.
+      CARGANDO = false;
+      registrar();
     })();
   </script>
 </body>

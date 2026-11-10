@@ -136,6 +136,108 @@ check('una opción antigua, sin el campo, se lee con comisión 0', vieja.apertur
 await p.evaluate(() => cargarOpcion('A'));
 check('cargar una opción repone su comisión', (await p.inputValue('#aperturaHip')) === '0,00');
 
+// ---------- 9) conmutador %/€ ----------
+await p.evaluate(() => resetDefaults());
+await poner('alquiler', 2600);
+const modo = (suf) => p.evaluate((x) => { const b = document.getElementById('modoApertura' + x); return { pulsado: b.getAttribute('aria-pressed'), title: b.title, txt: b.textContent.replace(/\s/g, '') }; }, suf);
+const m0 = await modo('Hip');
+check('hay un conmutador %/€ junto a cada comisión, en % y con title', m0.pulsado === 'false' && m0.txt === '%€' && /porcentaje/.test(m0.title), JSON.stringify(m0));
+check('  también el del préstamo', (await modo('Pre')).pulsado === 'false');
+await poner('aperturaHip', '1');
+const antes = await resumen();
+await p.click('#modoAperturaHip');
+const e1 = await resumen();
+check('al pasar a € el campo enseña el importe (1 % de 172.900)', (await p.inputValue('#aperturaHip')) === '1.729,00', await p.inputValue('#aperturaHip'));
+check('  el conmutador queda pulsado y su title lo dice', (await modo('Hip')).pulsado === 'true' && /euros/.test((await modo('Hip')).title));
+check('  y el importe de la comisión no cambia', cerca(e1.comision, antes.comision, 0.005) && cerca(e1.aportado, antes.aportado, 0.005), `${antes.comision} → ${e1.comision}`);
+check('  el paréntesis gris enseña ahora el % equivalente', /^\(1,00%\)$/.test((await p.textContent('#outAperturaHip')).trim()), await p.textContent('#outAperturaHip'));
+await p.click('#modoAperturaHip');
+check('al volver a % vuelve el 1 %', (await p.inputValue('#aperturaHip')) === '1,00' && cerca((await resumen()).comision, antes.comision, 0.005), await p.inputValue('#aperturaHip'));
+check('  y el paréntesis vuelve a enseñar euros', /€/.test(await p.textContent('#outAperturaHip')));
+// Un importe que no es un porcentaje redondo: ir y volver no puede mover el importe.
+await p.click('#modoAperturaHip');
+await poner('aperturaHip', '2000');
+await p.click('#modoAperturaHip');
+const pct = await p.inputValue('#aperturaHip');
+check('2.000 € de 172.900 son un 1,156738 %', pct === '1,156738', pct);
+check('  y el importe sigue siendo 2.000 € al céntimo', cerca((await resumen()).comision, 2000, 0.01), String((await resumen()).comision));
+await p.click('#modoAperturaHip');
+check('  y de vuelta a € quedan los 2.000,00', (await p.inputValue('#aperturaHip')) === '2.000,00', await p.inputValue('#aperturaHip'));
+// Avisos: más del 10 % del principal, en cualquiera de los dos modos.
+const rojoAp = (id) => p.evaluate((i) => document.getElementById(i).classList.contains('val-neg'), id);
+await poner('aperturaHip', '17000');
+check('en €: 17.000 (9,8 % del principal) no avisa', !(await rojoAp('aperturaHip')));
+await poner('aperturaHip', '18000');
+check('en €: 18.000 (más del 10 %) avisa en rojo con su title', (await rojoAp('aperturaHip')) && /10 %/.test(await p.evaluate(() => document.getElementById('aperturaHip').title)));
+// Límite duro en €: no puede pasar del principal.
+await poner('aperturaHip', '999999');
+check('en €: 999.999 se recorta al principal (172.900,00)', (await p.inputValue('#aperturaHip')) === '172.900,00', await p.inputValue('#aperturaHip'));
+check('  y avisa del rango en euros', /de 0,00\s€ a 172\.900,00\s€/.test(await p.evaluate(() => { const e = document.getElementById('avisoLimite'); return e.hidden ? '' : e.textContent; })));
+await p.click('#modoAperturaHip');
+await poner('aperturaHip', '10');
+check('en %: el 10 % exacto no avisa', !(await rojoAp('aperturaHip')));
+await poner('aperturaHip', '11');
+check('en %: el 11 % avisa', await rojoAp('aperturaHip'));
+await poner('aperturaHip', '150');
+check('en %: 150 se recorta a 100', (await p.inputValue('#aperturaHip')) === '100,00');
+await poner('aperturaHip', '1');
+// Sin principal, pasar de modo deja 0.
+await poner('pctFinanciado', '0');
+await p.click('#modoAperturaHip');
+check('sin principal, pasar a € pone 0', (await p.inputValue('#aperturaHip')) === '0,00');
+await p.click('#modoAperturaHip');
+await poner('pctFinanciado', '70');
+// Préstamo personal.
+await p.click('#lockPrestamo');
+await poner('importePrestamo', '30000');
+await poner('aperturaPre', '2');
+await p.click('#modoAperturaPre');
+check('el conmutador del préstamo convierte con el principal del préstamo (2 % de 30.000 = 600)', (await p.inputValue('#aperturaPre')) === '600,00', await p.inputValue('#aperturaPre'));
+// ---------- 10) el modo viaja: enlace, guardado, comparador y restablecer ----------
+await p.click('#modoAperturaHip');           // la hipoteca, en €
+await poner('aperturaHip', '1729');
+const url2 = await p.evaluate(() => enlaceConCalculos());
+check('el enlace lleva chm=e y cpm=e, y los importes', /[?&]chm=e(&|$)/.test(url2) && /[?&]cpm=e(&|$)/.test(url2) && /[?&]ch=1729(&|$)/.test(url2) && /[?&]cp=600(&|$)/.test(url2), url2);
+const pU = await abrir(url2.slice(url2.indexOf('?')));
+const viaje2 = await pU.evaluate(() => ({ h: document.getElementById('aperturaHip').value, he: document.getElementById('aperturaHipEur').checked,
+  pr: document.getElementById('aperturaPre').value, pe: document.getElementById('aperturaPreEur').checked, com: calcular().comisionApertura,
+  btn: document.getElementById('modoAperturaHip').getAttribute('aria-pressed') }));
+check('al abrir el enlace los dos modos y los importes vuelven', viaje2.he && viaje2.pe && viaje2.btn === 'true' && viaje2.h === '1.729,00' && viaje2.pr === '600,00' && cerca(viaje2.com, 2329, 0.01), JSON.stringify(viaje2));
+await pU.close();
+const pP = await abrir('?ch=1');
+check('un enlace sin chm deja el modo en %', await pP.evaluate(() => !document.getElementById('aperturaHipEur').checked && document.getElementById('aperturaHip').value === '1,00'));
+await pP.close();
+const pD = await abrir('?chm=e&ch=999999999');
+check('un enlace con € fuera de rango se recorta al principal, en silencio', await pD.evaluate(() => document.getElementById('aperturaHip').value === '172.900,00' && document.getElementById('avisoLimite').hidden));
+await pD.close();
+await p.waitForTimeout(900);
+await p.reload(); await p.waitForTimeout(500);
+const gu2 = await p.evaluate(() => [document.getElementById('aperturaHipEur').checked, document.getElementById('aperturaHip').value, document.getElementById('modoAperturaHip').getAttribute('aria-pressed')]);
+check('recargar conserva el modo y el importe', gu2.join() === 'true,1.729,00,true', gu2.join());
+// Comparador: la misma cifra en % y en € son opciones distintas, y la descripción dice cuál.
+await p.evaluate(() => resetDefaults());
+await poner('alquiler', 2600);
+await poner('aperturaHip', '1');
+await p.evaluate(() => { anadirComparacion(); });
+await p.click('#modoAperturaHip');
+await poner('aperturaHip', '2000');
+await p.evaluate(() => { anadirComparacion(); });
+const cmp2 = await p.evaluate(() => ({ n: OPCIONES.length, eur: OPCIONES.map(o => o.aperturaHipEur),
+  cab: [...document.querySelectorAll('#tblComparar thead .cmp-nombre')].map(e => e.textContent.replace(/\s+/g, ' ').trim()), opc: codificarOpciones(OPCIONES) }));
+check('una opción en % y otra en € son distintas', cmp2.n === 2 && cmp2.eur.join() === 'false,true', JSON.stringify(cmp2.eur));
+check('  la descripción dice «apertura 1 %» o «apertura 2.000 €»', /apertura 1 %/.test(cmp2.cab[0]) && /apertura 2\.000\s€/.test(cmp2.cab[1]), cmp2.cab.join(' | '));
+check('  y «opc» lleva el modo (chm-1) y se decodifica igual', /chm-1/.test(cmp2.opc) && await p.evaluate((o) => { const l = decodificarOpciones(o); return l[1].aperturaHipEur === true && l[1].aperturaHip === 2000 && l[0].aperturaHipEur === false; }, cmp2.opc), cmp2.opc);
+await p.evaluate(() => cargarOpcion('A'));
+check('cargar la opción en % repone el modo %', await p.evaluate(() => !document.getElementById('aperturaHipEur').checked && document.getElementById('aperturaHip').value === '1,00'));
+await p.evaluate(() => cargarOpcion('B'));
+check('cargar la opción en € repone el modo € y su importe', await p.evaluate(() => document.getElementById('aperturaHipEur').checked && document.getElementById('aperturaHip').value === '2.000,00'));
+check('calcular las opciones no deja tocados los campos ni los conmutadores', await p.evaluate(() => document.getElementById('modoApertura' + 'Hip').getAttribute('aria-pressed') === 'true'));
+await p.evaluate(() => resetDefaults());
+check('restablecer vuelve a % y a 0', await p.evaluate(() => !document.getElementById('aperturaHipEur').checked && document.getElementById('aperturaHip').value === '0,00' && document.getElementById('modoAperturaHip').getAttribute('aria-pressed') === 'false'));
+await p.click('#langBtn'); await p.waitForTimeout(300);
+check('el title del conmutador va en inglés', /percentage/.test((await modo('Hip')).title), (await modo('Hip')).title);
+await p.click('#langBtn'); await p.waitForTimeout(300);
+
 // ---------- 8) inglés y sin errores ----------
 await p.click('#langBtn'); await p.waitForTimeout(300);
 check('el rótulo se traduce', /Arrangement fee/.test(await p.textContent('#bloqueHipoteca')));

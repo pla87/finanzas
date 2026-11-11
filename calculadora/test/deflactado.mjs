@@ -110,12 +110,14 @@ const resumen = await p.textContent('#tblRentabilidad');
 check('el resumen enseña los dos subtotales',
   ['ROCE sin revalorización', 'ROCE con revalorización'].every(x => resumen.includes(x)));
 
-// Sin liquidez aportada no hay divisor: guion en vez de infinito.
-await p.evaluate(() => { document.getElementById('pctFinanciado').value = 100;
+// Sin un euro aportado en todo el horizonte no hay divisor: guion en vez de infinito. (Si hubiera
+// aportaciones posteriores serían el divisor: revision2 lo comprueba.) Un alquiler alto evita que
+// las cuotas pidan dinero.
+await p.evaluate(() => { document.getElementById('alquiler').value = '3000'; document.getElementById('pctFinanciado').value = 100;
   document.getElementById('usarPrestamo').checked = true; pintarFuente('prestamo');
   document.getElementById('importePrestamo').value = 999999; render(); });
 await p.waitForTimeout(200);
-check('sin liquidez aportada el ROCE es un guion', (await p.textContent('#kpiRoce')).trim() === '—', await p.textContent('#kpiRoce'));
+check('sin nada aportado en todo el horizonte el ROCE es un guion', (await p.textContent('#kpiRoce')).trim() === '—', await p.textContent('#kpiRoce'));
 check('y el de debajo también', (await p.textContent('#kpiRoceConReval')).includes('—'), await p.textContent('#kpiRoceConReval'));
 
 const linea = await p.evaluate(() => {

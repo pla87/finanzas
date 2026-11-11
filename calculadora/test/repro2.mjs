@@ -37,14 +37,17 @@ await p.evaluate(() => resetDefaults()); await set('plazoHipoteca', '');
 const r3 = await p.evaluate(() => { const d = calcular(); return { cuota: d.cuotaHip, a5: d.filas[4].hipFin }; });
 check('plazo vacío no capitaliza gratis', r3.cuota > 0 && r3.a5 < 400000, `cuota ${Math.round(r3.cuota)} €, saldo año 5 ${Math.round(r3.a5)} €`);
 
-// 4) Sin liquidez aportada el ROCE salía "0,0%", que se lee como un resultado neutro.
+// 4) Sin liquidez aportada el ROCE salía "0,0%", que se lee como un resultado neutro. Se mide con un
+// alquiler que paga las cuotas: si la operación pidiera dinero después, ese dinero sería el divisor
+// (revision2 lo comprueba) y ya no habría guion.
 await p.evaluate(() => { resetDefaults();
+  document.getElementById('alquiler').value = '3000';
   document.getElementById('pctFinanciado').value = '100';
   document.getElementById('usarPrestamo').checked = true; pintarFuente('prestamo');
   document.getElementById('importePrestamo').value = '99999999'; render(); });
 const r4 = await p.evaluate(() => calcular().aportado);
 check('operación financiada al 100%', r4 === 0, String(r4));
-check('sin liquidez el ROCE es un guion', norm(await p.textContent('#kpiRoce')) === '—', norm(await p.textContent('#kpiRoce')));
+check('sin un euro puesto en todo el horizonte el ROCE es un guion', (await p.evaluate(() => calcular().aportacionesExtra)) === 0 && norm(await p.textContent('#kpiRoce')) === '—', norm(await p.textContent('#kpiRoce')));
 
 check('sin errores de consola', errs.length === 0, errs[0] ?? '');
 await b.close();

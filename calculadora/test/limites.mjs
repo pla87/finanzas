@@ -213,6 +213,7 @@ check('  marginal 100, gastos de venta 0', url.tipoMarginal === '100' && url.pct
 check('  y no se avisa de nada al cargar', await p2.evaluate(() => document.getElementById('avisoLimite').hidden));
 await p2.close();
 const p3 = await abrir();
+await p3.waitForTimeout(800);   // que el guardado del arranque ya haya salido (pagehide no pisa lo escrito a mano)
 await p3.evaluate(() => { const e = JSON.parse(localStorage.getItem('calc_pisos_v2') || '{}'); Object.assign(e, { mesesVacios: '99', plazoHipoteca: '77', horizonte: '900', superficie: '1', tasaIbi: '500' }); localStorage.setItem('calc_pisos_v2', JSON.stringify(e)); });
 await p3.reload(); await p3.waitForTimeout(500);
 const gu = await p3.evaluate(() => Object.fromEntries(['mesesVacios', 'plazoHipoteca', 'horizonte', 'superficie', 'tasaIbi'].map(i => [i, document.getElementById(i).value])));

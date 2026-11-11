@@ -16,6 +16,9 @@ const nueva = async (w = 1440, h = 1100) => {
   const p = await nueva();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(PAGINA);
+  // Se espera a que el guardado del arranque haya salido: al recargar, pagehide escribe el que esté
+  // pendiente, y pisaría el estado viejo que se prepara a mano justo debajo.
+  await p.waitForTimeout(800);
   // Estado de una versión vieja: sin mesesVacios, sin venta, sin anoRef, sin candados nuevos.
   await p.evaluate(() => localStorage.setItem('calc_pisos_v2', JSON.stringify({
     precioAnunciado: '300.000', oferta: '280.000', valor: '300.000', superficie: '80',

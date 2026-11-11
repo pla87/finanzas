@@ -1,6 +1,6 @@
 # Pruebas
 
-Veinticuatro suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
+Veinticinco suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
 No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba donde vive.
 
 ## Correrlas
@@ -9,7 +9,7 @@ No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba dond
 cd test
 npm install            # sólo la primera vez
 npx playwright install chromium   # idem, salvo en contenedores que ya lo traen
-npm test               # las veintitrés
+npm test               # las veinticinco
 npm test -- verificar cruzar      # sólo algunas
 ```
 
@@ -27,7 +27,8 @@ guardados en `esperado.json`.
 en Python a partir de las mismas fórmulas, en quince escenarios (con y sin préstamo personal, con
 una y otra amortización acelerada, piso barato, sin entrada, deuda que se cancela a mitad de año, cuarenta años sin deuda para agotar la amortización fiscal, comisión de apertura, gastos estimados con las tasas por defecto y tres del tope de intereses y conservación: una comisión que no cabe el año 1 y se arrastra, un interés que choca con el tope y uno que no deja hueco nunca y caduca). Dos implementaciones escritas por
 separado que coinciden al céntimo es lo que da confianza en las ramas que el escenario por
-defecto no toca. `modelo.py` genera `modelo.json`, que está versionado para que las pruebas
+defecto no toca. También contrasta el año 1 del resumen (impuesto, caja y lo que se deduce, con la
+comisión de apertura) contra la fila 1 de la transcripción. `modelo.py` genera `modelo.json`, que está versionado para que las pruebas
 corran sin Python; el ejecutor lo regenera si `python3` está disponible.
 
 Si tocas el motor, **estas dos son las que tienen que seguir cuadrando**.
@@ -85,6 +86,7 @@ exigiendo igualdad exacta al céntimo.
 | `limites` | límite duro (recorta y redondea al salir del campo y al cargar de guardado o enlace), avisos en rojo con su title, `2,375` leído como decimal en un tipo, tope del horizonte, año de referencia que no se queda pegado y «1 año» |
 | `defectos` | IBI 0,2 % y mantenimiento 2 % por defecto; los enlaces sin `ver=2` se leen con 0,24 % y 5 % |
 | `irpf` | el tope del art. 23.1.a y su arrastre de cuatro años (comisión que no cabe, interés que choca, lo que caduca), el rendimiento negativo que da impuesto 0, el año 1 como año completo (el reparto amortiza toda la deuda inicial) y la bruta de doce meses |
+| `revision2` | la segunda revisión: una deuda se salda en el año de su plazo (sin residuo de coma flotante), el año 1 del resumen es el de la fila 1 de la tabla (con la comisión de apertura), la nota fiscal cuadra con lo deducido de verdad, el ROCE sin liquidez propia, la inflación negativa, la TIR por encima del 1.000 %, la FAQ del apalancamiento después de impuestos, la lectura de importes pegados con texto, el editor de nombre del comparador, el globo de recorte, el guardado al cerrar, los avisos de las deudas apagadas, los campos numéricos en el idioma activo, el ida y vuelta %↔€, los enlaces con basura y la zona táctil del año de referencia |
 | `revision` | deuda que se cancela a mitad de año contra una simulación mes a mes, tope de la amortización fiscal, base amortizable, tramo del 30 %, textos del interés sin «media», año 0 con comisión, enlaces parciales, modales accesibles (Escape, foco, aria), unidades y escala autonómica en inglés, «-0», selects inválidos e inflación ≤ −100 % |
 | `deshacer` | Ctrl+Z / Ctrl+Y: un paso por cambio confirmado, máximo 100, rehacer que se borra con un cambio nuevo, y Ctrl+Z nativo dentro de un campo con texto sin confirmar |
 

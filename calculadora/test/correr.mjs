@@ -33,6 +33,7 @@ const SUITES = [
   ['revision',       'deuda que se cancela a mitad de año, tope de amortización, tramo del 30 %, enlaces parciales y modales'],
   ['irpf',           'tope y arrastre del art. 23.1.a, año 1 completo y rentabilidad bruta de doce meses'],
   ['revision2',      'segunda revisión: residuo de deuda, año 1 único, lectura de importes, enlaces, comparador y guardado'],
+  ['revision3',      'tercera revisión: primer número de un texto, campo ilegible, ROCE del año 1, KPI legibles, móvil, idioma en el enlace y deshacer el reseteo'],
 ];
 
 const soloEstas = process.argv.slice(2);

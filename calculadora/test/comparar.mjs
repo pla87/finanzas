@@ -71,9 +71,10 @@ const alt = await p.evaluate(() => {
 });
 const dentro = (a, tol = 2) => Math.max(...a) - Math.min(...a) <= tol;
 check('1440: las seis tarjetas de cabecera, misma altura', dentro(alt.estirado), alt.estirado.map(Math.round).join('/'));
-// Ya ninguna lleva dos líneas de detalle (el «sobre X aportados» del ROCE va en su rótulo): aun
-// sin estirarlas, las seis miden lo mismo y lo menos posible.
-check('  y sin estirar también: ninguna es más alta por contenido', dentro(alt.natural), alt.natural.map(Math.round).join('/'));
+// El «sobre X aportados» del ROCE va en una línea propia bajo la cifra (en el rótulo no cabía a 1280
+// con «+ X en el año 1»): esa tarjeta es una línea más alta por contenido, y como las seis son celdas
+// de una rejilla las demás se estiran con ella. Las otras cinco miden lo mismo y lo menos posible.
+check('  y sin estirar: las otras cinco miden lo mismo y el ROCE sólo una línea más', dentro(alt.natural.filter((_, i) => i !== 1)) && alt.natural[1] - alt.natural[0] <= 20, alt.natural.map(Math.round).join('/'));
 check('  y su rótulo cabe en una línea', alt.rot < 20, `${alt.rot}px`);
 check('  con el rótulo corto «ANUALIZADA A … AÑOS»', await p.evaluate(() => /^ANUALIZADA A\s*[\d\s]*AÑOS$/i.test(document.querySelector('#kpiAnualizada').closest('.border-2').querySelector('.uppercase').textContent.replace(/\s+/g, ' ').trim())));
 await p.click('#langBtn');
@@ -89,22 +90,22 @@ const lineas = () => p.evaluate(() => {
   const alturas = [...g.children].map(c => c.getBoundingClientRect().height);
   const r = document.getElementById('kpiRoce').closest('.bg-brand-card').querySelector('.uppercase');
   const rd = document.getElementById('kpiRoceDetalle');
-  return { alturas, partidos: ids.filter(id => { const e = document.getElementById(id); return e.getBoundingClientRect().height > parseFloat(getComputedStyle(e).lineHeight) * 1.5; }),
+  return { alturas, partidos: ids.filter(id => { const e = document.getElementById(id); return e.getBoundingClientRect().height > parseFloat(getComputedStyle(e).lineHeight) * 2.5; }),
     rotRoce: r.getBoundingClientRect().height, roceDet: rd.textContent.trim(), roceTitle: rd.title, payback: document.getElementById('kpiPayback').textContent, paybackTitle: document.getElementById('kpiPayback').title,
     anual: document.getElementById('kpiAnualizada').parentElement.textContent.replace(/\s+/g, ' ').trim() };
 });
 const l0 = await lineas();
 check('1440 de fábrica: seis tarjetas iguales y sin detalles partidos', dentro(l0.alturas) && l0.partidos.length === 0, l0.alturas.map(Math.round).join('/') + ' ' + l0.partidos);
-check('  ROCE lleva «· sobre X € aportados» en la línea del rótulo', l0.rotRoce < 20 && /^· sobre [\d.]+\s€ aportados$/.test(l0.roceDet), l0.roceDet);
+check('  ROCE lleva «Sobre X € aportados» en su línea bajo la cifra', l0.rotRoce < 20 && /^Sobre [\d.]+\s€ aportados$/.test(l0.roceDet), l0.roceDet);
 check('  anualizada: «rentabilidad» detrás de la cifra y recuperación corta', /^[\d,.-]+%\s*rentabilidad$/.test(l0.anual) && /^Caja recuperada en \d+ años$/.test(l0.payback) && /^Recuperas los .* aportados en el año \d+/.test(l0.paybackTitle), `${l0.anual} | ${l0.payback} | ${l0.paybackTitle}`);
 await poner('alquiler', 300);
 const l1 = await lineas();
-check('  sin recuperación: cifras iguales, una línea, tooltip largo', dentro(l1.alturas) && l1.partidos.length === 0 && /^Caja: .* de .* aportados$/.test(l1.payback) && l1.paybackTitle.length > l1.payback.length, l1.alturas.map(Math.round).join('/') + ' ' + l1.payback);
+check('  sin recuperación: cifras iguales, a lo más dos líneas, tooltip largo', dentro(l1.alturas) && l1.partidos.length === 0 && /^Caja: .* de .* aportados$/.test(l1.payback) && l1.paybackTitle.length > l1.payback.length, l1.alturas.map(Math.round).join('/') + ' ' + l1.payback);
 await p.screenshot({ path: salida('calc4-1440-sin-recuperacion.png'), clip: { x: 0, y: 0, width: 1440, height: 330 } });
 await p.evaluate(() => resetDefaults());
 await p.click('#langBtn');
 const l2 = await lineas();
-check('  en inglés también', dentro(l2.alturas) && l2.partidos.length === 0 && /^Cash recovered in \d+ years$/.test(l2.payback) && /^[\d,.-]+%\s*return$/.test(l2.anual) && /^· on [^\d]*[\d,]+ put in$/.test(l2.roceDet), `${l2.alturas.map(Math.round).join('/')} ${l2.payback} | ${l2.anual} | ${l2.roceDet}`);
+check('  en inglés también', dentro(l2.alturas) && l2.partidos.length === 0 && /^Cash recovered in \d+ years$/.test(l2.payback) && /^[\d,.-]+%\s*return$/.test(l2.anual) && /^On [^\d]*[\d,]+ put in$/.test(l2.roceDet), `${l2.alturas.map(Math.round).join('/')} ${l2.payback} | ${l2.anual} | ${l2.roceDet}`);
 await p.click('#langBtn');
 
 /* ---------- 5) las tres tarjetas de datos llenan lo mismo ---------- */
@@ -365,16 +366,18 @@ for (const w of [1024, 1280, 1440, 1920]) {
     const card = document.querySelector('#kpiAnualizada').closest('.border-2'), c = card.getBoundingClientRect();
     const cs = getComputedStyle(card), area = { l: c.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft), r: c.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight) };
     const rot = card.querySelector('.kpi-rotulo-anual'), hijos = [...rot.children], sel = card.querySelector('#anoRefBtn').getBoundingClientRect(), numT = card.querySelector('#anoRefTxt');
-    const txt = rot.querySelector('.kpi-rotulo-texto'); const rt = document.createRange(); rt.selectNodeContents(txt); const tr = rt.getBoundingClientRect();
+    const txt = rot.querySelector('.kpi-rotulo-texto'); const recortado = txt.scrollWidth > txt.clientWidth + 1; const rt = document.createRange(); rt.selectNodeContents(txt); const tr = rt.getBoundingClientRect();
     const fuera = hijos.filter(e => { const b = e.getBoundingClientRect(); return b.left < area.l - 0.5 || b.right > area.r + 0.5 || b.right > c.right || b.bottom > c.bottom; }).map(e => e.className || e.tagName);
     const tops = [...document.querySelectorAll('#kpiGrid > div')].map(d => d.querySelector('.uppercase')).filter(Boolean);
     const alturas = [...document.querySelectorAll('#kpiGrid > div')].map(d => Math.round(d.getBoundingClientRect().height));
     const rn = document.createRange(); rn.selectNodeContents(numT); const nr = rn.getBoundingClientRect();
     const cn = getComputedStyle(numT.parentElement), ct = getComputedStyle(txt);
-    return { fuera, base: Math.abs(nr.bottom - tr.bottom), mismoTipo: cn.fontSize === ct.fontSize && cn.fontWeight === ct.fontWeight, dy: Math.abs((sel.top + sel.height / 2) - (tr.top + tr.height / 2)), una: rot.getBoundingClientRect().height < 20,
+    return { fuera, base: Math.abs(nr.bottom - tr.bottom), mismoTipo: cn.fontSize === ct.fontSize && cn.fontWeight === ct.fontWeight, dy: Math.abs((sel.top + sel.height / 2) - (tr.top + tr.height / 2)), una: rot.getBoundingClientRect().height < 20, recortado,
       lineas: new Set(tops.map(e => Math.round(e.getBoundingClientRect().top))).size, alturas: new Set(alturas).size, alturaRot: rot.getBoundingClientRect().height };
   });
-  check(`${w}: nada del rótulo de la anualizada sobresale de la tarjeta`, r.fuera.length === 0 && r.una, JSON.stringify(r));
+  // A 1024 px la tarjeta no da para una línea y el rótulo parte en dos (como «RENTABILIDAD BRUTA»), sin
+  // recortarse; a partir de 1280 cabe en una.
+  check(`${w}: nada del rótulo de la anualizada sobresale de la tarjeta ni se recorta`, r.fuera.length === 0 && !r.recortado && (w === 1024 ? r.alturaRot < 40 : r.una), JSON.stringify(r));
   check(`${w}: el desplegable está centrado con «ANUALIZADA A» (±1,5 px)`, r.dy <= 1.5, r.dy.toFixed(2));
   check(`${w}: el número queda en la línea base de «ANUALIZADA A», con su mismo tamaño y peso`, r.base <= 0.6 && r.mismoTipo, `${r.base.toFixed(2)} ${r.mismoTipo}`);
   check(`${w}: los seis rótulos en la misma línea y las seis tarjetas miden lo mismo`, r.lineas === 1 && r.alturas === 1, JSON.stringify({ l: r.lineas, a: r.alturas }));
@@ -394,8 +397,8 @@ const mv = await m.evaluate(() => { const c = document.querySelector('.comparar-
   return { scrollCaja: c.scrollWidth, anchoCaja: c.clientWidth, pagina: de.scrollWidth, ventana: de.clientWidth, cols: document.querySelectorAll('#tblComparar thead th[data-opcion]').length }; });
 check('390: la tabla tiene 3 columnas y se desplaza dentro de su caja', mv.cols === 3 && mv.scrollCaja > mv.anchoCaja, JSON.stringify(mv));
 const recMov = await m.evaluate(() => { OPCIONES[0].nombre = 'W'.repeat(30); ultimaTabla = null; render(); const pil = document.querySelector('#tblComparar .cmp-letra'), th = pil.closest('th'), c = th.getBoundingClientRect(), bt = th.querySelector('.cmp-btn').getBoundingClientRect(), r = pil.getBoundingClientRect();
-  const tx = pil.querySelector('.cmp-letra-txt'); return { recortado: tx.scrollWidth > tx.clientWidth, dentro: r.left >= c.left && r.right <= bt.left, elipsis: getComputedStyle(tx).textOverflow }; });
-check('390: un nombre de 30 «W» se recorta con «…» dentro de su celda, sin pisar los botones', recMov.recortado && recMov.dentro && recMov.elipsis === 'ellipsis', JSON.stringify(recMov));
+  const tx = pil.querySelector('.cmp-letra-txt'); return { recortado: tx.scrollWidth > tx.clientWidth, dentro: r.left >= c.left && r.right <= c.right && r.bottom <= bt.top + 1, elipsis: getComputedStyle(tx).textOverflow }; });
+check('390: un nombre de 30 «W» se recorta con «…» dentro de su celda, encima de los botones', recMov.recortado && recMov.dentro && recMov.elipsis === 'ellipsis', JSON.stringify(recMov));
 check('390: la página no se desborda', mv.pagina <= mv.ventana, `${mv.pagina} <= ${mv.ventana}`);
 await m.click('#kpiToggle');
 const rotM = await m.evaluate(() => { const l = document.querySelector('#kpiAnualizada').closest('.border-2').querySelector('.uppercase'); return { h: l.getBoundingClientRect().height, sw: l.scrollWidth, cw: l.clientWidth }; });

@@ -220,6 +220,14 @@
     .cmp-titulo { display: block; font-size: 11px; line-height: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgb(var(--brand-textMuted)); }
     .cmp-cab { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; min-width: 0; }
     .cmp-cab > .flex { flex: none; }
+    /* En móvil la columna de una opción es estrecha y la píldora del nombre compartía línea con «Cargar»
+       y «✕»: el nombre se quedaba en «Opci…». Se apilan: el nombre arriba con todo el ancho de la
+       celda y los botones debajo. En escritorio no cambia nada (las columnas no se mueven al renombrar). */
+    @media (max-width: 639px) {
+      .cmp-cab { flex-direction: column; align-items: stretch; gap: 3px; }
+      .cmp-cab > .cmp-letra { align-self: flex-start; max-width: 100%; }
+      .cmp-cab > .flex { align-self: flex-start; }
+    }
     /* El nombre de la opción (por defecto «Opción N»). Se renombra con doble clic, así que
        lleva cursor de texto y se recorta con puntos suspensivos: el máximo son 30 caracteres.
        Alto fijo (20 px): el campo de edición ocupa exactamente el sitio de la píldora. */
@@ -277,10 +285,22 @@
     .anoref-lista li { padding: 4px 10px; border-radius: 5px; cursor: pointer; text-align: center; font-variant-numeric: tabular-nums; }
     .anoref-lista li.activa { background: rgb(var(--brand-accent) / 0.16); }
     .anoref-lista li[aria-selected="true"] { background: rgb(var(--brand-accent)); color: #fff; }
+    /* Líneas de detalle bajo la cifra de cada indicador: sólo en escritorio, y hasta dos líneas. Va en
+       CSS propio y no con line-clamp-2 de Tailwind porque `lg:block` pisaba su display:-webkit-box y no
+       recortaba nada: el texto crecía sin límite. Si no cabe en dos, el título lo lleva entero. */
+    .kpi-detalle { display: none; }
+    @media (min-width: 1024px) {
+      .kpi-detalle { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    }
     .kpi-rotulo-texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .kpi-rotulo-fin { flex: none; }
     @media (min-width: 1024px) and (max-width: 1279px) {
       .kpi-rotulo-anual { font-size: 9.5px; letter-spacing: -0.01em; gap: 3px; }
+      /* A 1024 px la tarjeta es de unos 116 px útiles y «ANUALIZADA A [30] AÑOS» no cabe en una línea,
+         así que se recortaba con «…». Los rótulos vecinos («RENTABILIDAD BRUTA», «AÑOS DE ALQUILER»)
+         ya parten en dos líneas a este ancho: éste parte igual, con el desplegable y «AÑOS» abajo. */
+      .kpi-rotulo-anual.whitespace-nowrap { white-space: normal; flex-wrap: wrap; height: auto; }
+      .kpi-rotulo-texto { overflow: visible; }
     }
     /* Conmutador %/€ de la comisión de apertura. Ocupa el sitio de la unidad: enseña las dos
        opciones y resalta la que está activa, así no hay que adivinar en qué unidad se escribe. */
@@ -359,32 +379,30 @@
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiBruta" data-i18n-title="kpiBrutaTip">RENTABILIDAD BRUTA</div>
       <div class="text-base lg:text-xl font-bold text-brand-accent lg:mt-1.5 num" id="kpiBruta">--</div>
       <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiBrutaDesc"></div>
-      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiBrutaDetalle">--</div>
+      <div class="kpi-detalle text-[11px] text-brand-textMuted mt-0.5 num" id="kpiBrutaDetalle">--</div>
     </div>
     <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
-      <!-- El «sobre X aportados» va en la línea del rótulo, detrás de ROCE y más discreto: así la
-           tarjeta lleva una sola línea de detalle debajo de la cifra y no es más alta que las demás.
-           Una línea y sólo una (truncate); el texto entero va en el title cuando no cabe. -->
-      <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">
-        <span class="tooltip-help" data-i18n="kpiRoce" data-i18n-title="kpiRoceTip">ROCE</span><span id="kpiRoceDetalle" class="hidden lg:inline normal-case font-normal tracking-normal text-[10px] opacity-80"></span>
-      </div>
+      <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiRoce" data-i18n-title="kpiRoceTip">ROCE</div>
       <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiRoce">--</div>
       <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiRoceDesc"></div>
       <!-- La cifra grande es la que ya ha ocurrido; la plusvalía sobre el papel va debajo, que
            es donde se puede leer como lo que es: una hipótesis, no dinero cobrado. -->
-      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiRoceConReval">--</div>
+      <div class="kpi-detalle text-[11px] text-brand-textMuted mt-0.5 num" id="kpiRoceConReval">--</div>
+      <!-- Sobre qué capital se mide: antes iba en la línea del rótulo, donde no cabía a 1024 ni a 1280
+           con «+ X aportados en el año 1». Aquí puede ocupar dos líneas sin descolocar las cifras. -->
+      <div class="kpi-detalle text-[11px] text-brand-textMuted mt-0.5 num tooltip-help" id="kpiRoceDetalle"></div>
     </div>
     <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiCaja" data-i18n-title="kpiCajaTip">CAJA ANUAL</div>
       <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiCaja">--</div>
       <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiCajaDesc"></div>
-      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiCajaMes">--</div>
+      <div class="kpi-detalle text-[11px] text-brand-textMuted mt-0.5 num" id="kpiCajaMes">--</div>
     </div>
     <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiDeuda" data-i18n-title="kpiDeudaTip">FIN DE DEUDA</div>
       <div class="text-base lg:text-xl font-bold text-brand-amber lg:mt-1.5 num" id="kpiDeuda">--</div>
       <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiDeudaDesc"></div>
-      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiDeudaDetalle">--</div>
+      <div class="kpi-detalle text-[11px] text-brand-textMuted mt-0.5 num" id="kpiDeudaDetalle">--</div>
     </div>
     <div class="lg:col-span-2 bg-brand-card border-2 border-brand-accent/40 rounded-xl px-3 py-2.5 lg:p-[15px] shadow-sm flex flex-col lg:block">
       <!-- Rótulo, cifra y detalle: la misma estructura que las demás tarjetas. El rótulo cabe en
@@ -407,15 +425,16 @@
         <div class="lg:mt-1.5 whitespace-nowrap"><span class="text-base lg:text-xl font-bold num" id="kpiAnualizada">--</span><span class="hidden lg:inline text-[11px] font-normal text-brand-textMuted ml-1" data-i18n="kpiAnualizadaRent">rentabilidad</span></div>
       </div>
       <div class="lg:hidden text-[10px] leading-tight text-brand-textMuted mt-0.5" data-i18n="kpiAnualizadaDesc"></div>
-      <!-- Una línea y sólo una: truncate antes que un salto que descuadre la altura de la tarjeta.
-           El texto completo, con el matiz que no cabe, va en el título. -->
-      <div class="hidden lg:block text-[11px] mt-0.5 text-brand-textMuted num truncate tooltip-help" id="kpiPayback">--</div>
+      <!-- Hasta dos líneas (line-clamp-2): una sola recortaba con «…» a 1280 y 1440. Las tarjetas son
+           celdas de una rejilla, así que si una crece las seis crecen juntas. El texto completo, con el
+           matiz que no cabe, va además en el título. -->
+      <div class="kpi-detalle text-[11px] mt-0.5 text-brand-textMuted num tooltip-help" id="kpiPayback">--</div>
     </div>
     <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl px-3 py-2.5 lg:p-4 shadow-sm flex flex-wrap lg:block items-center justify-between gap-3">
       <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" data-i18n="kpiAnosAlquiler" data-i18n-title="kpiAnosAlquilerTip">AÑOS DE ALQUILER</div>
       <div class="text-base lg:text-xl font-bold lg:mt-1.5 num" id="kpiAnosAlquiler">--</div>
       <div class="lg:hidden w-full text-[10px] leading-tight text-brand-textMuted" data-i18n="kpiAnosAlquilerDesc"></div>
-      <div class="hidden lg:block text-[11px] text-brand-textMuted mt-0.5 num" id="kpiAnosAlquilerDetalle">--</div>
+      <div class="kpi-detalle text-[11px] text-brand-textMuted mt-0.5 num" id="kpiAnosAlquilerDetalle">--</div>
     </div>
   </div>
   </section>
@@ -727,12 +746,12 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-brand-card border border-brand-border rounded-xl p-5">
           <h3 class="text-sm font-bold mb-3" data-i18n="desgloseGastos">Desglose de gastos anuales</h3>
-          <div class="h-64"><canvas id="chartGastos"></canvas></div>
+          <div class="h-64 max-sm:h-80"><canvas id="chartGastos"></canvas></div>
         </div>
         <div class="bg-brand-card border border-brand-border rounded-xl p-5">
           <h3 class="text-sm font-bold mb-1" data-i18n="desgloseIngresos">A dónde va el alquiler</h3>
           <p class="text-[11px] text-brand-textMuted mb-3" id="desgloseIngresosSub">--</p>
-          <div class="h-64"><canvas id="chartIngresos"></canvas></div>
+          <div class="h-64 max-sm:h-80"><canvas id="chartIngresos"></canvas></div>
         </div>
       </div>
       <div class="bg-brand-card border border-brand-border rounded-xl p-5">
@@ -834,7 +853,7 @@
       <div class="flex items-start justify-between gap-4 border-b border-brand-border pb-3 mb-2">
         <div>
           <h2 id="faqTitulo" class="text-lg font-bold" data-i18n="faqTitulo">Preguntas de finanzas</h2>
-          <p class="text-[11px] text-brand-textMuted mt-0.5" data-i18n="faqSub">Por qué las cifras se comportan como se comportan. Los ejemplos numéricos salen del escenario que tengas cargado.</p>
+          <p class="text-[11px] text-brand-textMuted mt-0.5" data-i18n="faqSub">Por qué las cifras se comportan como se comportan. Los ejemplos numéricos son los del escenario de ejemplo; sólo la tabla del apalancamiento se recalcula con el escenario que tengas cargado.</p>
         </div>
         <button type="button" onclick="closeModal('faqModal')" aria-label="Cerrar" data-i18n-aria="cerrar" class="text-brand-textMuted hover:text-brand-accent text-xl leading-none"><span aria-hidden="true">✕</span></button>
       </div>
@@ -916,10 +935,11 @@
         // Límites de los campos: el aviso fugaz cuando se recorta, y los globos rojos de los valores
         // posibles pero preocupantes. Los umbrales de los textos son los de LIMITES y AVISOS.
         limiteRecorte: 'Ajustado al rango permitido: de {0} a {1}{2}.',
+        numeroIlegible: 'No se entiende el número; se mantiene {0}.',
         limiteSufEntero: ' (solo enteros)', limiteSufPaso: ' (de {0} en {0})',
         limiteUnidadAnos: 'años', limiteUnidadMeses: 'meses',
         cerrar: 'Cerrar', uPrecio: '% precio', uAlquiler: '% alquiler', uM2Mes: '€/m²·mes', uM2Ano: '€/m²·año', uMensualidades: 'mensualid.',
-        deshecho: 'Deshecho', rehecho: 'Rehecho', nadaQueDeshacer: 'Nada que deshacer', nadaQueRehacer: 'Nada que rehacer',
+        deshacerBtn: 'Deshacer', deshacerAtajo: ' · Ctrl+Z para deshacer', deshecho: 'Deshecho', rehecho: 'Rehecho', nadaQueDeshacer: 'Nada que deshacer', nadaQueRehacer: 'Nada que rehacer',
         modoAperturaTip: 'Escribir la comisión de apertura en porcentaje del principal o en euros. Al cambiar, el importe en euros no varía.',
         modoAperturaPct: 'Comisión de apertura en porcentaje del principal (pulsa para pasar a euros)',
         modoAperturaEur: 'Comisión de apertura en euros (pulsa para pasar a porcentaje)',
@@ -1010,7 +1030,7 @@
         ibi: 'IBI', ibiTip: 'Impuesto sobre bienes inmuebles. Se grava el valor catastral, no el de mercado,\nasí que la estimación va sobre el precio pagado y sale más baja que el tipo municipal.',
         seguroHogar: 'Seguro de hogar', seguroHogarTip: 'Seguro de continente y contenido del piso alquilado.',
         seguroImpagos: 'Seguro de impagos', seguroImpagosTip: 'Seguro de impago de rentas. Se cotiza en mensualidades de alquiler al año.',
-        mantenimiento: 'Mantenimiento', mantenimientoTip: 'Reparaciones y conservación. Se estima como un porcentaje del alquiler cobrado:\ncuanto más renta produce el piso, más desgaste tiene.',
+        mantenimiento: 'Mantenimiento', mantenimientoTip: 'Reparaciones y conservación. Se estima como un porcentaje del alquiler bruto de doce meses\n(sin descontar los meses vacíos): cuanto más renta produce el piso, más desgaste tiene.',
         gastosAnuales: 'Gastos anuales', delAlquiler: 'del alquiler', mensual: 'mensual', anual: 'anual',
         resumenTitulo: 'Resumen de la operación', resumenBadge: 'Salida', queCuesta: 'QUÉ TE CUESTA ENTRAR',
         resumenRentabilidad: 'RENTABILIDAD',
@@ -1027,7 +1047,7 @@
         rentRoceConTip: 'Lo anterior más la plusvalía latente del año. Es el rendimiento económico completo, pero\nla parte que añade está sobre el papel hasta que vendas, y depende por entero de que el\npiso suba lo que has supuesto.',
         rentAnualizada: 'Anualizada al año {0}',
         rentHorquilla: 'Anualizada al año {0} según revalorización',
-        rentHorquillaTip: 'La misma rentabilidad anualizada al año {0}, repetida con tres hipótesis de revalorización del\npiso: pesimista (no se revaloriza: 0 %), base (sube como la inflación: {1}) y optimista\n(inflación + 2 puntos: {2}).\n\nSe ve así cuánto de la rentabilidad depende de que el piso suba, que es lo único del modelo\nque nadie puede prometer. Lo demás (alquiler, gastos, deuda) se queda como lo tengas puesto.',
+        rentHorquillaTip: 'La misma rentabilidad anualizada al año {0}, repetida con tres hipótesis de revalorización del\npiso: pesimista (no se revaloriza: 0 %), base (sube como la inflación: {1}) y optimista\n(inflación + 2 puntos: {2}).\nSi la inflación es negativa o cero, las cifras se ordenan de peor a mejor, sin repetir, y la de la inflación va subrayada.\n\nSe ve así cuánto de la rentabilidad depende de que el piso suba, que es lo único del modelo\nque nadie puede prometer. Lo demás (alquiler, gastos, deuda) se queda como lo tengas puesto.',
         rentTirVenta: 'Anualizada vendiendo al año {0}',
         rentTirVentaTip: 'La rentabilidad que te llevas de verdad si vendes ese año, ya descontados los gastos de\nventa y el IRPF de la ganancia.',
         precioPagado: 'Precio pagado', cajaPrimerAno: 'CAJA DEL PRIMER AÑO COMPLETO',
@@ -1126,9 +1146,12 @@
         fuenteOff: 'Desactivada. Pulsa para financiar con ella.',
         colAportacion: 'Aportación extra',
         colAportacionTip: 'Dinero que tienes que poner ese año porque el alquiler no cubre las cuotas\ny los gastos, y la caja acumulada tampoco llega.',
-        kpiMasAportaciones: 'Sobre {0} + {1} aportados después',
+        kpiMasAportaciones: 'Sobre {0} + {1} aportados en el año 1',
+        kpiSobreAno1: 'Sobre {0} aportados en el año 1',
+        kpiMasAportacionesCorto: 'Sobre {0} + {1} del año 1',
+        kpiSobreAno1Corto: 'Sobre {0} del año 1',
         faqTitulo: 'Preguntas de finanzas',
-        faqSub: 'Por qué las cifras se comportan como se comportan. Los ejemplos numéricos salen del escenario que tengas cargado.',
+        faqSub: 'Por qué las cifras se comportan como se comportan. Los ejemplos numéricos son los del escenario de ejemplo; sólo la tabla del apalancamiento se recalcula con el escenario que tengas cargado.',
         btnFaq: 'Preguntas de finanzas',
         faqRendimientoPiso: 'Lo que rinde el piso',
         faqCosteHipoteca: 'Coste de la hipoteca, ya deducida',
@@ -1183,10 +1206,11 @@
         compNomApertura: 'fee {0}%', compNomAcel: 'accelerated', compNomHipAcel: 'mortgage accelerated', compNomPreAcel: 'loan accelerated', compNomSin: 'No financing',
         compNomAperturaEur: 'fee {0}',
         limiteRecorte: 'Adjusted to the allowed range: {0} to {1}{2}.',
+        numeroIlegible: 'Can\'t read that number; keeping {0}.',
         limiteSufEntero: ' (whole numbers only)', limiteSufPaso: ' (in steps of {0})',
         limiteUnidadAnos: 'years', limiteUnidadMeses: 'months',
         cerrar: 'Close', uPrecio: '% of price', uAlquiler: '% of rent', uM2Mes: '€/m²·month', uM2Ano: '€/m²·year', uMensualidades: 'rent months',
-        deshecho: 'Undone', rehecho: 'Redone', nadaQueDeshacer: 'Nothing to undo', nadaQueRehacer: 'Nothing to redo',
+        deshacerBtn: 'Undo', deshacerAtajo: ' · Ctrl+Z to undo', deshecho: 'Undone', rehecho: 'Redone', nadaQueDeshacer: 'Nothing to undo', nadaQueRehacer: 'Nothing to redo',
         modoAperturaTip: 'Enter the arrangement fee as a percentage of the principal or as an amount in euros. Switching keeps the euro amount unchanged.',
         modoAperturaPct: 'Arrangement fee as a percentage of the principal (press to switch to euros)',
         modoAperturaEur: 'Arrangement fee in euros (press to switch to a percentage)',
@@ -1277,7 +1301,7 @@
         ibi: 'Council tax (IBI)', ibiTip: 'Property tax. It is levied on the cadastral value, well below market value,\nso this estimate runs on the price paid and comes out below the municipal rate.',
         seguroHogar: 'Buildings insurance', seguroHogarTip: 'Buildings and contents cover for the let flat.',
         seguroImpagos: 'Rent guarantee insurance', seguroImpagosTip: 'Rent default cover. It is quoted in months of rent per year.',
-        mantenimiento: 'Maintenance', mantenimientoTip: 'Repairs and upkeep, estimated as a share of the rent collected:\nthe more a flat earns, the more wear it takes.',
+        mantenimiento: 'Maintenance', mantenimientoTip: 'Repairs and upkeep, estimated as a share of the gross rent for twelve months\n(before deducting vacant months): the more a flat earns, the more wear it takes.',
         gastosAnuales: 'Annual costs', delAlquiler: 'of the rent', mensual: 'monthly', anual: 'annual',
         resumenTitulo: 'Deal summary', resumenBadge: 'Output', queCuesta: 'WHAT IT COSTS TO GET IN',
         resumenRentabilidad: 'RETURN',
@@ -1294,7 +1318,7 @@
         rentRoceConTip: 'The above plus the paper gain of the year. It is the full economic return, but the part it\nadds stays on paper until you sell, and depends entirely on the flat rising by what you\nassumed.',
         rentAnualizada: 'Annualised to year {0}',
         rentHorquilla: 'Annualised to year {0} by appreciation',
-        rentHorquillaTip: 'The same annualised return to year {0}, repeated under three appreciation assumptions for the\nflat: pessimistic (it does not appreciate: 0%), base (it rises with inflation: {1}) and\noptimistic (inflation + 2 points: {2}).\n\nIt shows how much of the return depends on the flat rising, the one thing in the model that\nnobody can promise. Everything else (rent, costs, debt) stays as you have set it.',
+        rentHorquillaTip: 'The same annualised return to year {0}, repeated under three appreciation assumptions for the\nflat: pessimistic (it does not appreciate: 0%), base (it rises with inflation: {1}) and\noptimistic (inflation + 2 points: {2}).\nIf inflation is zero or negative, the figures are sorted worst to best without repeats, and the inflation one is underlined.\n\nIt shows how much of the return depends on the flat rising, the one thing in the model that\nnobody can promise. Everything else (rent, costs, debt) stays as you have set it.',
         rentTirVenta: 'Annualised selling in year {0}',
         rentTirVentaTip: 'The return you actually take home if you sell that year, after selling costs and capital\ngains tax.',
         precioPagado: 'Price paid', cajaPrimerAno: 'CASH IN THE FIRST FULL YEAR',
@@ -1367,7 +1391,7 @@
         horizonte: 'Years projected', indexar: 'Index rent and costs',
         indexarTip: 'Raises rent and running costs each year at the rate of inflation.\n\nMortgage and loan instalments stay in nominal euros: they are fixed rate, and\ninflation eroding them is the point of borrowing. Depreciation is not indexed\neither, being computed on historic purchase cost.',
         paramsHorizonteAyuda: 'Inflation and the appreciation of the flat are set on the letting card.',
-        paramsNota: "Purchase and financing start from the original spreadsheet's values; running costs from standard multipliers. Everything recalculates instantly and is saved in this browser.",
+        paramsNota: "Purchase and financing start from an example scenario; running costs from standard multipliers. Everything recalculates instantly and is saved in this browser.",
         avisoEscala: '⚠︎ {0} has no single rate: {1}. The table carries the first bracket; if your price is above the cut, unlock the field and enter the one that applies.',
         avisoImpuestos: 'The ITP and AJD rates shipped with this tool are indicative, reviewed in September 2026 against tax aggregators rather than the regional statute books. They change with every budget, several communities charge them in value brackets, and there are reduced rates by age, income, family size or depopulated area that this does not capture. Check the rate in force in your community and adjust it by unlocking the purchase tax.',
         ayudaTitulo: 'How the model works',
@@ -1393,9 +1417,12 @@
         fuenteOff: 'Off. Click to finance with it.',
         colAportacion: 'Extra cash in',
         colAportacionTip: 'Money you have to put in that year because the rent does not cover instalments\nand costs, and the accumulated cash does not stretch either.',
-        kpiMasAportaciones: 'On {0} + {1} put in later',
+        kpiMasAportaciones: 'On {0} + {1} put in during year 1',
+        kpiSobreAno1: 'On {0} put in during year 1',
+        kpiMasAportacionesCorto: 'On {0} + {1} in year 1',
+        kpiSobreAno1Corto: 'On {0} in year 1',
         faqTitulo: 'Finance questions',
-        faqSub: 'Why the figures behave the way they do. The worked numbers come from whatever scenario you have loaded.',
+        faqSub: 'Why the figures behave the way they do. The worked numbers are those of the example scenario; only the leverage table is recalculated with the scenario you have loaded.',
         btnFaq: 'Finance questions',
         faqRendimientoPiso: 'What the property earns',
         faqCosteHipoteca: 'Mortgage cost, after the deduction',
@@ -1630,9 +1657,14 @@
     // importe sigue siendo de miles, salvo que la parte entera sea 0 («0,125» no es 125).
     //
     // Lo que se pega suele traer texto: «247.000 €», «1.250 euros», «1.250/mes», «€1.250», «$1,250.00»
-    // o un menos tipográfico (U+2212). Antes de decidir qué separa miles y qué decimales se tira todo
-    // lo que no sea cifra, punto, coma o signo: con la «€» o las letras delante o detrás, la lectura
-    // se desviaba por mil o daba 0.
+    // o un menos tipográfico (U+2212). Se toma el PRIMER token numérico y se ignora todo lo demás: antes
+    // se tiraba lo que no fuera cifra y se pegaba el resto, y «80 m2» salía 802, «1.250 € (IVA 21%)»
+    // 1,25021 y «2,5 % (cupón 3)» 2,53. El signo cuenta sólo si va pegado a la cifra y no a una letra
+    // («ref-12» es el 12). Los espacios separan miles únicamente entre grupos de tres cifras («1 250»).
+    const TOKEN_NUMERICO = new RegExp(
+      '(?:(?<![\\p{L}\\d])([-+]))?' +
+      '(\\d{1,3}(?:[ \\u00a0\\u202f]\\d{3})+(?!\\d)(?:[.,]\\d+)*|\\d[\\d.,]*|[.,]\\d[\\d.,]*)' +
+      '(?:[eE]([-+]?\\d+))?', 'u');
     function parseNum(bruto, decimal = false) {
       const v = leerNumero(bruto, decimal);
       return Number.isNaN(v) ? 0 : v;
@@ -1640,14 +1672,15 @@
     // Igual que parseNum, pero NaN en vez de 0 cuando no hay número: lo que llega de fuera (enlace,
     // guardado) necesita distinguir «0» de «basura».
     function leerNumero(bruto, decimal = false) {
-      let s = String(bruto ?? '').replace(/[\u2212\u2012\u2013\u2014]/g, '-');
-      // La notación científica de un enlace manipulado («1e6») se respeta: los topes de cada campo
-      // son los que la acotan después.
-      if (/^\s*[-+]?\d+(\.\d+)?[eE][-+]?\d+\s*$/.test(s)) { const v = parseFloat(s); return isFinite(v) ? v : NaN; }
-      s = s.replace(/[^\d.,+-]/g, '');
+      const m = TOKEN_NUMERICO.exec(String(bruto ?? '').replace(/[\u2212\u2012\u2013\u2014]/g, '-'));
+      if (!m) return NaN;
+      // Un separador colgando al final («250.000.» al cierre de una frase) no es parte de la cifra.
+      let s = m[2].replace(/[.,]+$/, '').replace(/[ \u00a0\u202f]/g, '');
       if (!s) return NaN;
       const coma = s.lastIndexOf(','), punto = s.lastIndexOf('.');
-      const miles = (sep, re) => s.split(sep).length > 2 || (!decimal && re.test(s) && !/^[-+]?0[.,]/.test(s));
+      // Con exponente («1,5e3») la mantisa es siempre decimal: los topes de cada campo acotan después.
+      const dec = decimal || m[3] !== undefined;
+      const miles = (sep, re) => s.split(sep).length > 2 || (!dec && re.test(s) && !/^0[.,]/.test(s));
       if (coma >= 0 && punto >= 0) {
         // El último que aparece manda: es el separador decimal.
         s = coma > punto ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
@@ -1656,7 +1689,7 @@
       } else if (punto >= 0) {
         if (miles('.', /\.\d{3}$/)) s = s.replace(/\./g, '');
       }
-      const v = parseFloat(s);
+      const v = parseFloat((m[1] === '-' ? '-' : '') + s + (m[3] !== undefined ? 'e' + m[3] : ''));
       return isFinite(v) ? v : NaN;
     }
 
@@ -1943,21 +1976,50 @@
       const r = el(avisoLimiteCampo).getBoundingClientRect();
       if (r.bottom < 0 || r.top > window.innerHeight) { ocultarAvisoLimite(); return; }
       caja.style.left = Math.max(8, Math.min(r.right - caja.offsetWidth, window.innerWidth - caja.offsetWidth - 8)) + 'px';
-      const debajo = r.bottom + 6;
-      caja.style.top = (debajo + caja.offsetHeight > window.innerHeight - 8 ? Math.max(8, r.top - caja.offsetHeight - 6) : debajo) + 'px';
+      const debajo = r.bottom + 6, arriba = r.top - caja.offsetHeight - 6;
+      // El del foco prefiere ir arriba (no tapa lo que se escribe ni queda bajo el teclado del móvil);
+      // el fugaz, debajo, y arriba sólo si no cabe.
+      const alto = avisoFoco ? (arriba >= 8 ? arriba : debajo) : (debajo + caja.offsetHeight > window.innerHeight - 8 ? Math.max(8, arriba) : debajo);
+      caja.style.top = alto + 'px';
+    }
+    // El globo lo usan tres avisos. El fugaz (recorte o número ilegible) se esconde solo a los 4,5 s;
+    // el del motivo de un campo en rojo (avisoFoco) se queda mientras el campo tenga el foco, porque un
+    // `title` no se lee ni en un móvil ni con el teclado. El fugaz manda sobre el del foco: es lo que
+    // acaba de pasar, y al esconderse el del foco vuelve a ocupar su sitio.
+    let avisoFoco = false;
+    function mostrarGlobo(id, texto, fugaz) {
+      const caja = el('avisoLimite');
+      caja.textContent = texto;
+      caja.hidden = false;
+      avisoLimiteCampo = id;
+      avisoFoco = !fugaz;
+      colocarAvisoLimite();
+      clearTimeout(avisoLimiteTimer);
+      if (fugaz) avisoLimiteTimer = setTimeout(() => { ocultarAvisoLimite(); refrescarAvisoFoco(); }, 4500);
     }
     function avisarRecorte(id, lim) {
-      const campo = el(id), caja = el('avisoLimite');
       const sufijo = !lim.avisaPaso ? ''
         : lim.paso === 1 ? t('limiteSufEntero')
         : tf('limiteSufPaso', new Intl.NumberFormat(t('locale'), { maximumFractionDigits: 2 }).format(lim.paso));
-      caja.textContent = tf('limiteRecorte', fmtLimite(lim.min, lim), fmtLimite(lim.max, lim), sufijo);
-      caja.hidden = false;
-      avisoLimiteCampo = id;
-      colocarAvisoLimite();
-      clearTimeout(avisoLimiteTimer);
-      avisoLimiteTimer = setTimeout(ocultarAvisoLimite, 4500);
+      mostrarGlobo(id, tf('limiteRecorte', fmtLimite(lim.min, lim), fmtLimite(lim.max, lim), sufijo), true);
     }
+    // Lo que se tecleó no tenía ningún número: se vuelve al último valor confirmado y se dice, en vez
+    // de forzarlo al mínimo del campo (que además era un salto sin explicación).
+    function avisarIlegible(id) { mostrarGlobo(id, tf('numeroIlegible', el(id).value), true); }
+
+    // El motivo del campo en rojo que tiene el foco. Se repinta al recalcular (el motivo cambia o
+    // desaparece mientras se escribe) y se esconde al salir. Va ARRIBA del campo cuando cabe, para no
+    // tapar lo que se está escribiendo ni quedar bajo el teclado de un móvil.
+    function refrescarAvisoFoco() {
+      const f = document.activeElement;
+      const hay = f && f.classList && f.classList.contains('campo-aviso') && f.title;
+      if (!hay) { if (avisoFoco) ocultarAvisoLimite(); return; }
+      const caja = el('avisoLimite');
+      if (!caja.hidden && !avisoFoco) return;          // hay un aviso fugaz: no se pisa
+      mostrarGlobo(f.id, f.title, false);
+    }
+    document.addEventListener('focusin', () => refrescarAvisoFoco());
+    document.addEventListener('focusout', (ev) => { if (avisoFoco && avisoLimiteCampo === ev.target.id) ocultarAvisoLimite(); });
     window.addEventListener('scroll', colocarAvisoLimite, { passive: true });
     window.addEventListener('resize', colocarAvisoLimite);
 
@@ -1976,6 +2038,20 @@
       const [dmax, dmin] = decimalesCampo(id);
       fijar(id, v, dmax, dmin);
       if (!silencio && !CARGANDO && !RESTAURANDO && (recortado || lim.avisaPaso)) avisarRecorte(id, lim);
+      return true;
+    }
+
+    // Vacío o sin ningún número: se restaura el último valor confirmado de ese campo (el que tenía al
+    // recibir el foco) y se avisa. Antes parseNum lo leía como 0 y el límite lo subía al mínimo, un
+    // valor que nadie escribió. Oferta y descuento van enlazados, así que el otro se recalcula.
+    function restaurarSiIlegible(id) {
+      const campo = el(id);
+      if (!Number.isNaN(leerNumero(campo.value, !esMoneda(id)))) return false;
+      campo.value = campo.dataset.confirmado ?? '';
+      if (Number.isNaN(leerNumero(campo.value, !esMoneda(id)))) { const [dmax, dmin] = decimalesCampo(id); fijar(id, DEFECTOS[id] ?? 0, dmax, dmin); }
+      if (id === 'oferta') descuentoDesdeOferta();
+      else if (id === 'descuentoOferta' || id === 'precioAnunciado') ofertaDesdeDescuento();
+      if (!CARGANDO && !RESTAURANDO) avisarIlegible(id);
       return true;
     }
 
@@ -2060,6 +2136,7 @@
         const base = e.dataset.i18nTitle ? t(e.dataset.i18nTitle) : '';
         if (texto || base) e.title = texto || base; else e.removeAttribute('title');
       });
+      refrescarAvisoFoco();
     }
 
     /* ---------- Motor ---------- */
@@ -2622,10 +2699,13 @@
       const revalorizadoAno1 = (valor + reforma) * revalorizacion;
       const retornoRealizado = regimenInicial.caja + amortizadoAno1;
       const retornoAno1 = retornoRealizado + revalorizadoAno1;
-      // Sin liquidez del día uno (una compra financiada entera) el ROCE se mide contra lo que se ha
-      // ido aportando después, si hay algo: decir «—» ocultaba una rentabilidad que sí existe. Sin
-      // un euro puesto en todo el horizonte no hay nada contra lo que medir.
-      const capitalRoce = aportado > 0 ? aportado : aportadoAcum;
+      // El ROCE es de año 1, así que se mide contra el capital puesto en el año 1: la liquidez del día
+      // uno más lo que ese primer año haya pedido de tu bolsillo si la caja salía negativa. Antes, sin
+      // liquidez inicial, se dividía entre TODO lo aportado en el horizonte, y el mismo primer año daba
+      // un ROCE distinto según cuántos años se proyectaran. Sin un euro puesto en el año 1 no hay nada
+      // contra lo que medir y sale «—».
+      const aportadoAno1 = filas[0].aportacion;
+      const capitalRoce = aportado + aportadoAno1;
       const sobre = (v) => capitalRoce > 0 ? v / capitalRoce : null;
 
       const sinDeuda = filas.find(f => f.hipFin <= 0 && f.preFin <= 0);
@@ -2774,16 +2854,25 @@
 
       el('kpiAnualizada').textContent = fmtPct(d.filaRef.anualizada);
       el('kpiAnualizada').className = 'text-base lg:text-xl font-bold num ' + (d.filaRef.anualizada === null ? 'val-muted' : signo(d.filaRef.anualizada));
-      // Va detrás del rótulo, así que empieza en minúscula: «ROCE · sobre 259.800 € aportados».
-      const detalleRoce = d.aportacionesExtra > 0
-        ? tf('kpiMasAportaciones', fmt(d.aportado), fmt(d.aportacionesExtra))
+      // Va en su propia línea bajo la cifra: «Sobre 259.800 € aportados».
+      // El texto describe exactamente el divisor (liquidez + lo aportado el año 1), no las aportaciones
+      // de los años siguientes, que no entran en el ROCE.
+      const ap1 = d.filas[0].aportacion;
+      const sufijo = ap1 > 0 ? (d.aportado > 0 ? 'kpiMasAportaciones' : 'kpiSobreAno1') : null;
+      const detalleRoce = sufijo
+        ? tf(sufijo, ...(d.aportado > 0 ? [fmt(d.aportado), fmt(ap1)] : [fmt(ap1)]))
         : (d.aportado > 0 ? `${t('kpiSobre')} ${fmt(d.aportado)} ${t('kpiAportados')}` : t('kpiSinLiquidez'));
-      el('kpiRoceDetalle').textContent = ' · ' + detalleRoce.charAt(0).toLowerCase() + detalleRoce.slice(1);
+      // En la tarjeta, la versión corta (cabe en dos líneas a 1024 px); el título lleva la frase entera.
+      el('kpiRoceDetalle').textContent = sufijo
+        ? tf(sufijo + 'Corto', ...(d.aportado > 0 ? [fmt(d.aportado), fmt(ap1)] : [fmt(ap1)])) : detalleRoce;
       el('kpiRoceDetalle').title = detalleRoce;
 
       // Mismo mensaje en corto para la línea y entero para el globo: en la tarjeta sólo cabe un
       // renglón, y el matiz que se cae -de dónde sale ese dinero- merece seguir estando.
-      const acelera = (d.hipAcelerada && d.principalHip > 0) || (d.preAcelerado && d.principalPre > 0);
+      // «La caja va a amortizar deuda» sólo si todavía hay una deuda acelerada a la que se lleve: al
+      // empezar el último año del horizonte (si ya estaba saldada, la caja se acumula y lo que no cuadra
+      // es otra cosa: que no llega a devolver lo aportado). Antes bastaba con haber tenido deuda.
+      const acelera = (d.hipAcelerada && d.ultima.hipIni > 0) || (d.preAcelerado && d.ultima.preIni > 0);
       // «Sin aportación» sólo si no se ha puesto ni un euro en todo el horizonte: el capital que se mete
       // después también hay que recuperarlo.
       const [clave, args] = d.ultima.aportadoAcum <= 0 ? ['kpiSinAportacion', []]
@@ -2832,7 +2921,17 @@
       // la horquilla enseña cuánto de la cifra depende de ello. Con inflación negativa el escalón
       // del medio es esa caída, que es lo que hace el candado cerrado (estimado()).
       const inflBase = d.inflacion;
-      const horquilla = [0, inflBase, inflBase + 0.02].map(r => calcular(r).filaRef.anualizada);
+      // Con inflación negativa la hipótesis «base» queda POR DEBAJO del 0 % y la «optimista» puede
+      // caer justo en él, así que sin ordenar salía [3,2 · 1,2 · 3,2]: desordenada y con un duplicado.
+      // Se ordenan las tasas y se quitan las repetidas; el escenario central (el de la inflación, que
+      // es el de la cifra principal con el candado cerrado) se subraya cuando su posición ya no lo dice.
+      const tasasHorquilla = [...new Set([0, inflBase, inflBase + 0.02].map(r => Math.round(r * 1e9) / 1e9))].sort((a, b) => a - b);
+      const marcarCentral = tasasHorquilla.length < 3 || inflBase < 0;
+      const horquilla = tasasHorquilla.map(r => {
+        const html = pct(calcular(r).filaRef.anualizada);
+        return marcarCentral && Math.abs(r - inflBase) < 1e-9
+          ? html.replace('<span ', '<span data-central style="text-decoration:underline dotted;text-underline-offset:3px" ') : html;
+      });
       el('tblRentabilidad').innerHTML = [
         filaResumen(t('rentBruta'), pct(d.rentabilidadBruta, 'text-brand-accent'), { titulo: t('kpiBrutaTip') }),
         filaResumen(t('rentNeta'), pct(d.rentabilidadNeta, ''), { titulo: t('rentNetaTip') }),
@@ -2841,7 +2940,7 @@
         filaResumen('= ' + t('rentRoceSin'), pct(d.roceSinReval, 'text-brand-accent'), { titulo: t('rentRoceSinTip'), sinRaya: true }),
         filaResumen('= ' + t('rentRoceCon') + ` (+ ${fmtPct(d.revalorizacion, 2)})`, pct(d.roce, 'text-brand-accent'), { titulo: t('rentRoceConTip'), sinRaya: true }),
         filaResumen(tf('rentAnualizada', d.anoRef), pct(d.filaRef.anualizada), { titulo: t('kpiAnualizadaTip') }),
-        filaResumen(tf('rentHorquilla', d.anoRef), horquilla.map(v => pct(v)).join(' · '),
+        filaResumen(tf('rentHorquilla', d.anoRef), horquilla.join(' · '),
           { titulo: tf('rentHorquillaTip', d.anoRef, fmtPct(inflBase, 2), fmtPct(inflBase + 0.02, 2)) }),
         filaResumen(tf('rentTirVenta', d.anoRef), pct(d.filaRef.tirVenta), { titulo: t('rentTirVentaTip') })
       ].join('');
@@ -2977,18 +3076,18 @@
         </tr>`;
       };
       el('tblRegimenes').innerHTML = [
-        fila(t('alquilerCobrado'), r => r.ingresos, v => `<span class="val-pos">${fmt(v)}</span>`),
-        fila(t('gastosDelPiso'), r => r.gastos, v => `<span class="val-neg">− ${fmt(v)}</span>`),
-        fila(t('cuotasDeuda'), r => r.cuotas, v => v ? `<span class="val-neg">− ${fmt(v)}</span>` : '—'),
-        fila(t('interesDeducible'), r => r.financiacionDeducida, (v, r) => (v ? fmt(v) : '—') + (r.topeAplicado
+        fila(t('alquilerCobrado'), r => r.ingresos, v => `<span class="val-pos whitespace-nowrap">${fmt(v)}</span>`),
+        fila(t('gastosDelPiso'), r => r.gastos, v => `<span class="val-neg whitespace-nowrap">−&nbsp;${fmt(v)}</span>`),
+        fila(t('cuotasDeuda'), r => r.cuotas, v => v ? `<span class="val-neg whitespace-nowrap">−&nbsp;${fmt(v)}</span>` : '—'),
+        fila(t('interesDeducible'), r => r.financiacionDeducida, (v, r) => (v ? `<span class="whitespace-nowrap">${fmt(v)}</span>` : '—') + (r.topeAplicado
           ? ` <span class="tooltip-help text-[10px] text-brand-amber whitespace-nowrap" title="${escapar(tf('topeAplicadoTip', fmt(r.arrastre)))}">${t('topeAplicado')}</span>` : ''), t('interesDeducibleTip')),
-        fila(t('baseFiscal'), r => r.base, v => `<span class="${signo(v)}">${fmt(v)}</span>`, t('baseFiscalTip')),
-        fila(t('irpf'), r => r.impuestos, v => v ? `<span class="val-neg">− ${fmt(v)}</span>` : '—'),
+        fila(t('baseFiscal'), r => r.base, v => `<span class="whitespace-nowrap ${signo(v)}">${fmt(v)}</span>`, t('baseFiscalTip')),
+        fila(t('irpf'), r => r.impuestos, v => v ? `<span class="val-neg whitespace-nowrap">−&nbsp;${fmt(v)}</span>` : '—'),
         `<tr class="font-bold"><td class="py-2 pr-3 text-left">${t('cajaNetaAnual')}</td>
-          <td class="py-2 px-3 text-right ${signo(d.regConPrestamo.caja)}">${fmt(d.regConPrestamo.caja)}</td>
-          <td class="py-2 px-3 text-right ${signo(d.regConHipoteca.caja)}">${fmt(d.regConHipoteca.caja)}</td>
-          <td class="py-2 pl-3 text-right ${signo(d.regSinDeuda.caja)}">${fmt(d.regSinDeuda.caja)}</td></tr>`,
-        fila(t('cajaNetaMensual'), r => r.caja / 12, v => `<span class="${signo(v)}">${fmt(v)}</span>`)
+          <td class="py-2 px-3 text-right whitespace-nowrap ${signo(d.regConPrestamo.caja)}">${fmt(d.regConPrestamo.caja)}</td>
+          <td class="py-2 px-3 text-right whitespace-nowrap ${signo(d.regConHipoteca.caja)}">${fmt(d.regConHipoteca.caja)}</td>
+          <td class="py-2 pl-3 text-right whitespace-nowrap ${signo(d.regSinDeuda.caja)}">${fmt(d.regSinDeuda.caja)}</td></tr>`,
+        fila(t('cajaNetaMensual'), r => r.caja / 12, v => `<span class="whitespace-nowrap ${signo(v)}">${fmt(v)}</span>`)
       ].join('');
 
       el('tblFiscal').innerHTML = [
@@ -3105,7 +3204,9 @@
         responsive: true, maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'right',
+            // A la derecha en pantallas anchas; en un móvil (310 px útiles) la leyenda de la derecha se
+            // quedaba sin sitio y cortaba el porcentaje («Intereses de la deuda · 13'»), así que baja.
+            position: window.innerWidth < 640 ? 'bottom' : 'right',
             labels: {
               color: texto, font: { size: 11 }, boxWidth: 12,
               // El generador por defecto de un círculo es el del propio tipo, no el global:
@@ -3387,12 +3488,26 @@
     // El indicador de la cabecera lo comparten el guardado, el aviso de deshacer/rehacer y el de
     // copiar el enlace: un solo temporizador, para que un aviso viejo no esconda uno nuevo.
     let indicadorTimer = null;
-    function mostrarIndicador(texto, ms = 1200) {
+    // Con `deshacer` el indicador lleva un botón pequeño «Deshacer»: tras ♻️ no hay confirmación y
+    // en un móvil no existe Ctrl+Z, así que el propio aviso es la salida. Mientras está escondido no
+    // recibe toques (con opacidad 0 seguiría capturándolos) ni deja el botón en el orden del teclado.
+    function mostrarIndicador(texto, ms = 1200, deshacer = false) {
       const ind = el('saveIndicator');
       ind.textContent = texto;
+      if (deshacer) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'underline font-bold ml-1.5';
+        b.textContent = t('deshacerBtn');
+        b.addEventListener('click', () => moverHistorial(-1));
+        ind.appendChild(b);
+      }
+      ind.style.pointerEvents = deshacer ? 'auto' : 'none';
       ind.classList.remove('opacity-0');
       clearTimeout(indicadorTimer);
-      indicadorTimer = setTimeout(() => ind.classList.add('opacity-0'), ms);
+      indicadorTimer = setTimeout(() => {
+        ind.classList.add('opacity-0'); ind.style.pointerEvents = 'none';
+        const b = ind.querySelector('button'); if (b) b.remove();
+      }, ms);
     }
     let avisoGuardado = 'guardado';
     let guardarTimer = null;
@@ -3401,7 +3516,13 @@
       guardarTimer = setTimeout(() => {
         guardarTimer = null;
         escribirGuardado();
-        if (avisoGuardado) mostrarIndicador(t(avisoGuardado));
+        if (avisoGuardado === 'datosReseteados') {
+          // El atajo sólo se nombra donde hay teclado: en un móvil mentiría. Y se deja más tiempo que
+          // el «Guardado» de siempre, para dar tiempo a verlo y pulsarlo.
+          const teclado = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+          const atajo = /Mac|iPhone|iPad/.test(navigator.platform || '') ? t('deshacerAtajo').replace('Ctrl+Z', '⌘Z') : t('deshacerAtajo');
+          mostrarIndicador(t(avisoGuardado) + (teclado ? atajo : ''), 6000, true);
+        } else if (avisoGuardado) mostrarIndicador(t(avisoGuardado));
         avisoGuardado = 'guardado';
       }, 600);
     }
@@ -3875,7 +3996,9 @@
       if (burbuja) { burbuja.remove(); burbuja = null; }
       if (!window.matchMedia('(hover: none)').matches) return;
       const destino = ev.target.closest('.tooltip-help, .campo-aviso');
-      if (!destino || !destino.title) return;
+      // Un campo en rojo no abre burbuja: al tocarlo se enfoca y su motivo sale en el globo de aviso
+      // (refrescarAvisoFoco), y las dos cosas a la vez se pisaban.
+      if (!destino || !destino.title || destino.matches('input, select')) return;
       burbuja = document.createElement('div');
       burbuja.className = 'touch-tip';
       burbuja.textContent = destino.title;
@@ -3948,7 +4071,8 @@
     // Además de los campos, el enlace lleva el tema («tema=d» u «l») y la comparación («opc=»).
     // Son claves de tres y cuatro letras a propósito: ninguna clave corta ni antigua de un campo
     // las pisa, ni las que se añadan después (de una o dos letras).
-    const CLAVE_TEMA = 'tema', CLAVE_OPCIONES = 'opc';
+    // El idioma («lang=es» o «lang=en») va igual: quien recibe el enlace lo ve en el idioma de quien lo envió.
+    const CLAVE_TEMA = 'tema', CLAVE_OPCIONES = 'opc', CLAVE_IDIOMA = 'lang';
     // Versión del enlace. Un enlace sólo lleva lo que difiere del escenario de ejemplo, así que
     // cambiar un valor por defecto cambia lo que significa un enlace antiguo que lo omitía. «ver=2»
     // (la v a secas es el valor del piso) marca los enlaces hechos con los defectos actuales; sin
@@ -4015,6 +4139,7 @@
       CASILLAS.forEach(id => { if (actual[id] !== DEFECTOS[id]) params.set(claveCorta(id), actual[id] ? (MODOS_EUR.includes(id) ? 'e' : '1') : '0'); });
       params.set(CLAVE_VERSION, String(VERSION_ENLACE));
       params.set(CLAVE_TEMA, document.documentElement.getAttribute('data-theme') === 'dark' ? 'd' : 'l');
+      params.set(CLAVE_IDIOMA, IDIOMA);
       if (OPCIONES.length) params.set(CLAVE_OPCIONES, codificarOpciones(OPCIONES));
       const q = params.toString();
       return URL_HERRAMIENTA + (q ? '?' + q : '');
@@ -4031,7 +4156,11 @@
       // Un enlace sin tema ni comparación (los de antes) no toca ni lo uno ni lo otro.
       const tema = params.get(CLAVE_TEMA);
       const hayOpciones = params.has(CLAVE_OPCIONES);
-      if (!Object.keys(estado).length && !tema && !hayOpciones) return;
+      // Los enlaces de antes no llevan idioma: sin «lang» (o con uno que no existe) no se toca el del visitante.
+      const idioma = params.get(CLAVE_IDIOMA);
+      const hayIdioma = idioma === 'es' || idioma === 'en';
+      if (!Object.keys(estado).length && !tema && !hayOpciones && !hayIdioma) return;
+      if (hayIdioma) aplicarIdioma(idioma);
       if (tema === 'd' || tema === 'l') applyTheme(tema === 'd' ? 'dark' : 'light');
       // Sin «ver», o con ver=1, el enlace es de antes de los defectos nuevos.
       const defectos = (parseInt(params.get(CLAVE_VERSION), 10) || 1) >= 2 ? DEFECTOS : { ...DEFECTOS, ...DEFECTOS_V1 };
@@ -4119,10 +4248,10 @@
         const campo = el(id);
         if (campo.tagName === 'SELECT') { campo.addEventListener('change', confirmarCambio); return; }
         campo.addEventListener('input', () => { if (cifrasEscritas(campo) >= cifrasMinimas(id)) render(); });
-        campo.addEventListener('change', () => { limitarYEnlazar(id); confirmarCambio(); });
+        campo.addEventListener('change', () => { if (!restaurarSiIlegible(id)) limitarYEnlazar(id); confirmarCambio(); });
         // Al salir de cualquier campo de texto se le da su formato (el idioma activo, sus decimales).
         campo.addEventListener('blur', () => {
-          if (id !== 'descuentoOferta') limitarYEnlazar(id);
+          if (!restaurarSiIlegible(id) && id !== 'descuentoOferta') limitarYEnlazar(id);
           const [dmax, dmin] = decimalesCampo(id);
           fijar(id, num(id), dmax, dmin);
           confirmarCambio();

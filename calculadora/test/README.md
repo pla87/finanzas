@@ -1,6 +1,6 @@
 # Pruebas
 
-Veinticinco suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
+Veintiséis suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
 No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba donde vive.
 
 ## Correrlas
@@ -9,7 +9,7 @@ No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba dond
 cd test
 npm install            # sólo la primera vez
 npx playwright install chromium   # idem, salvo en contenedores que ya lo traen
-npm test               # las veinticinco
+npm test               # las veintiséis
 npm test -- verificar cruzar      # sólo algunas
 ```
 
@@ -42,7 +42,7 @@ las deshaga sin querer.
 | Qué | La hoja | La herramienta |
 |---|---|---|
 | **Interés deducible** | la media de toda la vida del préstamo | el que se paga cada año |
-| **ROCE** | caja sobre lo aportado | caja + principal amortizado, y aparte con revalorización |
+| **ROCE** | caja sobre lo aportado | caja + principal amortizado, y aparte con revalorización, sobre el capital del año 1 (liquidez + lo que ese año pide de tu bolsillo; no depende del horizonte) |
 | **Caja negativa** | se arrastraba sin coste | la cubre la caja acumulada y, si no llega, una aportación tuya |
 | **Amortización anticipada** | la misma caja se gastaba dos veces con las dos aceleradas | se reparte en un solo sentido |
 | **Base amortizable** | 60 % del precio + reforma + gastos de compra enteros | 60 % de (precio + gastos de compra) + reforma: los gastos se reparten entre suelo y construcción como el precio |
@@ -86,6 +86,7 @@ exigiendo igualdad exacta al céntimo.
 | `limites` | límite duro (recorta y redondea al salir del campo y al cargar de guardado o enlace), avisos en rojo con su title, `2,375` leído como decimal en un tipo, tope del horizonte, año de referencia que no se queda pegado y «1 año» |
 | `defectos` | IBI 0,2 % y mantenimiento 2 % por defecto; los enlaces sin `ver=2` se leen con 0,24 % y 5 % |
 | `irpf` | el tope del art. 23.1.a y su arrastre de cuatro años (comisión que no cabe, interés que choca, lo que caduca), el rendimiento negativo que da impuesto 0, el año 1 como año completo (el reparto amortiza toda la deuda inicial) y la bruta de doce meses |
+| `revision3` | la tercera revisión: el primer número de un texto pegado («80 m2», «1.250 € (IVA 21%)», «1,5e3»), el campo vacío o ilegible que recupera su valor y lo avisa, el ROCE del año 1 que no depende del horizonte, la horquilla de revalorización ordenada, «va a amortizar deuda» sólo con deuda viva, los textos de la FAQ, Mantenimiento y Parámetros, los KPI sin recortes a 1024/1280/1440, el comparador y la leyenda del donut a 390 px, el idioma en el enlace, el motivo de los campos en rojo en el globo y el «Deshacer» tras ♻️ |
 | `revision2` | la segunda revisión: una deuda se salda en el año de su plazo (sin residuo de coma flotante), el año 1 del resumen es el de la fila 1 de la tabla (con la comisión de apertura), la nota fiscal cuadra con lo deducido de verdad, el ROCE sin liquidez propia, la inflación negativa, la TIR por encima del 1.000 %, la FAQ del apalancamiento después de impuestos, la lectura de importes pegados con texto, el editor de nombre del comparador, el globo de recorte, el guardado al cerrar, los avisos de las deudas apagadas, los campos numéricos en el idioma activo, el ida y vuelta %↔€, los enlaces con basura y la zona táctil del año de referencia |
 | `revision` | deuda que se cancela a mitad de año contra una simulación mes a mes, tope de la amortización fiscal, base amortizable, tramo del 30 %, textos del interés sin «media», año 0 con comisión, enlaces parciales, modales accesibles (Escape, foco, aria), unidades y escala autonómica en inglés, «-0», selects inválidos e inflación ≤ −100 % |
 | `deshacer` | Ctrl+Z / Ctrl+Y: un paso por cambio confirmado, máximo 100, rehacer que se borra con un cambio nuevo, y Ctrl+Z nativo dentro de un campo con texto sin confirmar |

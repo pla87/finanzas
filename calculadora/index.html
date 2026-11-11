@@ -873,7 +873,7 @@
         cabeceraSub: 'Rentabilidad de un piso en alquiler con proyección año a año.',
         avisoMovil: 'Las tablas se ven mejor en un ordenador', guardado: 'Guardado', datosReseteados: 'Datos reseteados',
         kpiTitulo: 'PRINCIPALES MÉTRICAS', kpiResBruta: 'Bruta', kpiResCaja: 'Caja',
-        kpiBrutaDesc: 'alquiler del año sobre el coste total',
+        kpiBrutaDesc: 'alquiler de 12 meses sobre el coste total',
         kpiRoceDesc: 'rentabilidad sobre lo que pones de tu bolsillo',
         kpiCajaDesc: 'lo que te queda tras gastos, cuotas e IRPF',
         kpiDeudaDesc: 'años hasta pagar hipoteca y préstamo',
@@ -887,7 +887,7 @@
         kpiAnosAlquilerTip: 'Cuántos años de alquiler íntegro (los doce meses, sin descontar vacíos ni gastos) cuesta el piso:\nel precio pagado dividido entre el alquiler anual bruto. Cuanto menos, mejor. En España\nsuele ir de 15 a 25.',
         alto: 'ALTO',
         kpiBruta: 'RENTABILIDAD BRUTA',
-        kpiBrutaTip: 'Alquiler anual dividido entre el coste total de la operación (precio + gastos + reforma).\nNo descuenta gastos, impuestos ni cuotas: es la referencia rápida que se usa para descartar.',
+        kpiBrutaTip: 'Alquiler de los doce meses dividido entre el coste total de la operación (precio + gastos + reforma).\nNo descuenta los meses vacíos, ni gastos, impuestos ni cuotas: es la referencia rápida que se usa para descartar.',
         kpiRoce: 'ROCE',
         kpiRoceTip: 'ROCE = Return on Capital Employed: rentabilidad sobre el capital empleado, es decir,\nsobre lo que pones de tu bolsillo (la liquidez aportada), no sobre el precio del piso.\n\nRentabilidad del primer año sobre ese dinero. Va en dos cifras porque no\ntodo lo que ganas es de la misma clase.\n\nLa grande es lo realizado: la caja que queda tras cuotas, gastos e impuestos, más el\nprincipal que amortizan esas cuotas. Lo primero está en tu banco y lo segundo es deuda\nque ya no debes; ninguna de las dos depende de ninguna hipótesis.\n\nLa de debajo añade la revalorización del piso entero, que es plusvalía latente sobre el\npapel: sale de la revalorización que hayas puesto y no se cobra hasta vender. Suele ser\nla mitad larga del total, así que conviene mirarla aparte.',
         kpiRoceConReval: '{0} con la revalorización',
@@ -921,14 +921,13 @@
         modoAperturaPct: 'Comisión de apertura en porcentaje del principal (pulsa para pasar a euros)',
         modoAperturaEur: 'Comisión de apertura en euros (pulsa para pasar a porcentaje)',
         avisoOfertaMayor: 'La oferta supera el precio anunciado: pagarías más de lo que pide el vendedor. Comprueba que no sea un error.',
-        avisoDescuento: 'Un descuento del {0} sobre el precio anunciado es muy difícil de conseguir (lo normal queda por debajo del 30 %). Mira si la oferta es realista.',
+        avisoDescuento: 'Un descuento del {0} sobre el precio anunciado es muy difícil de conseguir (lo normal queda por debajo del 40 %). Mira si la oferta es realista.',
         avisoEurM2Bajo: 'Sale a {0} por m², por debajo de 300 €/m²: es raro. Revisa el precio o la superficie.',
         avisoEurM2Alto: 'Sale a {0} por m², por encima de 15.000 €/m²: es muy alto. Revisa el precio o la superficie.',
         avisoImpuestoCompra: 'Por encima del 12 % sólo llegan los últimos tramos de alguna escala autonómica (ITP habitual del 6 al 10 %; en obra nueva, IVA del 10 % más AJD). Revísalo.',
         avisoNotaria: 'Notaría, registro y gestoría rara vez pasan del 3 % del precio.',
         avisoComision: 'La comisión supone el {0} del precio de la oferta: lo habitual es no pasar del 5 %.',
         avisoReforma: 'La reforma ({0}) cuesta más que el propio piso ({1}). Comprueba la cifra.',
-        avisoFinanciado: 'Los bancos rara vez financian más del 80 % del precio: lo que falta, y los gastos de compra, los pones tú.',
         avisoPlazoHipoteca: 'Más de 30 años es un plazo largo: los intereses totales crecen mucho y la edad del titular suele limitarlo.',
         avisoTipoHipoteca: 'Un tipo por encima del 6 % es muy alto para una hipoteca: la caja del primer año se resiente. Comprueba la cifra.',
         avisoPlazoPrestamo: 'Más de 10 años es un plazo muy largo para un préstamo personal.',
@@ -988,7 +987,7 @@
         importePrestamo: 'Importe', importePrestamoTip: 'Tope: lo que quede por cubrir del coste total una vez aplicada la hipoteca.',
         plazo: 'Plazo', tipoInteres: 'Tipo de interés', aceleradaCorta: 'amort. acelerada',
         apertura: 'Comisión apertura',
-        aperturaTip: 'Porcentaje del principal de esta deuda que cobra el banco al firmar. Se paga de tu bolsillo, así que suma a la liquidez aportada.\n\nFiscalmente es un gasto de financiación, como los intereses: se deduce entera en el primer año del alquiler. No forma parte del valor de adquisición del piso.',
+        aperturaTip: 'Porcentaje del principal de esta deuda que cobra el banco al firmar. Se paga de tu bolsillo, así que suma a la liquidez aportada.\n\nFiscalmente es un gasto de financiación, como los intereses: se deduce en el primer año del alquiler, dentro del mismo tope que los intereses (los gastos de financiación y de conservación no pueden superar los ingresos del año): lo que no quepa se deduce en los cuatro años siguientes. No forma parte del valor de adquisición del piso.',
         aceleradaHipTip: 'Amortización acelerada. Si está marcada, cada año la caja acumulada se destina a reducir el principal de la hipoteca\nen lugar de quedarse en tu bolsillo. Cancela la deuda mucho antes.\n\nCon las dos aceleradas, el dinero va primero a la deuda con el tipo más alto.',
         aceleradaPreTip: 'Amortización acelerada. Si está marcada, la caja acumulada amortiza este préstamo.\n\nCon las dos aceleradas, el dinero va primero a la deuda con el tipo más alto\ny sólo lo que sobre a la otra.',
         cuotaMensual: 'Cuota mensual', cuota: 'Cuota', principal: 'Principal', sinHipoteca: 'Sin hipoteca', sinPrestamo: 'Sin préstamo',
@@ -1046,7 +1045,7 @@
         colPatrimonio: 'Patrimonio neto', colPatrimonioTip: 'Valor del inmueble revalorizado al ritmo que hayas puesto, menos toda la deuda viva.\nVa en euros de ese año, no de hoy.',
         colPatrimonioReal: 'Patrimonio neto',
         colPatrimonioRealTip: 'En euros de hoy: el mismo patrimonio neto de la columna anterior, dividido por la inflación\nacumulada hasta ese año. Es lo que compraría ese dinero si lo tuvieras ahora mismo.\n\nA treinta años y al 3%, un euro de entonces son 41 céntimos de ahora: la mayor parte\nde lo que crece la columna de al lado es la propia inflación, no riqueza nueva.',
-        colCajaAno: 'Caja del año', colCajaAnoTip: 'Caja neta generada durante el año. El primer año cuenta a medias: se supone media anualidad de explotación.',
+        colCajaAno: 'Caja del año', colCajaAnoTip: 'Caja neta generada durante el año. Alquiler cobrado menos gastos, cuotas e IRPF; el primer año cuenta como un año completo.',
         colCajaAcum: 'Caja acumulada', colCajaAcumTip: 'Caja acumulada sin gastar. Con amortización acelerada se vacía cada vez que se destina a reducir deuda.',
         colNetoVenta: 'Neto si vendes',
         colNetoVentaTip: 'Lo que te quedaría en la cuenta si vendieras al acabar ese año: precio de mercado, menos\nlos gastos de venta, menos cancelar la deuda viva, menos el IRPF de la ganancia, más la\ncaja que llevases acumulada.\n\nOjo con la ganancia fiscal: la amortización que te has ido deduciendo cada año resta del\nvalor de adquisición, así que al vender vuelve a tributar.',
@@ -1060,7 +1059,7 @@
         regimenesAyuda: 'La caja anual del piso cambia según qué deuda siga viva. Cifras del primer año: con la indexación activada, alquiler y gastos crecen cada año y la proyección aplica el régimen que toque con los importes de ese año.',
         colConcepto: 'Concepto', colConPrestamo: 'Con préstamo e hipoteca', colSoloHipoteca: 'Sólo con hipoteca', colSinDeuda: 'Sin deuda',
         interesDeducible: 'Interés deducible', interesDeducibleTip: 'Interés que pagan en el año los préstamos vivos (en esta tabla, el primero), deducible del rendimiento del alquiler.',
-        baseFiscal: 'Base fiscal', baseFiscalTip: 'Alquiler menos gastos, interés pagado en el año y amortización.',
+        baseFiscal: 'Base fiscal', baseFiscalTip: 'Alquiler menos gastos, interés pagado en el año y amortización. Intereses y conservación no pueden deducirse por encima del alquiler del año (art. 23.1.a LIRPF); si la base sale negativa, el impuesto es 0 y no se compensa.',
         desgloseGastos: 'Desglose de gastos anuales', baseImponible: 'Base imponible del alquiler',
         desgloseIngresos: 'A dónde va el alquiler',
         desgloseIngresosSub: 'Reparto de los {0} que entran en los {1} años proyectados, entre lo que se gasta, lo que paga la deuda y lo que queda.',
@@ -1102,7 +1101,7 @@
         ayuda3t: 'La amortización acelerada.', ayuda3: 'Si la activas, la caja acumulada no se queda en tu bolsillo: cada año se descuenta del principal pendiente y el contador de caja vuelve a cero. Cuando están activas las dos, cobra primero la deuda con el tipo más alto, que suele ser el préstamo personal pero no tiene por qué: el orden lo deciden los tipos que hayas puesto.',
         ayuda4t: 'Los impuestos.', ayuda4: 'Del alquiler anual se restan los gastos, el interés que se paga ese año por los préstamos y la amortización fiscal. Sobre lo que queda se aplica tu tipo marginal, pero sólo a la parte que tributa. El interés es el real de cada año, no un reparto uniforme: en una cuota francesa pesa mucho al principio y poco al final.',
         ayudaIrpft: 'La reducción del alquiler.', ayudaIrpf: 'La «parte que tributa» arranca en el 50 %. Desde la Ley 12/2023, para los contratos firmados desde el 26 de mayo de 2023, la reducción general por alquilar una vivienda como residencia habitual es del 50 % del rendimiento neto. Puede ser del 60 % (si hiciste obras de rehabilitación en los dos años anteriores), del 70 % (inquilino de 18 a 35 años en zona tensionada, o vivienda social) o del 90 % (nuevo contrato en zona tensionada con una rebaja de más del 5 % sobre la renta anterior). Si te corresponde otra, cámbiala en Parámetros: con un 60 % de reducción tributa el 40 %, con un 70 % el 30 % y con un 90 % el 10 %.',
-        ayuda5t: 'El año 0 y el primer año.', ayuda5: 'El año 0 es el momento de la compra: acabas de pagar los impuestos y los gastos, así que la ganancia sobre lo invertido arranca en negativo justo por ese importe. El año 1 cuenta la caja a medias, suponiendo la compra a mitad de año.',
+        ayuda5t: 'El año 0 y el primer año.', ayuda5: 'El año 0 es el momento de la compra: acabas de pagar los impuestos y los gastos, así que la ganancia sobre lo invertido arranca en negativo justo por ese importe. El año 1 es un año completo, como los demás: doce meses de alquiler, de cuotas y de revalorización.',
         ayuda6t: 'La ganancia sobre lo invertido', ayuda6: 'compara lo que tendrías al final de cada año (valor del piso menos deuda viva, más la caja acumulada) con la liquidez que pusiste. La rentabilidad anualizada convierte esa misma comparación en un tipo anual compuesto.',
         ayuda7t: 'Esto no es asesoramiento financiero.', ayuda7: 'Es un modelo simplificado: los meses sin inquilino son una media repartida por igual, y no incluye derramas ni cambios de tipo en hipotecas variables. La venta sí está, en sus dos columnas, con los gastos y el IRPF de la ganancia.',
         pieAvisoTitulo: '⚖️ Aviso legal:',
@@ -1138,7 +1137,7 @@
         cabeceraSub: 'Return on a rental flat, projected year by year.',
         avisoMovil: 'The tables read better on a computer', guardado: 'Saved', datosReseteados: 'Data reset',
         kpiTitulo: 'KEY METRICS', kpiResBruta: 'Gross', kpiResCaja: 'Cash',
-        kpiBrutaDesc: 'year of rent over the total cost',
+        kpiBrutaDesc: 'twelve months of rent over the total cost',
         kpiRoceDesc: 'return on what you put in from your own pocket',
         kpiCajaDesc: 'what is left after costs, instalments and income tax',
         kpiDeudaDesc: 'years until mortgage and loan are paid off',
@@ -1152,7 +1151,7 @@
         kpiAnosAlquilerTip: 'How many years of full rent (all twelve months, before vacancy or costs) the flat costs:\nthe price paid divided by the gross annual rent. The lower, the better. In Spain it\nusually runs from 15 to 25.',
         alto: 'HIGH',
         kpiBruta: 'GROSS YIELD',
-        kpiBrutaTip: 'Annual rent divided by the total cost of the deal (price + costs + refurbishment).\nIt ignores running costs, tax and instalments: a quick screen, not the real return.',
+        kpiBrutaTip: 'Twelve months of rent divided by the total cost of the deal (price + costs + refurbishment).\nIt ignores empty months, running costs, tax and instalments: a quick screen, not the real return.',
         kpiRoce: 'ROCE',
         kpiRoceTip: 'ROCE = Return on Capital Employed: the return on the capital you employ, that is,\non what you put in from your own pocket (the cash invested), not on the price of the flat.\n\nFirst-year return on that money. Two figures, because not everything you earn\nis of the same kind.\n\nThe large one is what has actually happened: the cash left after instalments, costs and\ntax, plus the principal those instalments repay. The first is in your bank, the second is\ndebt you no longer owe; neither rests on an assumption.\n\nThe one below adds the appreciation of the whole flat, which is a paper gain: it follows\nthe appreciation rate you set and is not collected until you sell. It is usually more\nthan half the total, so it is worth reading separately.',
         kpiRoceConReval: '{0} including appreciation',
@@ -1184,14 +1183,13 @@
         modoAperturaPct: 'Arrangement fee as a percentage of the principal (press to switch to euros)',
         modoAperturaEur: 'Arrangement fee in euros (press to switch to a percentage)',
         avisoOfertaMayor: 'The offer is above the asking price: you would pay more than the seller asks. Check it is not a mistake.',
-        avisoDescuento: 'A {0} discount on the asking price is very hard to get (normally it stays below 30%). Check the offer is realistic.',
+        avisoDescuento: 'A {0} discount on the asking price is very hard to get (normally it stays below 40%). Check the offer is realistic.',
         avisoEurM2Bajo: 'That comes to {0} per m², below 300 €/m²: unusual. Check the price or the floor area.',
         avisoEurM2Alto: 'That comes to {0} per m², above 15,000 €/m²: very high. Check the price or the floor area.',
         avisoImpuestoCompra: 'Above 12% only the top bands of some regional scales get there (usual transfer tax of 6 to 10%; on new builds, 10% VAT plus stamp duty). Check it.',
         avisoNotaria: 'Notary, registry and paperwork rarely go above 3% of the price.',
         avisoComision: 'The fee is {0} of the offer price: it is usually no more than 5%.',
         avisoReforma: 'The renovation ({0}) costs more than the flat itself ({1}). Check the figure.',
-        avisoFinanciado: 'Banks rarely finance more than 80% of the price: the rest, plus the purchase costs, is yours to pay.',
         avisoPlazoHipoteca: 'More than 30 years is a long term: total interest grows a lot and the holder’s age often caps it.',
         avisoTipoHipoteca: 'A rate above 6% is very high for a mortgage: first-year cash flow suffers. Check the figure.',
         avisoPlazoPrestamo: 'More than 10 years is a very long term for a personal loan.',
@@ -1251,7 +1249,7 @@
         importePrestamo: 'Amount', importePrestamoTip: 'Capped at whatever of the total cost the mortgage leaves uncovered.',
         plazo: 'Term', tipoInteres: 'Interest rate', aceleradaCorta: 'accelerated',
         apertura: 'Arrangement fee',
-        aperturaTip: 'Percentage of this debt\u2019s principal that the bank charges at signing. You pay it out of pocket, so it adds to the cash you put in.\n\nFor tax it is a financing expense, like interest: it is deducted in full in the first rental year. It is not part of the flat\u2019s acquisition value.',
+        aperturaTip: 'Percentage of this debt\u2019s principal that the bank charges at signing. You pay it out of pocket, so it adds to the cash you put in.\n\nFor tax it is a financing expense, like interest: it is deducted in the first rental year, within the same cap as interest (financing and upkeep costs cannot exceed the year\u2019s rent): whatever does not fit is deducted over the next four years. It is not part of the flat\u2019s acquisition value.',
         aceleradaHipTip: 'Accelerated repayment. If ticked, each year the accumulated cash pays down mortgage principal instead of\nstaying in your pocket. It clears the debt far sooner.\n\nWith both accelerated, the money goes first to whichever debt carries the higher rate.',
         aceleradaPreTip: 'Accelerated repayment. If ticked, accumulated cash pays down this loan.\n\nWith both accelerated, the money goes first to whichever debt carries the higher\nrate, and only the remainder to the other.',
         cuotaMensual: 'Monthly instalment', cuota: 'Instalment', principal: 'Principal', sinHipoteca: 'No mortgage', sinPrestamo: 'No loan',
@@ -1309,7 +1307,7 @@
         colPatrimonio: 'Net worth', colPatrimonioTip: 'Property value uprated at the appreciation rate you set, less all debt outstanding.\nIn that year\u2019s euros, not today\u2019s.',
         colPatrimonioReal: 'Net worth',
         colPatrimonioRealTip: 'In today\u2019s euros: the same net worth as the column before, divided by inflation compounded to that year.\nIt is what that money would buy if you held it right now.\n\nOver thirty years at 3%, a euro back then is 41 cents now: most of the growth in the\ncolumn next door is inflation itself, not new wealth.',
-        colCajaAno: 'Cash this year', colCajaAnoTip: 'Net cash generated during the year. Year one counts half, assuming a mid-year purchase.',
+        colCajaAno: 'Cash this year', colCajaAnoTip: 'Net cash generated during the year. Rent received less running costs, instalments and tax; year one counts as a full year.',
         colCajaAcum: 'Accumulated cash', colCajaAcumTip: 'Cash kept rather than spent. With accelerated repayment it empties whenever it pays down debt.',
         colNetoVenta: 'Net if you sell',
         colNetoVentaTip: 'What would land in your account if you sold at the end of that year: market price, less\nselling costs, less clearing the outstanding debt, less capital gains tax, plus whatever\ncash you had accumulated.\n\nMind the taxable gain: the depreciation you have been deducting each year comes off the\nacquisition value, so it is taxed again on sale.',
@@ -1323,7 +1321,7 @@
         regimenesAyuda: "Annual cash changes with whichever debt is still alive. First-year figures: with indexation on, rent and costs grow each year and the projection applies the right regime with that year's amounts.",
         colConcepto: 'Item', colConPrestamo: 'Loan and mortgage', colSoloHipoteca: 'Mortgage only', colSinDeuda: 'Debt free',
         interesDeducible: 'Deductible interest', interesDeducibleTip: 'Interest paid in the year on live borrowing (the first one, in this table), deductible against rental income.',
-        baseFiscal: 'Taxable base', baseFiscalTip: 'Rent less costs, interest paid in the year and depreciation.',
+        baseFiscal: 'Taxable base', baseFiscalTip: 'Rent less costs, interest paid in the year and depreciation. Interest and upkeep cannot be deducted beyond the year\u2019s rent (art. 23.1.a LIRPF); a negative base means zero tax and is not offset.',
         desgloseGastos: 'Annual costs breakdown', baseImponible: 'Rental taxable base',
         desgloseIngresos: 'Where the rent goes',
         desgloseIngresosSub: 'How the {0} collected over {1} years splits between running costs, the debt and what is left.',
@@ -1365,7 +1363,7 @@
         ayuda3t: 'Accelerated repayment.', ayuda3: 'Switch it on and accumulated cash does not stay in your pocket: each year it comes off the outstanding principal and the cash counter resets. With both on, whichever debt carries the higher rate is paid first — usually the personal loan, but not necessarily: the rates you enter decide the order.',
         ayuda4t: 'The tax.', ayuda4: 'Costs, the interest paid that year on the loans and depreciation come off the annual rent. Your marginal rate applies to what is left, but only to the share that is actually taxed. Interest is the real figure for each year, not an even spread: on a constant instalment it weighs heavily at the start and lightly at the end.',
         ayudaIrpft: 'The letting relief.', ayudaIrpf: 'The "share actually taxed" starts at 50%. Since Law 12/2023, for contracts signed from 26 May 2023, the general relief for letting a home as a main residence is 50% of net rental income. It can be 60% (if you carried out refurbishment works in the previous two years), 70% (tenant aged 18 to 35 in a stressed area, or social housing) or 90% (a new contract in a stressed area with a rent cut of more than 5% on the previous one). If another applies to you, change it in Parameters: with a 60% relief 40% is taxed, with 70% it is 30% and with 90% it is 10%.',
-        ayuda5t: 'Year 0 and year one.', ayuda5: 'Year 0 is the moment of purchase: you have just paid the taxes and costs, so the gain on capital invested starts negative by exactly that amount. Year one counts cash at half, assuming a mid-year purchase.',
+        ayuda5t: 'Year 0 and year one.', ayuda5: 'Year 0 is the moment of purchase: you have just paid the taxes and costs, so the gain on capital invested starts negative by exactly that amount. Year one is a full year like the rest: twelve months of rent, instalments and appreciation.',
         ayuda6t: 'The gain on capital invested', ayuda6: 'compares what you would hold at the end of each year (property value less debt outstanding, plus accumulated cash) with the cash you put in. The annualised return turns that same comparison into a compound annual rate.',
         ayuda7t: 'This is not financial advice.', ayuda7: 'It is a simplified model: void months are an average spread evenly, and it excludes special levies and rate changes on variable mortgages. Selling is covered, in its two columns, with the costs and the tax on the gain.',
         pieAvisoTitulo: '⚖️ Legal notice:',
@@ -1428,7 +1426,7 @@
       madrid:         { nombre: 'Madrid', itp: 6, ajd: 0.75 },
       murcia:         { nombre: 'Murcia', itp: 7.75, ajd: 1.5 },
       navarra:        { nombre: 'Navarra', itp: 6, ajd: 0.5 },
-      paisVasco:      { nombre: 'País Vasco', itp: 7, ajd: 0 },
+      paisVasco:      { nombre: 'País Vasco', itp: 7, ajd: 0.5 },
       rioja:          { nombre: 'La Rioja', itp: 7, ajd: 1 },
       valencia:       { nombre: 'Valencia', itp: 9, ajd: 1.5, escala: '9%, y 11% por encima de 1.000.000 €', escalaEn: '9%, and 11% above €1,000,000' }
     };
@@ -1441,7 +1439,7 @@
           <p>Son dos fuerzas empujando en sentidos contrarios, y ganan en momentos distintos.</p>
           <p><strong>Al principio manda el peso de los gastos de compra.</strong> Los impuestos, la notaría y la comisión se pagan enteros el primer día y no vuelven. En el año 1 esa pérdida se reparte entre un solo año y hunde la cifra. Según pasan los años la misma pérdida se reparte entre más años y pesa cada vez menos, así que la curva sube deprisa.</p>
           <p><strong>Después manda el apalancamiento, que se va apagando.</strong> Con la hipoteca recién firmada tu dinero controla un piso que vale varias veces lo que pusiste, y toda la revalorización del piso entero es tuya. A medida que amortizas, tus fondos propios crecen hasta igualar el valor del piso, y esa misma revalorización se reparte sobre una base cada vez mayor.</p>
-          <p>En el escenario de ejemplo el apalancamiento pasa de <strong>2,8 veces</strong> el primer año a <strong>1,0</strong> el último, y el pico cae sobre el <strong>año 8</strong>: el punto en que los gastos de compra ya están digeridos pero la hipoteca sigue siendo grande.</p>` },
+          <p>En el escenario de ejemplo el apalancamiento pasa de <strong>2,8 veces</strong> el primer año a <strong>1,0</strong> el último, y el pico cae sobre el <strong>año 7</strong>: el punto en que los gastos de compra ya están digeridos pero la hipoteca sigue siendo grande.</p>` },
 
         { q: '¿Por qué el año 0 empieza en negativo?', a: `
           <p>Porque acabas de pagar impuestos, notaría y comisión por un piso que sigue valiendo lo que valía. Si compras a precio de mercado, en el instante de la compra has perdido exactamente los gastos de compra.</p>
@@ -1451,7 +1449,7 @@
           <p>Porque miden cosas distintas y las dos tienen razón.</p>
           <p>La <strong>caja anual</strong> es lo que queda en el bolsillo una vez pagadas las cuotas. Más hipoteca son más cuotas, así que baja, y pasado cierto punto se vuelve negativa: el piso deja de pagarse solo y te pide dinero todos los meses.</p>
           <p>El <strong>ROCE</strong> y la <strong>rentabilidad anualizada</strong> miran además dos cosas que la caja ignora: la parte de cada cuota que amortiza principal, que es ahorro y no gasto, y la revalorización del piso entero, que es tuya aunque esté hipotecado. Y las dividen entre un dinero aportado que se hace cada vez más pequeño.</p>
-          <p>En el escenario de ejemplo, pasar del 0% al 70% de hipoteca hunde la caja de <strong>10.117 € a 2.671 €</strong> al año mientras el ROCE sin revalorización sube del <strong>3,7% al 6,4%</strong> y la anualizada del <strong>4,3% al 6,8%</strong>. Al 100% la caja ya son <strong>−575 €</strong> anuales y la anualizada marca un <strong>11,2%</strong>.</p>
+          <p>En el escenario de ejemplo, pasar del 0% al 70% de hipoteca hunde la caja de <strong>10.117 € a 2.671 €</strong> al año mientras el ROCE sin revalorización sube del <strong>3,7% al 6,4%</strong> y la anualizada del <strong>4,3% al 6,9%</strong>. Al 100% la caja ya son <strong>−575 €</strong> anuales y la anualizada marca un <strong>11,2%</strong>.</p>
           <p>Las dos cifras hay que leerlas juntas: la anualizada te dice cuánto ganas con el dinero que pusiste, y la caja, si puedes aguantar hasta cobrarlo.</p>` },
 
         { q: '¿Cuánta hipoteca conviene? ¿Se puede calcular la mezcla óptima?', a: `
@@ -1486,7 +1484,7 @@
 
         { q: '¿Cuándo compensa vender?', a: `
           <p>La tabla trae dos columnas que contestan a eso: lo que te quedaría en la cuenta si vendieras al acabar cada año, y la rentabilidad anualizada que habrías conseguido de verdad en ese caso.</p>
-          <p><strong>Vender pronto es ruinoso.</strong> En el escenario de ejemplo, vender el primer año deja una anualizada del <strong>−19,0%</strong>: has pagado los gastos de compra y encima pagas los de venta, sobre un piso que apenas ha subido. La cifra no se pone en positivo hasta el <strong>año 3</strong>, y hasta ahí lo que has hecho es financiar una mudanza cara.</p>
+          <p><strong>Vender pronto es ruinoso.</strong> En el escenario de ejemplo, vender el primer año deja una anualizada del <strong>−17,7%</strong>: has pagado los gastos de compra y encima pagas los de venta, sobre un piso que apenas ha subido. La cifra no se pone en positivo hasta el <strong>año 3</strong>, y hasta ahí lo que has hecho es financiar una mudanza cara.</p>
           <p><strong>Y hay un óptimo, que no es el final.</strong> La anualizada vendiendo llega a su máximo sobre el <strong>año 12</strong> con un <strong>7,1%</strong>, y a partir de ahí baja despacio: es la misma curva de siempre, con los gastos de compra ya digeridos y el apalancamiento apagándose, sólo que además carga los gastos de venta.</p>
           <p><strong>La diferencia con la columna de al lado es lo que se lleva vender.</strong> Empieza en 13 puntos el primer año y se va estrechando hasta menos de uno a los treinta, porque un coste fijo pesa cada vez menos repartido entre más años.</p>
           <p>Lo que más sorprende del cálculo es la amortización: cada año te has deducido una parte del valor del inmueble, y esa deducción <strong>resta del valor de adquisición</strong> al vender. Al cabo de treinta años la base de la que partes ha bajado de 272.290 € a 122.373 €, y la ganancia que tributa es esos 149.917 € mayor. No es un impuesto nuevo: es el que fuiste aplazando.</p>` },
@@ -1497,7 +1495,7 @@
             <li><strong>Los meses sin inquilino son una media</strong>, repartida por igual en todos los años: en la vida real vienen de golpe y justo cuando peor viene.</li>
             <li><strong>No hay derramas</strong> ni sorpresas de la comunidad.</li>
             <li><strong>La plusvalía municipal va dentro de los gastos de venta</strong>, a ojo: depende del municipio y de los años que lo tengas.</li>
-            <li><strong>Se deduce todo el interés pagado cada año</strong>, sin el límite que la ley pone a intereses y reparaciones frente a los ingresos íntegros del alquiler (art. 23.1.a de la LIRPF). Si los gastos financieros son muy altos frente al alquiler, la deducción real puede ser menor.</li>
+            <li><strong>Se deduce el interés pagado cada año, con el tope de la ley y su arrastre.</strong> Intereses, comisión de apertura y mantenimiento no pueden deducirse por encima de los ingresos íntegros del año (art. 23.1.a de la LIRPF); el exceso se deduce en los cuatro años siguientes con el mismo tope, lo más antiguo primero, y lo que no cabe en ese plazo se pierde. Lo que no hace el modelo es compensar un rendimiento negativo con otros ingresos tuyos, porque no los conoce: si los gastos del piso (comunidad, IBI, seguros, amortización) superan el alquiler, ese año el impuesto es cero y la pérdida no se aprovecha en ningún otro sitio.</li>
             <li><strong>El dinero que metes después no renta nada por su cuenta.</strong> Un año que no se paga solo se cubre primero con la caja acumulada y, si no llega, con una aportación tuya que aparece en su columna y entra en el cálculo de la rentabilidad. Lo que el modelo no hace es cobrarte por ese dinero ni suponer que lo sacas de otra inversión.</li>
             <li><strong>Los tipos de ITP y AJD son orientativos</strong> y cambian con cada presupuesto autonómico.</li>
           </ul>` }
@@ -1507,7 +1505,7 @@
           <p>Two forces pull in opposite directions, and each wins at a different time.</p>
           <p><strong>Early on, the purchase costs dominate.</strong> Tax, notary and agent fees are paid in full on day one and never come back. In year 1 that loss is spread over a single year and sinks the figure. As years pass the same loss is spread over more of them and weighs less each time, so the curve climbs steeply.</p>
           <p><strong>Later, decaying leverage dominates.</strong> With a fresh mortgage your cash controls a flat worth several times what you put in, and the whole property's appreciation is yours. As you repay, your equity grows until it matches the property's value, and that same appreciation is spread over an ever larger base.</p>
-          <p>In the example scenario leverage falls from <strong>2.8×</strong> in year one to <strong>1.0</strong> in the last, and the peak lands around <strong>year 8</strong>: the point where the purchase costs are digested but the mortgage is still large.</p>` },
+          <p>In the example scenario leverage falls from <strong>2.8×</strong> in year one to <strong>1.0</strong> in the last, and the peak lands around <strong>year 7</strong>: the point where the purchase costs are digested but the mortgage is still large.</p>` },
 
         { q: 'Why does year 0 start negative?', a: `
           <p>Because you have just paid tax, notary and agent fees on a flat that is still worth what it was worth. Buy at market price and, at the moment of purchase, you are down by exactly the purchase costs.</p>
@@ -1517,7 +1515,7 @@
           <p>Because they measure different things, and both are right.</p>
           <p><strong>Annual cash</strong> is what is left in your pocket once the instalments are paid. More mortgage means more instalments, so it falls, and past a point it turns negative: the flat stops paying for itself and starts asking you for money every month.</p>
           <p><strong>ROCE</strong> and the <strong>annualised return</strong> also count two things cash ignores: the share of each instalment that repays principal, which is saving rather than spending, and the appreciation of the whole flat, which is yours even though it is mortgaged. And they divide those by a stake that keeps getting smaller.</p>
-          <p>In the example scenario, going from 0% to 70% mortgage sinks cash from <strong>€10,117 to €2,671</strong> a year while ROCE excluding appreciation climbs from <strong>3.7% to 6.4%</strong> and the annualised return from <strong>4.3% to 6.8%</strong>. At 100% cash is already <strong>−€575</strong> a year and the annualised return reads <strong>11.2%</strong>.</p>
+          <p>In the example scenario, going from 0% to 70% mortgage sinks cash from <strong>€10,117 to €2,671</strong> a year while ROCE excluding appreciation climbs from <strong>3.7% to 6.4%</strong> and the annualised return from <strong>4.3% to 6.9%</strong>. At 100% cash is already <strong>−€575</strong> a year and the annualised return reads <strong>11.2%</strong>.</p>
           <p>The two have to be read together: the annualised return tells you how much you make on the cash you put in, and the cash tells you whether you can hold on long enough to collect it.</p>` },
 
         { q: 'How much mortgage is right? Can the optimal mix be calculated?', a: `
@@ -1552,7 +1550,7 @@
 
         { q: 'When is it worth selling?', a: `
           <p>The table carries two columns that answer this: what would land in your account if you sold at the end of each year, and the annualised return you would actually have achieved that way.</p>
-          <p><strong>Selling early is ruinous.</strong> In the example scenario, selling in year one gives an annualised <strong>−19.0%</strong>: you have paid the buying costs and now the selling costs too, on a flat that has barely moved. The figure does not turn positive until <strong>year 3</strong>; before that all you have financed is an expensive house move.</p>
+          <p><strong>Selling early is ruinous.</strong> In the example scenario, selling in year one gives an annualised <strong>−17.7%</strong>: you have paid the buying costs and now the selling costs too, on a flat that has barely moved. The figure does not turn positive until <strong>year 3</strong>; before that all you have financed is an expensive house move.</p>
           <p><strong>And there is an optimum, which is not the end.</strong> The annualised return on sale peaks around <strong>year 12</strong> at <strong>7.1%</strong> and drifts down after that: the same curve as always, with the purchase costs digested and leverage decaying, only now carrying the selling costs as well.</p>
           <p><strong>The gap with the column next door is what selling takes.</strong> It starts at 13 points in year one and narrows to under one by year thirty, because a fixed cost weighs less the more years it is spread over.</p>
           <p>The surprising part of the calculation is depreciation: each year you deducted a slice of the building's value, and that deduction <strong>comes off the acquisition value</strong> when you sell. After thirty years the base you start from has fallen from €272,290 to €122,373, and the taxable gain is €149,917 larger. It is not a new tax: it is the one you were deferring.</p>` },
@@ -1563,7 +1561,7 @@
             <li><strong>Void months are an average</strong>, spread evenly across the years: in real life they arrive all at once and at the worst possible time.</li>
             <li><strong>No special levies</strong> or surprises from the building.</li>
             <li><strong>Municipal capital gains tax sits inside the selling costs</strong>, as a rough figure: it depends on the town and on how long you hold.</li>
-            <li><strong>All the interest paid each year is deducted</strong>, without the cap the law puts on interest and repairs against gross rental income (art. 23.1.a LIRPF). If financing costs are very high against the rent, the real deduction can be lower.</li>
+            <li><strong>The interest paid each year is deducted, with the legal cap and its carry-forward.</strong> Interest, the arrangement fee and upkeep cannot be deducted beyond the year’s gross rental income (art. 23.1.a LIRPF); the excess is deducted over the next four years under the same cap, oldest first, and whatever does not fit in that window is lost. What the model does not do is offset a negative result against your other income, because it does not know it: if the flat’s costs (service charge, property tax, insurance, depreciation) exceed the rent, tax that year is zero and the loss is not used anywhere else.</li>
             <li><strong>Money you put in later earns nothing on its own.</strong> A year that does not pay for itself is covered first from accumulated cash and, failing that, by a contribution of yours that shows in its own column and counts towards the return. What the model does not do is charge you for that money or assume you pulled it out of another investment.</li>
             <li><strong>ITP and AJD rates are indicative</strong> and change with every regional budget.</li>
           </ul>` }
@@ -1937,7 +1935,7 @@
     // explicación en el title. Un campo que no avisa vuelve a su title de siempre. Nada se
     // corrige: son valores posibles, y quien los escribe puede tener sus razones.
     const IDS_AVISO = ['oferta', 'descuentoOferta', 'superficie', 'outEurM2', 'pctImpuestos', 'pctNotaria', 'comision', 'reforma',
-      'pctFinanciado', 'plazoHipoteca', 'tipoHipoteca', 'aperturaHip', 'plazoPrestamo', 'tipoPrestamo', 'aperturaPre',
+      'plazoHipoteca', 'tipoHipoteca', 'aperturaHip', 'plazoPrestamo', 'tipoPrestamo', 'aperturaPre',
       'alquiler', 'mesesVacios', ...GASTOS_ESTIMADOS, 'inflacion', 'revalorizacion',
       'tasaIbi', 'tasaComunidad', 'tasaSeguroHogar', 'tasaImpagos', 'tasaMantenimiento',
       'tipoMarginal', 'tasaAmortizacion', 'pctGastosVenta', 'pctGananciaVenta'];
@@ -1946,7 +1944,7 @@
       const av = {};
       const poner = (ids, texto) => { if (texto) [].concat(ids).forEach(id => { av[id] = av[id] || texto; }); };
       poner('oferta', d.oferta > d.precioAnunciado + 0.5 && t('avisoOfertaMayor'));
-      poner('descuentoOferta', d.descuento > 0.3 + 1e-6 && tf('avisoDescuento', fmtPct(d.descuento, 1)));
+      poner('descuentoOferta', d.descuento > 0.4 + 1e-6 && tf('avisoDescuento', fmtPct(d.descuento, 1)));
       if (d.superficie > 0) {
         const m2 = d.oferta / d.superficie;
         poner(['superficie', 'outEurM2'], m2 < 300 ? tf('avisoEurM2Bajo', fmt(m2)) : m2 > 15000 ? tf('avisoEurM2Alto', fmt(m2)) : '');
@@ -1955,7 +1953,8 @@
       poner('pctNotaria', num('pctNotaria') > 3 && t('avisoNotaria'));
       poner('comision', d.comision > 0.05 * d.oferta + 0.005 && tf('avisoComision', fmtPct(d.oferta > 0 ? d.comision / d.oferta : 0, 1)));
       poner('reforma', d.reforma > d.oferta + 0.005 && tf('avisoReforma', fmt(d.reforma), fmt(d.oferta)));
-      poner('pctFinanciado', num('pctFinanciado') > 80 && t('avisoFinanciado'));
+      // pctFinanciado no avisa: su máximo es 100 y no hay valor por encima que sea «posible pero
+      // preocupante». El 80 % que suelen financiar los bancos es contexto, no un fallo.
       poner('plazoHipoteca', num('plazoHipoteca') > 30 && t('avisoPlazoHipoteca'));
       poner('tipoHipoteca', num('tipoHipoteca') > 6 && t('avisoTipoHipoteca'));
       poner('plazoPrestamo', num('plazoPrestamo') > 10 && t('avisoPlazoPrestamo'));
@@ -2324,17 +2323,47 @@
       // La amortización fiscal tampoco sigue restando para siempre: se agota cuando se ha deducido
       // toda la base amortizable (al 3 % anual, a los 33 años y cuatro meses). En la venta ya se
       // topaba; aquí el año n deduce lo que quede de base, con un máximo de la cuota anual.
-      const regimen = (interes, cuotas, n) => {
+      //
+      // Límite de los gastos de financiación y conservación (art. 23.1.a LIRPF): intereses +
+      // gastos de financiación (aquí la comisión de apertura, en el año en que se paga) +
+      // reparación y conservación (el mantenimiento) no pueden superar los ingresos íntegros del
+      // año. El exceso se deduce en los cuatro años siguientes con ese mismo límite, lo más
+      // antiguo primero, y lo que no quepa en ese plazo se pierde. Los gastos del propio año
+      // entran antes que los arrastrados. `lotes` es lo pendiente de años anteriores, del más
+      // antiguo al más reciente ([{ ano, importe }]); la función no lo toca y devuelve el nuevo.
+      //
+      // Un rendimiento neto negativo por los demás gastos (comunidad, IBI, seguros, amortización)
+      // da impuesto 0 ese año y ya está: la herramienta no conoce otros ingresos tuyos, así que
+      // no hay base general contra la que compensarlo. Tampoco se arrastra: la ley sólo arrastra
+      // el exceso de financiación y conservación, no esa pérdida.
+      const PLAZO_ARRASTRE = 4;
+      const regimen = (interes, cuotas, n, comision = 0, lotes = []) => {
         const f = indice(n);
         const ingresos = alquilerAnual * f;
         const gastos = gastosAnuales * f;
+        const conservacion = mantenimiento * f;
         const deduccion = Math.min(amortizacion, Math.max(baseAmortizable - amortizacion * (n - 1), 0));
-        const base = ingresos - gastos - interes - deduccion;
+        const propios = interes + comision + conservacion;
+        const delAno = Math.min(propios, ingresos);
+        let hueco = ingresos - delAno, usado = 0, perdido = 0;
+        const pendientes = [];
+        for (const lote of lotes) {
+          if (n - lote.ano > PLAZO_ARRASTRE) { perdido += lote.importe; continue; }
+          const u = Math.min(lote.importe, hueco);
+          hueco -= u; usado += u;
+          if (lote.importe - u > 1e-9) pendientes.push({ ano: lote.ano, importe: lote.importe - u });
+        }
+        if (propios > ingresos) pendientes.push({ ano: n, importe: propios - ingresos });
+        const deducido = delAno + usado;
+        const base = ingresos - (gastos - conservacion) - deducido - deduccion;
         const impuestos = Math.max(base * tipoEfectivo, 0);
-        return { ingresos, gastos, interes, base, impuestos, cuotas, deduccion, caja: ingresos - impuestos - gastos - cuotas };
+        return { ingresos, gastos, interes, base, impuestos, cuotas, deduccion, deducido, perdido, pendientes,
+          caja: ingresos - impuestos - gastos - cuotas };
       };
 
-      // Las tres columnas del primer año se calculan con el interés de ese primer año.
+      // Las tres columnas del primer año se calculan con el interés de ese primer año. Describen el
+      // régimen anual, así que no llevan la comisión de apertura (un gasto de una sola vez, que
+      // entra en la proyección del año 1 con su arrastre); el tope del art. 23.1.a sí se aplica.
       const primerAno = (principal, tipo, cuota) => tramoAno(principal, tipo, cuota);
       const hip1 = primerAno(principalHip, tipoHip, cuotaHip);
       const pre1 = primerAno(principalPre, tipoPre, cuotaPre);
@@ -2370,11 +2399,14 @@
       // Reparto acumulado de todo el dinero que entra en el horizonte. Se lleva sumando dentro
       // del bucle para que cierre por construcción: alquiler cobrado más aportaciones tuyas se
       // reparte, sin residuo, entre gastos, IRPF, intereses, principal amortizado y la caja que
-      // queda al final. La media anualidad del año 1 se aplica a todas las partidas por igual.
+      // queda al final. El año 1 es un año completo como los demás, así que el principal amortizado
+      // suma toda la deuda inicial cuando la deuda se paga dentro del horizonte.
       const reparto = { gastos: 0, irpf: 0, intereses: 0, amortizacion: 0, caja: 0 };
       let ingresosAcum = 0;
 
       let hipFinPrev = null, preFinPrev = null, cajaPrev = 0;
+      // Exceso de financiación y conservación que espera hueco (ver regimen), y lo ya perdido.
+      let lotesIrpf = [], perdidoIrpf = 0;
       // Capital total puesto por el comprador: la liquidez del día uno más lo que haya tenido
       // que ir metiendo en los años que no se pagaban solos.
       let aportadoAcum = aportado;
@@ -2413,26 +2445,20 @@
         const hipFin = dh.fin, preFin = dp.fin;
         const patrimonio = (valor + reforma) * Math.pow(1 + revalorizacion, n) - hipFin - preFin;
 
-        const reg = regimen(dh.interes + dp.interes, dh.cuotas + dp.cuotas, n);
-        const mitad = n === 1 ? 0.5 : 1;
-        let cajaAno = reg.caja * mitad;
-        let irpfAno = reg.impuestos * mitad;
-        // La comisión de apertura se deduce entera en el año en que se paga, el primero. Como ese
-        // año cuenta a medias, la deducción se resta de la base de esa media anualidad -no de la
-        // anual, que la haría valer la mitad- y nunca deja un impuesto negativo: si no cabe en la
-        // base, el sobrante se pierde. El motor no modela el tope de intereses y reparaciones
-        // frente a los ingresos íntegros (art. 23.1.a LIRPF), así que tampoco se aplica aquí.
-        if (n === 1 && comisionApertura > 0) {
-          irpfAno = Math.max((reg.base * mitad - comisionApertura) * tipoEfectivo, 0);
-          cajaAno += reg.impuestos * mitad - irpfAno;
-        }
+        // La comisión de apertura se paga al firmar, así que es gasto de financiación del año 1 y
+        // entra en el mismo límite que los intereses: lo que no quepa ese año se arrastra.
+        const reg = regimen(dh.interes + dp.interes, dh.cuotas + dp.cuotas, n, n === 1 ? comisionApertura : 0, lotesIrpf);
+        lotesIrpf = reg.pendientes;
+        perdidoIrpf += reg.perdido;
+        const cajaAno = reg.caja;
+        const irpfAno = reg.impuestos;
 
-        ingresosAcum += reg.ingresos * mitad;
-        reparto.gastos += reg.gastos * mitad;
+        ingresosAcum += reg.ingresos;
+        reparto.gastos += reg.gastos;
         reparto.irpf += irpfAno;
-        reparto.intereses += (dh.interes + dp.interes) * mitad;
+        reparto.intereses += dh.interes + dp.interes;
         // El principal amortizado suma lo que va en la cuota y lo que se adelanta con la caja.
-        reparto.amortizacion += (dh.principal + dp.principal) * mitad + (cajaPrev - sobrante);
+        reparto.amortizacion += dh.principal + dp.principal + (cajaPrev - sobrante);
 
         // Lo que quedó sin gastar en amortizar sigue en caja, en vez de perderse al vaciarla.
         const cajaBase = sobrante;
@@ -2481,6 +2507,7 @@
           patrimonioReal: aHoy(patrimonio, n), cajaAcumReal: aHoy(cajaAcum, n),
           netoVentaReal: aHoy(netoVenta, n), tirVentaReal,
           precioVenta, gastosVenta, gananciaFiscal, impuestoVenta, netoVenta, tirVenta,
+          finDeducido: reg.deducido, finPendiente: lotesIrpf.reduce((t, l) => t + l.importe, 0), finPerdido: perdidoIrpf,
           anualizada, ganancia, aportadoAcum });
         hipFinPrev = hipFin; preFinPrev = preFin; cajaPrev = cajaAcum;
       }
@@ -2543,7 +2570,8 @@
         aportadoAcum, aportacionesExtra, primeraAportacion, reparto, ingresosAcum,
         anoRef, filaRef, amortizadoAno1, revalorizadoAno1, retornoRealizado, retornoAno1, rupturaCaja,
         alquilerAnualBruto, mesesVacios, ocupacion, pctGastosVenta, hip1, pre1,
-        rentabilidadBruta: costeTotal > 0 ? alquilerAnual / costeTotal : 0,
+        // La bruta es la referencia rápida: el alquiler de los doce meses, sin descontar los vacíos.
+        rentabilidadBruta: costeTotal > 0 ? alquilerAnualBruto / costeTotal : 0,
         rentabilidadNeta: costeTotal > 0 ? regSinDeuda.caja / costeTotal : 0,
         roceCaja: sobre(regimenInicial.caja), roceAmortizacion: sobre(amortizadoAno1),
         roceSinReval: sobre(retornoRealizado),
@@ -2642,7 +2670,7 @@
       el('kpiBruta').textContent = fmtPct(d.rentabilidadBruta);
       // La cabecera de la caja plegable (solo móvil) repite dos cifras para no obligar a abrirla.
       el('kpiResBruta').textContent = fmtPct(d.rentabilidadBruta);
-      el('kpiBrutaDetalle').textContent = `${fmt(d.alquilerAnual)} / ${fmt(d.costeTotal)}`;
+      el('kpiBrutaDetalle').textContent = `${fmt(d.alquilerAnualBruto)} / ${fmt(d.costeTotal)}`;
       el('kpiRoce').textContent = fmtPct(d.roceSinReval);
       el('kpiRoce').className = 'text-base lg:text-xl font-bold lg:mt-1.5 num ' + (d.roceSinReval === null ? 'val-muted' : signo(d.roceSinReval));
       el('kpiRoceConReval').textContent = tf('kpiRoceConReval', fmtPct(d.roce));
@@ -3256,7 +3284,7 @@
           // Las opciones de la comparación viajan con el resto del estado guardado, pero no en el
           // enlace de compartir: son una herramienta de trabajo, no parte del escenario.
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...leerEstado(), comparar: OPCIONES }));
-          mostrarIndicador(t(avisoGuardado));
+          if (avisoGuardado) mostrarIndicador(t(avisoGuardado));
           avisoGuardado = 'guardado';
         } catch (e) {}
       }, 600);
@@ -3442,7 +3470,7 @@
     }
 
     // Los intereses salen de reparto.intereses, que el motor ya acumula año a año en todo el
-    // horizonte (con la convención del primer año a medias, igual que el resto del reparto).
+    // horizonte (el año 1 como un año completo, igual que el resto del reparto).
     function metricasOpcion(d) {
       const cj = cajaDelAno(d);
       const hayDeuda = d.principalHip > 0 || d.principalPre > 0;
@@ -3960,6 +3988,9 @@
       ESTIMABLES.forEach(pintarCandado);
       FUENTES.forEach(pintarFuente);
       formatearCampos();
+      // Al abrir la página se guarda en silencio: nadie ha guardado nada todavía, y un «Guardado»
+      // que llegaba 600 ms tarde pisaba cualquier aviso del primer momento (p. ej. «Nada que deshacer»).
+      avisoGuardado = null;
       render();
       // Fin de la carga: de aquí en adelante los ajustes avisan, y la instantánea inicial es el
       // punto de partida al que se puede volver con Ctrl+Z.

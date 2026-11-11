@@ -51,7 +51,7 @@ check('ni la base amortizable (no forma parte del valor de adquisición)', cerca
 check('la comisión es el 1 % del principal', cerca(h.comision, X * 0.01), `${h.comision.toFixed(2)} de ${X}`);
 check('la liquidez aportada sube exactamente X·1 %', cerca(h.aportado - base0.aportado, X * 0.01), `+${(h.aportado - base0.aportado).toFixed(2)}`);
 const ahorro = base0.irpf1 - h.irpf1;
-// El primer año cuenta a medias: la deducción se resta de la base de media anualidad.
+// El año 1 es un año completo: la deducción se resta de la base anual de ese año.
 check('el impuesto del año 1 baja comisión × tipo efectivo', cerca(ahorro, h.comision * h.tipo, 0.01),
   `baja ${ahorro.toFixed(2)}; esperado ${(h.comision * h.tipo).toFixed(2)}`);
 check('  y esa rebaja pasa entera a la caja del año 1', cerca(h.caja1 - base0.caja1, ahorro, 0.01));
@@ -65,7 +65,7 @@ check('el reparto sigue cerrando sin residuo',
 check('la caja recuperada tarda lo mismo o más', h.payback === null || base0.payback === null || h.payback >= base0.payback,
   `${base0.payback} → ${h.payback}`);
 
-// Una comisión que la base de media anualidad no absorbe: el impuesto se queda en 0, no se vuelve negativo.
+// Una comisión que la base del año no absorbe: el impuesto se queda en 0, no se vuelve negativo.
 await poner('aperturaHip', '20');
 const grande = await resumen();
 check('una comisión enorme deja el impuesto del año 1 en 0, no en negativo', grande.irpf1 === 0, String(grande.irpf1));

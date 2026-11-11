@@ -90,7 +90,13 @@ await p.click('#lockPctImpuestos');
 // ---------- 6) descuento y oferta, enlazados ----------
 await poner('descuentoOferta', '95');
 check('descuento 95 → 90 y la oferta se ajusta a él', (await val('descuentoOferta')) === '90' && (await val('oferta')) === '26.000', `${await val('descuentoOferta')} / ${await val('oferta')}`);
-check('  el descuento del 90 % avisa (>30)', await rojo('descuentoOferta'));
+check('  el descuento del 90 % avisa (>40)', await rojo('descuentoOferta'));
+await poner('descuentoOferta', '35');
+check('  uno del 35 % ya no avisa (el umbral es el 40 %)', !(await rojo('descuentoOferta')));
+await poner('descuentoOferta', '40');
+check('  ni el 40 % exacto', !(await rojo('descuentoOferta')));
+await poner('descuentoOferta', '41');
+check('  pero el 41 % sí, y el aviso habla del 40 %', (await rojo('descuentoOferta')) && /40 %/.test(await titulo('descuentoOferta')), await titulo('descuentoOferta'));
 await poner('descuentoOferta', '-3');
 check('descuento −3 → 0', (await val('descuentoOferta')) === '0');
 await poner('descuentoOferta', '5');
@@ -111,7 +117,10 @@ await poner('superficie', '10');
 check('€/m² por encima de 15.000 también', await rojo('superficie') && /15\.000/.test(await titulo('superficie')));
 await poner('superficie', '80');
 await poner('pctFinanciado', '85');
-check('85 % financiado: se queda y avisa', (await val('pctFinanciado')) === '85' && await rojo('pctFinanciado'));
+// El máximo del campo es 100, así que no hay valor por encima que avisar: 85 y 100 se quedan sin rojo.
+check('85 % financiado: se queda y no avisa', (await val('pctFinanciado')) === '85' && !(await rojo('pctFinanciado')));
+await poner('pctFinanciado', '100');
+check('  y el 100 % tampoco (es el máximo del campo)', (await val('pctFinanciado')) === '100' && !(await rojo('pctFinanciado')));
 await poner('pctFinanciado', '70');
 await poner('alquiler', '300');
 check('rentabilidad bruta < 2 %: el alquiler avisa', (await rojo('alquiler')) && /2 %/.test(await titulo('alquiler')), await titulo('alquiler'));

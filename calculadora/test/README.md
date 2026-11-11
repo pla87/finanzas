@@ -1,6 +1,6 @@
 # Pruebas
 
-Veintitrés suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
+Veinticuatro suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
 No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba donde vive.
 
 ## Correrlas
@@ -24,8 +24,8 @@ Las dos primeras son la red de seguridad de verdad; las demás cuidan comportami
 guardados en `esperado.json`.
 
 **`cruzar`** — el motor contra `modelo.py`, una transcripción independiente del modelo escrita
-en Python a partir de las mismas fórmulas, en doce escenarios (con y sin préstamo personal, con
-una y otra amortización acelerada, piso barato, sin entrada, deuda que se cancela a mitad de año, cuarenta años sin deuda para agotar la amortización fiscal, comisión de apertura y gastos estimados con las tasas por defecto). Dos implementaciones escritas por
+en Python a partir de las mismas fórmulas, en quince escenarios (con y sin préstamo personal, con
+una y otra amortización acelerada, piso barato, sin entrada, deuda que se cancela a mitad de año, cuarenta años sin deuda para agotar la amortización fiscal, comisión de apertura, gastos estimados con las tasas por defecto y tres del tope de intereses y conservación: una comisión que no cabe el año 1 y se arrastra, un interés que choca con el tope y uno que no deja hueco nunca y caduca). Dos implementaciones escritas por
 separado que coinciden al céntimo es lo que da confianza en las ramas que el escenario por
 defecto no toca. `modelo.py` genera `modelo.json`, que está versionado para que las pruebas
 corran sin Python; el ejecutor lo regenera si `python3` está disponible.
@@ -50,6 +50,9 @@ las deshaga sin querer.
 | **Tramo alto del ahorro** | 28 % | 30 % por encima de 300.000 € (Ley 7/2024) |
 | **Orden de amortización** | siempre el préstamo personal primero | primero la deuda con el tipo más alto |
 | **Payback** | `#N/A` cuando no llegaba | dice cuánto falta y por qué |
+| **Año 1** | media anualidad (se suponía la compra a mitad de año), con la deuda bajando doce cuotas | un año completo, como los demás: alquiler, gastos, cuotas, IRPF y amortización fiscal. La caja del año 1 es el doble que la de la hoja |
+| **Gastos de financiación y conservación** | se deducían sin tope (la comisión de apertura ni siquiera se modelaba) | intereses + comisión de apertura + mantenimiento no pasan de los ingresos íntegros del año (art. 23.1.a LIRPF); el exceso se arrastra cuatro años, lo más antiguo primero, y lo que no cabe se pierde |
+| **Rentabilidad bruta** | alquiler anual cobrado | alquiler de los doce meses, sin descontar los vacíos (los vacíos siguen recortando caja, IRPF y rentabilidades netas) |
 
 La del interés es la que más se nota: en una cuota francesa el interés está casi todo al
 principio, así que deducir la media hacía pagar de más los primeros años y de menos los últimos.
@@ -81,6 +84,7 @@ exigiendo igualdad exacta al céntimo.
 | `apertura` | la comisión de apertura: sube lo aportado, se deduce en el año 1, y viaja por guardado, enlace y comparador; en % o en € con el conmutador (conserva el importe al alternar) |
 | `limites` | límite duro (recorta y redondea al salir del campo y al cargar de guardado o enlace), avisos en rojo con su title, `2,375` leído como decimal en un tipo, tope del horizonte, año de referencia que no se queda pegado y «1 año» |
 | `defectos` | IBI 0,2 % y mantenimiento 2 % por defecto; los enlaces sin `ver=2` se leen con 0,24 % y 5 % |
+| `irpf` | el tope del art. 23.1.a y su arrastre de cuatro años (comisión que no cabe, interés que choca, lo que caduca), el rendimiento negativo que da impuesto 0, el año 1 como año completo (el reparto amortiza toda la deuda inicial) y la bruta de doce meses |
 | `revision` | deuda que se cancela a mitad de año contra una simulación mes a mes, tope de la amortización fiscal, base amortizable, tramo del 30 %, textos del interés sin «media», año 0 con comisión, enlaces parciales, modales accesibles (Escape, foco, aria), unidades y escala autonómica en inglés, «-0», selects inválidos e inflación ≤ −100 % |
 | `deshacer` | Ctrl+Z / Ctrl+Y: un paso por cambio confirmado, máximo 100, rehacer que se borra con un cambio nuevo, y Ctrl+Z nativo dentro de un campo con texto sin confirmar |
 

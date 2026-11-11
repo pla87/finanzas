@@ -53,6 +53,14 @@ for (let i = 0; i < hoja.filas.length; i++) {
   // después. El cruce cae por donde el interés real del año iguala al medio.
   if (Math.abs(modelo.defecto.salida.filas[i].cajaAno - hoja.filas[i].cajaAno) > 0.02) divergentes++;
 }
+// Tercera divergencia: el año 1. La hoja lo contaba como media anualidad; el modelo lo cuenta entero,
+// como los demás años (la deuda baja doce cuotas y el piso se revaloriza doce meses). Se comprueba la
+// causa: la caja del año 1 de la hoja es la mitad de su caja anual y la del modelo es la anual entera.
+const [h1, m1] = [hoja.filas[0], modelo.defecto.salida.filas[0]];
+const esc = modelo.defecto.salida.escalares;
+if (!(Math.abs(h1.cajaAno * 2 - hoja.escalares.cajaConHipoteca) < 0.02 && Math.abs(m1.cajaAno - esc.cajaConHipoteca) < 0.02 && m1.cajaAno > h1.cajaAno)) {
+  fallos++; console.log(`FALLO año 1: la hoja debería contar media anualidad y el modelo la anual entera: hoja=${h1.cajaAno} py=${m1.cajaAno}`);
+} else console.log(`  diverge cajaAno año 1   hoja=${h1.cajaAno.toFixed(2).padStart(10)} py=${m1.cajaAno.toFixed(2).padStart(10)}  (año 1 completo: la hoja contaba media anualidad)`);
 const cruce = modelo.defecto.salida.filas.findIndex((f, i) => f.cajaAno < hoja.filas[i].cajaAno) + 1;
 console.log(`  la caja diverge en ${divergentes} de ${hoja.filas.length} años; pasa a ser menor que la de la hoja en el año ${cruce || '—'}`);
 if (divergentes !== hoja.filas.length) { fallos++; console.log('FALLO: se esperaba que la caja divergiese todos los años'); }
@@ -127,7 +135,7 @@ const montar = (p) => {
         cajaConHipoteca: r.regConHipoteca.caja, impSinDeuda: r.regSinDeuda.impuestos,
         cajaSinDeuda: r.regSinDeuda.caja, costeTotal: r.costeTotal
       },
-      filas: r.filas.map(f => ({ n: f.n, irpf: f.irpf, hipIni: f.hipIni, hipFin: f.hipFin, preIni: f.preIni, preFin: f.preFin, patrimonio: f.patrimonio, cajaAno: f.cajaAno, aportacion: f.aportacion, cajaAcum: f.cajaAcum, anualizada: f.anualizada, gananciaFiscal: f.gananciaFiscal, impuestoVenta: f.impuestoVenta, netoVenta: f.netoVenta, tirVenta: f.tirVenta }))
+      filas: r.filas.map(f => ({ n: f.n, irpf: f.irpf, hipIni: f.hipIni, hipFin: f.hipFin, preIni: f.preIni, preFin: f.preFin, patrimonio: f.patrimonio, cajaAno: f.cajaAno, aportacion: f.aportacion, cajaAcum: f.cajaAcum, anualizada: f.anualizada, finDeducido: f.finDeducido, finPendiente: f.finPendiente, finPerdido: f.finPerdido, gananciaFiscal: f.gananciaFiscal, impuestoVenta: f.impuestoVenta, netoVenta: f.netoVenta, tirVenta: f.tirVenta }))
     };
   }, p);
 
@@ -137,7 +145,7 @@ const montar = (p) => {
     if (!cerca(web.escalares[k], v, 0.02)) { malos++; console.log(`  FALLO ${nombre} ${k}: py=${v} web=${web.escalares[k]}`); }
   }
   for (let i = 0; i < esc.salida.filas.length; i++) {
-    for (const k of ['irpf', 'hipIni', 'hipFin', 'preIni', 'preFin', 'patrimonio', 'cajaAno', 'aportacion', 'cajaAcum', 'anualizada', 'gananciaFiscal', 'impuestoVenta', 'netoVenta', 'tirVenta']) {
+    for (const k of ['irpf', 'hipIni', 'hipFin', 'preIni', 'preFin', 'patrimonio', 'cajaAno', 'aportacion', 'cajaAcum', 'anualizada', 'finDeducido', 'finPendiente', 'finPerdido', 'gananciaFiscal', 'impuestoVenta', 'netoVenta', 'tirVenta']) {
       if (!cerca(web.filas[i][k], esc.salida.filas[i][k], k.startsWith('tir') || k === 'anualizada' ? 1e-9 : 0.02)) {
         malos++;
         if (malos < 5) console.log(`  FALLO ${nombre} año ${i + 1} ${k}: py=${esc.salida.filas[i][k]} web=${web.filas[i][k]}`);

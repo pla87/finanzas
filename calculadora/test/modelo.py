@@ -19,7 +19,8 @@ def TIR(flujos):
         return sum(f / (1 + r) ** i for i, f in enumerate(flujos))
     if not any(f > 0 for f in flujos) or not any(f < 0 for f in flujos):
         return None
-    bajo, alto = -0.9999, 10.0
+    # Hasta 100.000 %: la cota de 10 (1.000 %) daba por inexistente una rentabilidad alta con poca liquidez propia.
+    bajo, alto = -0.9999, 1000.0
     vbajo, valto = vna(bajo), vna(alto)
     if vbajo * valto > 0:
         return None
@@ -33,6 +34,8 @@ def TIR(flujos):
         else:
             alto = medio
     return (bajo + alto) / 2
+
+SALDO_MINIMO = 0.005
 
 def correr(p):
     C2,C3,C4 = p['C2'],p['C3'],p['C4']
@@ -68,13 +71,18 @@ def correr(p):
         """Un año de una deuda: (saldo final, cuotas pagadas, interés). Sin fórmula cerrada: mes a
         mes, y el último pago es sólo el saldo más su interés, así que el año en que la deuda se
         cancela no se cobran doce cuotas. Es deliberadamente distinto de lo que hace el motor
-        (cerrado si el saldo sobrevive), para que el cruce compruebe las dos formas."""
+        (cerrado si el saldo sobrevive), para que el cruce compruebe las dos formas.
+
+        Un saldo por debajo de medio céntimo es residuo de coma flotante y vale 0, igual que en el
+        motor (cuya fórmula cerrada deja 1e-10 en el último año)."""
+        if ini < SALDO_MINIMO: return 0.0, 0.0, 0.0
         s, pagado, interes = ini, 0.0, 0.0
         for _ in range(12):
             if s <= 0: break
             i = s*tipo/12
             pago = min(cuota, s + i)
             s = s + i - pago
+            if s < SALDO_MINIMO: s = 0.0
             pagado += pago
             interes += i
         return max(s, 0.0), pagado, interes
@@ -188,10 +196,14 @@ def correr(p):
                       'aportacion':aportacion,'cajaAcum':L,'finDeducido':dat['deducido'],'finPendiente':dat['pendiente'],'finPerdido':perdido_acum,'anualizada':M,'aportadoAcum':aportado_acum,
                       'gananciaFiscal':ganancia,'impuestoVenta':imp_venta,'netoVenta':neto,'tirVenta':MV})
         G_prev, I_prev, L_prev = G, I, L
+    # El año 1 de verdad (el de la fila 1, con la comisión de apertura): es el que enseñan el resumen,
+    # el KPI de caja y el ROCE, y el motor lo calcula aparte del bucle de la proyección.
+    f1 = filas[0]
+    ded1 = f1['finDeducido'] - C31
     return {'escalares':{'gastosCompra':C9,'desembolso':C12,'aportado':C13 + com,'comision':com,'cuotaHip':C18,'cuotaPre':C23,
             'gastosAnuales':C32,'amortizacion':C33,'impConPrestamo':C36,'cajaConPrestamo':C37,
             'impConHipoteca':C38,'cajaConHipoteca':C39,'impSinDeuda':C40,'cajaSinDeuda':C41,
-            'costeTotal':C4+C9+C10}, 'filas':filas}
+            'costeTotal':C4+C9+C10, 'impAno1':f1['irpf'], 'cajaAno1':f1['cajaAno'], 'dedAno1':ded1}, 'filas':filas}
 
 BASE = dict(C2=500000,C3=500000,C4=500000,C7=0,C8='No',C10=0,C11=100000,C13=151000,
             C15=30,C16=0.022,C19='No',C21=5,C22=0.11,C24='Sí',

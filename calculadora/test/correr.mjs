@@ -32,6 +32,7 @@ const SUITES = [
   ['deshacer',       'Ctrl+Z / Ctrl+Y con historial de instantáneas'],
   ['revision',       'deuda que se cancela a mitad de año, tope de amortización, tramo del 30 %, enlaces parciales y modales'],
   ['irpf',           'tope y arrastre del art. 23.1.a, año 1 completo y rentabilidad bruta de doce meses'],
+  ['revision2',      'segunda revisión: residuo de deuda, año 1 único, lectura de importes, enlaces, comparador y guardado'],
 ];
 
 const soloEstas = process.argv.slice(2);

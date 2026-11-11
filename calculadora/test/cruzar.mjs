@@ -133,7 +133,9 @@ const montar = (p) => {
         amortizacion: r.amortizacion, impConPrestamo: r.regConPrestamo.impuestos,
         cajaConPrestamo: r.regConPrestamo.caja, impConHipoteca: r.regConHipoteca.impuestos,
         cajaConHipoteca: r.regConHipoteca.caja, impSinDeuda: r.regSinDeuda.impuestos,
-        cajaSinDeuda: r.regSinDeuda.caja, costeTotal: r.costeTotal
+        cajaSinDeuda: r.regSinDeuda.caja, costeTotal: r.costeTotal,
+        // El año 1 del resumen (con comisión de apertura y su arrastre) contra la fila 1 del modelo.
+        impAno1: r.regimenInicial.impuestos, cajaAno1: r.regimenInicial.caja, dedAno1: r.regimenInicial.financiacionDeducida
       },
       filas: r.filas.map(f => ({ n: f.n, irpf: f.irpf, hipIni: f.hipIni, hipFin: f.hipFin, preIni: f.preIni, preFin: f.preFin, patrimonio: f.patrimonio, cajaAno: f.cajaAno, aportacion: f.aportacion, cajaAcum: f.cajaAcum, anualizada: f.anualizada, finDeducido: f.finDeducido, finPendiente: f.finPendiente, finPerdido: f.finPerdido, gananciaFiscal: f.gananciaFiscal, impuestoVenta: f.impuestoVenta, netoVenta: f.netoVenta, tirVenta: f.tirVenta }))
     };

@@ -171,7 +171,9 @@ await p.evaluate(() => document.getElementById('langBtn').click());
 await p.waitForTimeout(100);
 
 // --- el tipo alto del préstamo se pone en rojo por encima del 10% ---
+// El préstamo tiene que estar activo: una deuda apagada no avisa de nada.
 const alto = async (tipo) => p.evaluate((x) => {
+  document.getElementById('usarPrestamo').checked = true; pintarFuente('prestamo');
   document.getElementById('tipoPrestamo').value = x; render();
   const rojo = (e) => e.classList.contains('val-neg');
   return { visible: !document.getElementById('altoPrestamo').classList.contains('hidden'),
@@ -192,6 +194,7 @@ await p.evaluate(() => document.getElementById('langBtn').click());
 check('en inglés es (HIGH)', (await alto('12,00')).texto === '(HIGH)');
 await p.evaluate(() => document.getElementById('langBtn').click());
 await alto('9,00');
+await p.evaluate(() => { document.getElementById('usarPrestamo').checked = false; pintarFuente('prestamo'); render(); });
 
 // --- la horquilla de revalorización ---
 const hor = await p.evaluate(() => {

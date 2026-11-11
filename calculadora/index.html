@@ -257,8 +257,11 @@
        para no añadir alto: así el número queda en la misma línea base que el texto. */
     .anoref { position: relative; flex: none; display: inline-flex; }
     .anoref-nativo { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; margin: 0; padding: 0; border: 0; }
-    .anoref-btn { display: inline-flex; align-items: baseline; gap: 2px; margin: 0; padding: 0 3px; font: inherit; letter-spacing: inherit; text-transform: inherit; line-height: inherit; color: inherit;
+    .anoref-btn { position: relative; display: inline-flex; align-items: baseline; gap: 2px; margin: 0; padding: 0 3px; font: inherit; letter-spacing: inherit; text-transform: inherit; line-height: inherit; color: inherit;
       background: rgb(var(--brand-bg)); border: 0; border-radius: 4px; box-shadow: inset 0 0 0 1px rgb(var(--brand-accent) / 0.4); cursor: pointer; }
+    /* La zona táctil se amplía con un pseudoelemento transparente (32×32 como mínimo) y no con
+       relleno: el botón es del tamaño de una cifra y debe seguir alineado con el texto de su línea. */
+    .anoref-btn::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 32px); height: 32px; transform: translate(-50%, -50%); }
     .anoref-btn:hover, .anoref-btn[aria-expanded="true"] { box-shadow: inset 0 0 0 1px rgb(var(--brand-accent)); }
     .anoref-btn:focus-visible { outline: 2px solid rgb(var(--brand-accent) / 0.6); outline-offset: 1px; }
     .anoref-flecha { width: 7px; height: 7px; align-self: center; flex: none; transition: transform .12s; }
@@ -706,7 +709,7 @@
     <div id="cajaTab" class="tab-content hidden space-y-6">
       <div class="bg-brand-card border border-brand-border rounded-xl p-5">
         <h3 class="text-sm font-bold mb-1" data-i18n="regimenesTitulo">Los tres regímenes de caja</h3>
-        <p class="text-[11px] text-brand-textMuted mb-4" data-i18n="regimenesAyuda">La caja anual del piso cambia según qué deuda siga viva.</p>
+        <p class="text-[11px] text-brand-textMuted mb-4" id="regimenesAyuda" data-i18n="regimenesAyuda">La caja anual del piso cambia según qué deuda siga viva.</p>
         <div class="overflow-x-auto scrollbar-thin">
           <table class="w-full text-xs num">
             <thead>
@@ -1030,7 +1033,12 @@
         precioPagado: 'Precio pagado', cajaPrimerAno: 'CAJA DEL PRIMER AÑO COMPLETO',
         alquilerCobrado: 'Alquiler cobrado', gastosDelPiso: 'Gastos del piso', cuotasDeuda: 'Cuotas de deuda',
         irpf: 'IRPF del alquiler', cajaNetaAnual: 'Caja neta anual', cajaNetaMensual: 'Caja neta mensual',
-        notaFiscal: 'Base fiscal: {0} de alquiler − {1} de gastos − {2} de interés pagado − {3} de amortización = {4}. Tributa el {5} de esa base al {6}.',
+        notaFiscal: 'Base fiscal: {0} de alquiler − {1} de gastos {2} de {7} − {3} de amortización = {4}. Tributa el {5} de esa base al {6}.{8}',
+        notaInteres: 'interés deducido', notaInteresApertura: 'interés y comisión deducidos',
+        notaTope: 'El tope del art. 23.1.a LIRPF (intereses, comisión y mantenimiento no pueden pasar del alquiler del año) deja fuera {0} este año: se arrastra a los cuatro años siguientes.',
+        topeAplicado: 'tope aplicado',
+        topeAplicadoTip: 'El art. 23.1.a LIRPF limita intereses, comisión y mantenimiento al alquiler del año. Se deduce lo que se ve en la celda; {0} se arrastra a los cuatro años siguientes.',
+        regimenesSinApertura: 'No incluyen la comisión de apertura, que sólo se paga el año 1: está en la fila 1 de la proyección y en el resumen.',
         tabProyeccion: '📈 Proyección', tabCaja: '💵 Flujo de caja', tabTablas: '🔥 Tablas de rentabilidad', tabParams: '⚙️ Parámetros',
         graficaPatrimonio: 'Patrimonio, deuda y caja', graficaRentabilidad: 'Rentabilidad anualizada acumulada',
         serieGanancia: 'Ganancia sobre lo invertido', serieDeuda: 'Deuda viva', serieCaja: 'Caja acumulada',
@@ -1058,8 +1066,8 @@
         regimenesTitulo: 'Los tres regímenes de caja',
         regimenesAyuda: 'La caja anual del piso cambia según qué deuda siga viva. Cifras del primer año: con la indexación activada, alquiler y gastos crecen cada año y la proyección aplica el régimen que toque con los importes de ese año.',
         colConcepto: 'Concepto', colConPrestamo: 'Con préstamo e hipoteca', colSoloHipoteca: 'Sólo con hipoteca', colSinDeuda: 'Sin deuda',
-        interesDeducible: 'Interés deducible', interesDeducibleTip: 'Interés que pagan en el año los préstamos vivos (en esta tabla, el primero), deducible del rendimiento del alquiler.',
-        baseFiscal: 'Base fiscal', baseFiscalTip: 'Alquiler menos gastos, interés pagado en el año y amortización. Intereses y conservación no pueden deducirse por encima del alquiler del año (art. 23.1.a LIRPF); si la base sale negativa, el impuesto es 0 y no se compensa.',
+        interesDeducible: 'Interés deducible', interesDeducibleTip: 'Lo que se deduce de verdad del rendimiento del alquiler: el interés que pagan en el año los préstamos vivos, hasta el tope del alquiler del año. Con «tope aplicado», lo pagado es más y el exceso se arrastra.',
+        baseFiscal: 'Base fiscal', baseFiscalTip: 'Alquiler menos gastos, interés deducido en el año y amortización. Intereses y conservación no pueden deducirse por encima del alquiler del año (art. 23.1.a LIRPF); si la base sale negativa, el impuesto es 0 y no se compensa.',
         desgloseGastos: 'Desglose de gastos anuales', baseImponible: 'Base imponible del alquiler',
         desgloseIngresos: 'A dónde va el alquiler',
         desgloseIngresosSub: 'Reparto de los {0} que entran en los {1} años proyectados, entre lo que se gasta, lo que paga la deuda y lo que queda.',
@@ -1127,7 +1135,7 @@
         faqCostePrestamo: 'Coste del préstamo, ya deducido',
         faqSuma: 'suma rentabilidad',
         faqResta: 'resta rentabilidad',
-        faqNotaDeduccion: 'El coste de la deuda va después de deducir los intereses del rendimiento del alquiler. Lo que rinde el piso es la renta neta de gastos sobre el coste total, más la revalorización.',
+        faqNotaDeduccion: 'Las dos cifras van después de impuestos. El coste de la deuda, con los intereses ya deducidos del rendimiento del alquiler: tipo × (1 − tipo efectivo). Lo que rinde el piso, la renta neta de gastos y de IRPF sobre el coste total, más la revalorización (que no tributa hasta vender).',
         si: 'Sí', no: 'No'
       },
       en: {
@@ -1292,7 +1300,12 @@
         precioPagado: 'Price paid', cajaPrimerAno: 'CASH IN THE FIRST FULL YEAR',
         alquilerCobrado: 'Rent collected', gastosDelPiso: 'Running costs', cuotasDeuda: 'Debt instalments',
         irpf: 'Income tax on rent', cajaNetaAnual: 'Net annual cash', cajaNetaMensual: 'Net monthly cash',
-        notaFiscal: 'Taxable base: {0} of rent − {1} of costs − {2} of interest paid − {3} of depreciation = {4}. {5} of that base is taxed at {6}.',
+        notaFiscal: 'Taxable base: {0} of rent − {1} of costs {2} of {7} − {3} of depreciation = {4}. {5} of that base is taxed at {6}.{8}',
+        notaInteres: 'interest deducted', notaInteresApertura: 'interest and fee deducted',
+        notaTope: 'The art. 23.1.a LIRPF cap (interest, fee and upkeep cannot exceed the year\u2019s rent) leaves {0} out this year: it is carried forward over the next four years.',
+        topeAplicado: 'cap applied',
+        topeAplicadoTip: 'Art. 23.1.a LIRPF limits interest, fee and upkeep to the year\u2019s rent. What the cell shows is what gets deducted; {0} is carried forward over the next four years.',
+        regimenesSinApertura: 'They leave out the arrangement fee, which is paid in year 1 only: it is in row 1 of the projection and in the summary.',
         tabProyeccion: '📈 Projection', tabCaja: '💵 Cash flow', tabTablas: '🔥 Yield tables', tabParams: '⚙️ Parameters',
         graficaPatrimonio: 'Net worth, debt and cash', graficaRentabilidad: 'Cumulative annualised return',
         serieGanancia: 'Gain on capital invested', serieDeuda: 'Debt outstanding', serieCaja: 'Accumulated cash',
@@ -1320,8 +1333,8 @@
         regimenesTitulo: 'The three cash regimes',
         regimenesAyuda: "Annual cash changes with whichever debt is still alive. First-year figures: with indexation on, rent and costs grow each year and the projection applies the right regime with that year's amounts.",
         colConcepto: 'Item', colConPrestamo: 'Loan and mortgage', colSoloHipoteca: 'Mortgage only', colSinDeuda: 'Debt free',
-        interesDeducible: 'Deductible interest', interesDeducibleTip: 'Interest paid in the year on live borrowing (the first one, in this table), deductible against rental income.',
-        baseFiscal: 'Taxable base', baseFiscalTip: 'Rent less costs, interest paid in the year and depreciation. Interest and upkeep cannot be deducted beyond the year\u2019s rent (art. 23.1.a LIRPF); a negative base means zero tax and is not offset.',
+        interesDeducible: 'Deductible interest', interesDeducibleTip: 'What is really deducted from rental income: the interest paid in the year on live borrowing, up to the year\u2019s rent. With \u201ccap applied\u201d, more was paid and the excess is carried forward.',
+        baseFiscal: 'Taxable base', baseFiscalTip: 'Rent less costs, interest deducted in the year and depreciation. Interest and upkeep cannot be deducted beyond the year\u2019s rent (art. 23.1.a LIRPF); a negative base means zero tax and is not offset.',
         desgloseGastos: 'Annual costs breakdown', baseImponible: 'Rental taxable base',
         desgloseIngresos: 'Where the rent goes',
         desgloseIngresosSub: 'How the {0} collected over {1} years splits between running costs, the debt and what is left.',
@@ -1389,7 +1402,7 @@
         faqCostePrestamo: 'Loan cost, after the deduction',
         faqSuma: 'adds return',
         faqResta: 'subtracts return',
-        faqNotaDeduccion: 'The cost of debt is shown after deducting interest against rental income. What the property earns is rent net of running costs over total cost, plus appreciation.',
+        faqNotaDeduccion: 'Both figures are after tax. The cost of debt, with interest already deducted against rental income: rate × (1 − effective tax rate). What the property earns, rent net of running costs and income tax over total cost, plus appreciation (which is not taxed until you sell).',
         si: 'Yes', no: 'No'
       }
     };
@@ -1453,7 +1466,7 @@
           <p>Las dos cifras hay que leerlas juntas: la anualizada te dice cuánto ganas con el dinero que pusiste, y la caja, si puedes aguantar hasta cobrarlo.</p>` },
 
         { q: '¿Cuánta hipoteca conviene? ¿Se puede calcular la mezcla óptima?', a: `
-          <p>La regla es corta: <strong>endeudarte sube la rentabilidad de tu dinero mientras el coste de la deuda, ya descontada la deducción de intereses, sea menor que lo que rinde el piso.</strong></p>
+          <p>La regla es corta: <strong>endeudarte sube la rentabilidad de tu dinero mientras el coste de la deuda, ya descontada la deducción de intereses, sea menor que lo que rinde el piso, las dos cosas después de impuestos.</strong></p>
           <div id="faqApalancamiento"></div>
           <p>Cuando se cumple, el óptimo matemático no está en el medio: <strong>está en el extremo</strong>. Cuanta más deuda barata, mejor sale la rentabilidad sobre lo que pones, hasta el 100%. Por eso la pregunta útil no es cuál es el óptimo, sino dónde está el límite. Y el límite lo ponen tres cosas que esta herramienta no decide por ti:</p>
           <ul>
@@ -1519,7 +1532,7 @@
           <p>The two have to be read together: the annualised return tells you how much you make on the cash you put in, and the cash tells you whether you can hold on long enough to collect it.</p>` },
 
         { q: 'How much mortgage is right? Can the optimal mix be calculated?', a: `
-          <p>The rule is short: <strong>borrowing raises the return on your own money as long as the cost of debt, after the interest deduction, is below what the property earns.</strong></p>
+          <p>The rule is short: <strong>borrowing raises the return on your own money as long as the cost of debt, after the interest deduction, is below what the property earns, both after tax.</strong></p>
           <div id="faqApalancamiento"></div>
           <p>When it holds, the mathematical optimum is not in the middle: <strong>it is at the extreme</strong>. The more cheap debt, the better the return on what you put in, all the way to 100%. So the useful question is not what the optimum is, but where the limit is. Three things set it, none of which this tool decides for you:</p>
           <ul>
@@ -1615,9 +1628,24 @@
     // en un importe, pero «2,375» en un tipo de interés son dos y pico, no dos mil. Por eso los
     // campos que no son importes (`decimal`) leen un único separador como decimal siempre; en un
     // importe sigue siendo de miles, salvo que la parte entera sea 0 («0,125» no es 125).
+    //
+    // Lo que se pega suele traer texto: «247.000 €», «1.250 euros», «1.250/mes», «€1.250», «$1,250.00»
+    // o un menos tipográfico (U+2212). Antes de decidir qué separa miles y qué decimales se tira todo
+    // lo que no sea cifra, punto, coma o signo: con la «€» o las letras delante o detrás, la lectura
+    // se desviaba por mil o daba 0.
     function parseNum(bruto, decimal = false) {
-      let s = String(bruto ?? '').replace(/[\s\u00a0\u202f]/g, '');
-      if (!s) return 0;
+      const v = leerNumero(bruto, decimal);
+      return Number.isNaN(v) ? 0 : v;
+    }
+    // Igual que parseNum, pero NaN en vez de 0 cuando no hay número: lo que llega de fuera (enlace,
+    // guardado) necesita distinguir «0» de «basura».
+    function leerNumero(bruto, decimal = false) {
+      let s = String(bruto ?? '').replace(/[\u2212\u2012\u2013\u2014]/g, '-');
+      // La notación científica de un enlace manipulado («1e6») se respeta: los topes de cada campo
+      // son los que la acotan después.
+      if (/^\s*[-+]?\d+(\.\d+)?[eE][-+]?\d+\s*$/.test(s)) { const v = parseFloat(s); return isFinite(v) ? v : NaN; }
+      s = s.replace(/[^\d.,+-]/g, '');
+      if (!s) return NaN;
       const coma = s.lastIndexOf(','), punto = s.lastIndexOf('.');
       const miles = (sep, re) => s.split(sep).length > 2 || (!decimal && re.test(s) && !/^[-+]?0[.,]/.test(s));
       if (coma >= 0 && punto >= 0) {
@@ -1629,7 +1657,7 @@
         if (miles('.', /\.\d{3}$/)) s = s.replace(/\./g, '');
       }
       const v = parseFloat(s);
-      return isFinite(v) ? v : 0;
+      return isFinite(v) ? v : NaN;
     }
 
     // Cada campo se lee según lo que es: los importes llevan separador de miles, el resto no.
@@ -1638,7 +1666,9 @@
     // Sí/no: las casillas (IVA de la comisión, amortización acelerada) por su marca; los
     // desplegables que quedan (obra nueva), por su valor.
     const yes = (id) => { const e = el(id); return e.type === 'checkbox' ? e.checked : e.value === 'si'; };
-    const esMoneda = (campo) => el(campo).hasAttribute('data-money');
+    // La comisión de apertura es un importe mientras su modo es €: «2.000» son dos mil euros, no un
+    // decimal («2.000 %» no existiría). En modo % es un porcentaje como los demás.
+    const esMoneda = (campo) => el(campo).hasAttribute('data-money') || (!!APERTURAS[campo] && el(APERTURAS[campo].modo).checked);
 
     // Los decimales son un máximo salvo que se pidan mínimos: un tipo autonómico del 6% se
     // escribe "6" y no "6,00", pero un tipo de interés lleva siempre sus dos cifras.
@@ -1654,7 +1684,11 @@
     // Se reformatea al salir del campo y no mientras se teclea: hacerlo en cada pulsación
     // mueve el cursor de sitio y es imposible escribir.
     function formatearCampos(tambienActivo = false) {
-      document.querySelectorAll('[data-money], [data-dec]').forEach(e => {
+      // Todos los campos numéricos, no sólo los que declaran su formato: los que no lo declaran
+      // (porcentajes y plazos, las tasas de gastos, el descuento) se quedaban con el punto decimal
+      // del HTML en español o con la coma del español en inglés.
+      document.querySelectorAll('input[type="text"]').forEach(e => {
+        if (!e.id || !CAMPOS.includes(e.id)) return;
         if (!tambienActivo && document.activeElement === e) return;
         const [dmax, dmin] = decimalesCampo(e.id);
         fijar(e.id, parseCampo(e.id, e.value), dmax, dmin);
@@ -1679,7 +1713,9 @@
       const vna = (r) => flujos.reduce((a, f, i) => a + f / Math.pow(1 + r, i), 0);
       // Sin un cambio de signo no hay raíz que buscar.
       if (!flujos.some(f => f > 0) || !flujos.some(f => f < 0)) return null;
-      let bajo = -0.9999, alto = 10;
+      // Hasta 100.000 %: con poca liquidez propia y una venta grande la rentabilidad pasa de sobra
+      // del 1.000 % y la cota de antes (10 = 1.000 %) la daba por inexistente.
+      let bajo = -0.9999, alto = 1000;
       let vBajo = vna(bajo), vAlto = vna(alto);
       if (vBajo * vAlto > 0) return null;
       for (let i = 0; i < 200; i++) {
@@ -1691,12 +1727,18 @@
       return (bajo + alto) / 2;
     }
 
+    // Un saldo por debajo de medio céntimo es residuo de coma flotante, no deuda: la fórmula cerrada
+    // del último año deja 1e-10 en lugar de 0, y con eso «el año en que se salda» salía un año más
+    // tarde y el KPI decía «> plazo años» en cerca de cuatro de cada diez combinaciones. Un saldo
+    // así vale 0 aquí y en la decisión de tramoAno.
+    const SALDO_MINIMO = 0.005;
+    const sinResiduo = (saldo) => saldo < SALDO_MINIMO ? 0 : saldo;
     function saldoTrasUnAno(saldo, tipoAnual, cuotaMensual) {
-      if (saldo <= 0) return 0;
+      if (!(saldo >= SALDO_MINIMO)) return 0;
       const r = tipoAnual / 12;
-      if (Math.abs(r) < 1e-12) return Math.max(saldo - cuotaMensual * 12, 0);
+      if (Math.abs(r) < 1e-12) return sinResiduo(Math.max(saldo - cuotaMensual * 12, 0));
       const g = Math.pow(1 + r, 12);
-      return Math.max(saldo * g - cuotaMensual * (g - 1) / r, 0);
+      return sinResiduo(Math.max(saldo * g - cuotaMensual * (g - 1) / r, 0));
     }
 
     /* ---------- Candados ---------- */
@@ -1712,12 +1754,17 @@
     const FUENTES = ['hipoteca', 'prestamo'];
     const capitalizar = (s) => s[0].toUpperCase() + s.slice(1);
 
+    // La revalorización es el único estimado que puede ser negativo (el piso puede perder valor, y
+    // «a la par de la inflación» con deflación es una caída): se acota a su rango, no a cero. El
+    // resto son importes y tipos que no admiten un menos.
     function estimado(campo, valor, decimales = 0) {
       const automatico = el('auto' + capitalizar(campo)).checked;
       el(campo).disabled = automatico;
+      const suelo = campo === 'revalorizacion' ? LIMITES.revalorizacion.min : 0;
+      const techo = campo === 'revalorizacion' ? LIMITES.revalorizacion.max : Infinity;
       // Los campos con decimales fijos (los tipos) los llevan también cuando se rellenan solos,
       // para que no bailen entre "3" y "3,00" según quién escriba la cifra.
-      if (automatico) fijar(campo, Math.max(valor, 0), decimales, decimalesFijos(campo) ?? 0);
+      if (automatico) fijar(campo, Math.min(Math.max(valor, suelo), techo), decimales, decimalesFijos(campo) ?? 0);
       return num(campo);
     }
 
@@ -1864,7 +1911,8 @@
       const e = el(id);
       const min = e.hasAttribute('data-dec') ? +e.dataset.dec : 0;
       if (APERTURAS[id] && el(APERTURAS[id].modo).checked) return [2, 2];
-      return [e.hasAttribute('data-dec-max') ? +e.dataset.decMax : min, min];
+      // Sin decimales declarados, los que admite su rango (un 66,5 % de financiación, un 0,35 de IBI).
+      return [e.hasAttribute('data-dec-max') ? +e.dataset.decMax : Math.max(min, LIMITES[id]?.dec ?? 0), min];
     }
 
     // Las unidades de LIMITES que llevan palabras (no sólo %, € o m²) y por tanto se traducen.
@@ -1883,10 +1931,21 @@
     }
 
     // El aviso fugaz de recorte, fijo y junto al campo (alineado a su borde derecho, que es donde
-    // están todas las cajas). Se esconde solo, y también al desplazar o cambiar de tamaño, porque
-    // una caja fija se quedaría colgada donde estaba el campo.
-    let avisoLimiteTimer = null;
-    function ocultarAvisoLimite() { clearTimeout(avisoLimiteTimer); el('avisoLimite').hidden = true; }
+    // están todas las cajas). Se esconde solo. Al desplazar o cambiar de tamaño se RECOLOCA junto a su
+    // campo -una caja fija se quedaría colgada donde estaba-, y sólo se esconde si el campo se sale de
+    // la pantalla: el Tab que lleva al campo siguiente desplaza la página, y esconderlo por eso lo
+    // hacía desaparecer al instante, antes de poder leerlo.
+    let avisoLimiteTimer = null, avisoLimiteCampo = null;
+    function ocultarAvisoLimite() { clearTimeout(avisoLimiteTimer); avisoLimiteCampo = null; el('avisoLimite').hidden = true; }
+    function colocarAvisoLimite() {
+      const caja = el('avisoLimite');
+      if (!avisoLimiteCampo || caja.hidden) return;
+      const r = el(avisoLimiteCampo).getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) { ocultarAvisoLimite(); return; }
+      caja.style.left = Math.max(8, Math.min(r.right - caja.offsetWidth, window.innerWidth - caja.offsetWidth - 8)) + 'px';
+      const debajo = r.bottom + 6;
+      caja.style.top = (debajo + caja.offsetHeight > window.innerHeight - 8 ? Math.max(8, r.top - caja.offsetHeight - 6) : debajo) + 'px';
+    }
     function avisarRecorte(id, lim) {
       const campo = el(id), caja = el('avisoLimite');
       const sufijo = !lim.avisaPaso ? ''
@@ -1894,15 +1953,13 @@
         : tf('limiteSufPaso', new Intl.NumberFormat(t('locale'), { maximumFractionDigits: 2 }).format(lim.paso));
       caja.textContent = tf('limiteRecorte', fmtLimite(lim.min, lim), fmtLimite(lim.max, lim), sufijo);
       caja.hidden = false;
-      const r = campo.getBoundingClientRect();
-      caja.style.left = Math.max(8, Math.min(r.right - caja.offsetWidth, window.innerWidth - caja.offsetWidth - 8)) + 'px';
-      const debajo = r.bottom + 6;
-      caja.style.top = (debajo + caja.offsetHeight > window.innerHeight - 8 ? Math.max(8, r.top - caja.offsetHeight - 6) : debajo) + 'px';
+      avisoLimiteCampo = id;
+      colocarAvisoLimite();
       clearTimeout(avisoLimiteTimer);
       avisoLimiteTimer = setTimeout(ocultarAvisoLimite, 4500);
     }
-    window.addEventListener('scroll', ocultarAvisoLimite, { passive: true });
-    window.addEventListener('resize', ocultarAvisoLimite);
+    window.addEventListener('scroll', colocarAvisoLimite, { passive: true });
+    window.addEventListener('resize', colocarAvisoLimite);
 
     // El límite duro de un campo: lo recorta y redondea si hace falta y devuelve si lo cambió.
     // También se recortan los campos desactivados (una fuente apagada, un gasto estimado): lo que
@@ -1955,14 +2012,18 @@
       poner('reforma', d.reforma > d.oferta + 0.005 && tf('avisoReforma', fmt(d.reforma), fmt(d.oferta)));
       // pctFinanciado no avisa: su máximo es 100 y no hay valor por encima que sea «posible pero
       // preocupante». El 80 % que suelen financiar los bancos es contexto, no un fallo.
-      poner('plazoHipoteca', num('plazoHipoteca') > 30 && t('avisoPlazoHipoteca'));
-      poner('tipoHipoteca', num('tipoHipoteca') > 6 && t('avisoTipoHipoteca'));
-      poner('plazoPrestamo', num('plazoPrestamo') > 10 && t('avisoPlazoPrestamo'));
+      // Una deuda apagada no entra en el cálculo, así que sus campos no avisan de nada: un plazo de 35
+      // años en una hipoteca desactivada no es «posible pero preocupante», es irrelevante.
+      const hipActiva = el('usarHipoteca').checked, preActivo = el('usarPrestamo').checked;
+      poner('plazoHipoteca', hipActiva && num('plazoHipoteca') > 30 && t('avisoPlazoHipoteca'));
+      poner('tipoHipoteca', hipActiva && num('tipoHipoteca') > 6 && t('avisoTipoHipoteca'));
+      poner('plazoPrestamo', preActivo && num('plazoPrestamo') > 10 && t('avisoPlazoPrestamo'));
       // El mismo umbral que el «(ALTO)» de la etiqueta: por encima de 9,99 (ver render).
-      poner('tipoPrestamo', num('tipoPrestamo') > 9.995 && t('avisoTipoPrestamo'));
+      poner('tipoPrestamo', preActivo && num('tipoPrestamo') > 9.995 && t('avisoTipoPrestamo'));
       // Más del 10 % del principal, en cualquiera de los dos modos. Sin principal no hay euros
       // que medir, y se mira el porcentaje tal como está escrito.
       for (const [id, ap] of Object.entries(APERTURAS)) {
+        if (!el(ap.sufijo === 'Hip' ? 'usarHipoteca' : 'usarPrestamo').checked) continue;
         const principal = ap.principal(d), eur = el(ap.modo).checked;
         const comision = ap.sufijo === 'Hip' ? d.comisionHip : d.comisionPre;
         const pct = principal > 0 ? comision / principal : (eur ? 0 : num(id) / 100);
@@ -2300,7 +2361,7 @@
       // del mes. Con doce cuotas y la diferencia tomada como interés, el año de cancelación se
       // cobraba de más y casi todo ese exceso aparecía como interés deducible.
       const tramoAno = (ini, tipo, cuota) => {
-        if (!(ini > 0)) return { fin: 0, cuotas: 0, interes: 0, principal: 0 };
+        if (!(ini >= SALDO_MINIMO)) return { fin: 0, cuotas: 0, interes: 0, principal: 0 };
         const fin = saldoTrasUnAno(ini, tipo, cuota);
         if (fin > 0) {
           const interes = Math.min(Math.max(cuota * 12 - (ini - fin), 0), cuota * 12);
@@ -2309,15 +2370,16 @@
         let saldo = ini, cuotas = 0, interes = 0;
         for (let m = 0; m < 12 && saldo > 0; m++) {
           const i = saldo * tipo / 12, pago = Math.min(cuota, saldo + i);
-          saldo = saldo + i - pago; cuotas += pago; interes += i;
+          saldo = sinResiduo(saldo + i - pago); cuotas += pago; interes += i;
         }
         return { fin: 0, cuotas, interes, principal: cuotas - interes };
       };
 
       // El interés deducible es el que se paga ese año, no la media de la vida del préstamo.
-      // La hipoteca francesa carga casi todo el interés al principio: con la del ejemplo son
-      // 8.704 € el primer año frente a 4.892 € de media, y deducir la media hacía pagar de más
-      // en los primeros años y de menos en los últimos. El total a treinta años apenas cambia;
+      // La hipoteca francesa carga casi todo el interés al principio: el primer año se paga bastante
+      // más que la media de toda la vida, y deducir la media hacía pagar de más en los primeros
+      // años y de menos en los últimos (no se citan cifras: se quedan viejas con cada cambio de
+      // los valores de ejemplo). El total a treinta años apenas cambia;
       // lo que cambia es en qué año cae cada euro, que es de lo que vive una TIR.
       //
       // La amortización fiscal tampoco sigue restando para siempre: se agota cuando se ha deducido
@@ -2357,13 +2419,21 @@
         const deducido = delAno + usado;
         const base = ingresos - (gastos - conservacion) - deducido - deduccion;
         const impuestos = Math.max(base * tipoEfectivo, 0);
+        // Lo que enseñan la nota fiscal y la fila «Interés deducible»: lo deducido de verdad, que no
+        // es lo pagado cuando muerde el tope. `deducido` lleva también el mantenimiento, que ya
+        // viene restado dentro de los gastos, así que se le quita para que la resta que se lee
+        // (alquiler − gastos − esto − amortización) dé exactamente la base. `arrastre` es lo que
+        // este año se queda fuera del tope y espera hueco en los siguientes.
+        const financiacionDeducida = deducido - conservacion;
+        const arrastre = Math.max(propios - ingresos, 0);
         return { ingresos, gastos, interes, base, impuestos, cuotas, deduccion, deducido, perdido, pendientes,
+          financiacionDeducida, arrastre, topeAplicado: arrastre > 1e-9,
           caja: ingresos - impuestos - gastos - cuotas };
       };
 
-      // Las tres columnas del primer año se calculan con el interés de ese primer año. Describen el
-      // régimen anual, así que no llevan la comisión de apertura (un gasto de una sola vez, que
-      // entra en la proyección del año 1 con su arrastre); el tope del art. 23.1.a sí se aplica.
+      // Las tres columnas de la tabla de regímenes se calculan con el interés del primer año. Son
+      // regímenes «tipo» -lo que pasa mientras vive cada deuda-, así que no llevan la comisión de
+      // apertura, que es un gasto de una sola vez; el tope del art. 23.1.a sí se aplica.
       const primerAno = (principal, tipo, cuota) => tramoAno(principal, tipo, cuota);
       const hip1 = primerAno(principalHip, tipoHip, cuotaHip);
       const pre1 = primerAno(principalPre, tipoPre, cuotaPre);
@@ -2371,16 +2441,20 @@
         (principalHip > 0 ? cuotaHip * 12 : 0) + (principalPre > 0 ? cuotaPre * 12 : 0), 1);
       const regConHipoteca = regimen(hip1.interes, principalHip > 0 ? cuotaHip * 12 : 0, 1);
       const regSinDeuda = regimen(0, 0, 1);
-      const regimenInicial = principalPre > 0 ? regConPrestamo : regConHipoteca;
+      // El año 1 de verdad, el de la fila 1 de la proyección: con la comisión de apertura y su
+      // arrastre. Es el que usan el resumen, el KPI de caja, el «va a amortizar» y el ROCE; si
+      // fuera el régimen tipo, el resumen enseñaría un IRPF y una caja que la tabla no tiene.
+      const regimenInicial = regimen(hip1.interes + pre1.interes, hip1.cuotas + pre1.cuotas, 1, comisionApertura);
 
-      // Tipo de hipoteca al que la caja del primer año se queda en cero: a partir de ahí el piso
+      // Tipo de hipoteca al que la caja del primer año (la del resumen, con la comisión de apertura,
+      // que no depende del tipo) se queda en cero: a partir de ahí el piso
       // deja de pagarse solo y hay que alimentarlo todos los meses. No hace falta proyectar
       // treinta años para saberlo, basta con el régimen del primer año, así que sale barato y
       // cabe dentro del motor. La caja decrece con el tipo, así que la bisección es directa.
       const cajaConTipo = (t) => {
         const cuota = pmt(t / 12, plazoHip * 12, principalHip);
         const h = tramoAno(principalHip, t, cuota);
-        return regimen(h.interes + pre1.interes, h.cuotas + pre1.cuotas, 1).caja;
+        return regimen(h.interes + pre1.interes, h.cuotas + pre1.cuotas, 1, comisionApertura).caja;
       };
       const TIPO_MAX = 0.30;
       const rupturaCaja = (() => {
@@ -2548,7 +2622,11 @@
       const revalorizadoAno1 = (valor + reforma) * revalorizacion;
       const retornoRealizado = regimenInicial.caja + amortizadoAno1;
       const retornoAno1 = retornoRealizado + revalorizadoAno1;
-      const sobre = (v) => aportado > 0 ? v / aportado : null;
+      // Sin liquidez del día uno (una compra financiada entera) el ROCE se mide contra lo que se ha
+      // ido aportando después, si hay algo: decir «—» ocultaba una rentabilidad que sí existe. Sin
+      // un euro puesto en todo el horizonte no hay nada contra lo que medir.
+      const capitalRoce = aportado > 0 ? aportado : aportadoAcum;
+      const sobre = (v) => capitalRoce > 0 ? v / capitalRoce : null;
 
       const sinDeuda = filas.find(f => f.hipFin <= 0 && f.preFin <= 0);
       // Recuperar lo puesto se mide contra todo el capital aportado, no sólo el del día uno.
@@ -2663,7 +2741,7 @@
       // «por encima de 9,99»: con 9.995 se absorbe el redondeo a dos decimales de la caja, para
       // que un 10,00 escrito a mano no se quede justo por debajo.
       // La caja del tipo se pone en rojo con el resto de avisos (pintarAvisos), con el mismo umbral.
-      const tipoPrestamoAlto = num('tipoPrestamo') > 9.995;
+      const tipoPrestamoAlto = d.usarPrestamo && num('tipoPrestamo') > 9.995;
       el('lblTipoPrestamo').classList.toggle('val-neg', tipoPrestamoAlto);
       el('altoPrestamo').classList.toggle('hidden', !tipoPrestamoAlto);
 
@@ -2706,7 +2784,9 @@
       // Mismo mensaje en corto para la línea y entero para el globo: en la tarjeta sólo cabe un
       // renglón, y el matiz que se cae -de dónde sale ese dinero- merece seguir estando.
       const acelera = (d.hipAcelerada && d.principalHip > 0) || (d.preAcelerado && d.principalPre > 0);
-      const [clave, args] = d.aportado <= 0 ? ['kpiSinAportacion', []]
+      // «Sin aportación» sólo si no se ha puesto ni un euro en todo el horizonte: el capital que se mete
+      // después también hay que recuperarlo.
+      const [clave, args] = d.ultima.aportadoAcum <= 0 ? ['kpiSinAportacion', []]
         : d.payback ? ['kpiRecuperas', [fmt(d.ultima.aportadoAcum), d.payback.n]]
         : acelera ? ['kpiNoRecuperaAcel', [fmt(d.ultima.aportadoAcum)]]
         : ['kpiNoRecupera', [fmt(d.ultima.cajaAcum), d.horizonte, fmt(d.ultima.aportadoAcum)]];
@@ -2749,9 +2829,9 @@
       const pct = (v, clase) => `<span class="${clase || (v === null ? 'val-muted' : signo(v))}">${fmtPct(v, 1)}</span>`;
       // La misma anualizada con tres hipótesis de revalorización: el piso no sube, sube como la
       // inflación, o la supera en dos puntos. Es lo único del modelo que nadie puede prometer, y
-      // la horquilla enseña cuánto de la cifra depende de ello. Con inflación negativa la base
-      // es 0, que es lo que haría el candado cerrado.
-      const inflBase = Math.max(d.inflacion, 0);
+      // la horquilla enseña cuánto de la cifra depende de ello. Con inflación negativa el escalón
+      // del medio es esa caída, que es lo que hace el candado cerrado (estimado()).
+      const inflBase = d.inflacion;
       const horquilla = [0, inflBase, inflBase + 0.02].map(r => calcular(r).filaRef.anualizada);
       el('tblRentabilidad').innerHTML = [
         filaResumen(t('rentBruta'), pct(d.rentabilidadBruta, 'text-brand-accent'), { titulo: t('kpiBrutaTip') }),
@@ -2766,8 +2846,15 @@
         filaResumen(tf('rentTirVenta', d.anoRef), pct(d.filaRef.tirVenta), { titulo: t('rentTirVentaTip') })
       ].join('');
 
-      el('notaFiscal').textContent = tf('notaFiscal', fmt(reg.ingresos), fmt(reg.gastos), fmt(reg.interes),
-        fmt(d.amortizacion), fmt(reg.base), fmtNum(num('baseTributable')) + '%', fmtNum(num('tipoMarginal')) + '%');
+      // La resta de la nota tiene que cuadrar con lo que se deduce de verdad (reg.financiacionDeducida),
+      // no con lo pagado: cuando muerde el tope son cifras distintas. El signo va dentro de la cifra
+      // porque lo deducido puede salir negativo (un mantenimiento que no cabe en el tope).
+      const deducida = reg.financiacionDeducida;
+      el('notaFiscal').textContent = tf('notaFiscal', fmt(reg.ingresos), fmt(reg.gastos),
+        (deducida >= 0 ? '− ' : '+ ') + fmt(Math.abs(deducida)),
+        fmt(d.amortizacion), fmt(reg.base), fmtNum(num('baseTributable')) + '%', fmtNum(num('tipoMarginal')) + '%',
+        t(d.comisionApertura > 0 ? 'notaInteresApertura' : 'notaInteres'),
+        reg.topeAplicado ? ' ' + tf('notaTope', fmt(reg.arrastre)) : '');
 
       renderProyeccion(d);
       renderRegimenes(d);
@@ -2796,16 +2883,30 @@
 
     // Pasa la comisión de % a € o al revés conservando el importe en euros: lo que cambia es la
     // forma de escribirlo, no lo que se paga. Sin principal no hay importe que conservar y queda en 0.
+    //
+    // Convertir y volver altera lo escrito («3,3656» % → € → «3,365601» %: el importe se redondea al
+    // céntimo y al deshacerlo ya no sale el mismo porcentaje). Por eso se guarda de dónde viene lo que
+    // hay en el campo: si se vuelve al modo de origen sin tocar el texto y con el mismo principal, se
+    // restaura el texto original en vez de reconvertir.
+    const PUENTE_APERTURA = {};
     function alternarModoApertura(sufijo) {
       const id = 'apertura' + sufijo, casilla = el(id + 'Eur');
       const aEuros = !casilla.checked;
+      const antes = el(id).value;
       const valor = Math.max(num(id), 0);          // se lee antes de que calcular() lo recorte
       const principal = APERTURAS[id].principal(calcular());
-      let nuevo = 0;
-      if (principal > 0) nuevo = aEuros ? principal * Math.min(valor, 100) / 100 : Math.min(valor / principal * 100, 100);
+      const puente = PUENTE_APERTURA[id];
       casilla.checked = aEuros;
       const [dmax, dmin] = decimalesCampo(id);
-      fijar(id, nuevo, dmax, dmin);
+      if (puente && puente.haciaEuros !== aEuros && puente.resultado === antes && puente.principal === principal) {
+        el(id).value = puente.origen;
+        delete PUENTE_APERTURA[id];
+      } else {
+        let nuevo = 0;
+        if (principal > 0) nuevo = aEuros ? principal * Math.min(valor, 100) / 100 : Math.min(valor / principal * 100, 100);
+        fijar(id, nuevo, dmax, dmin);
+        PUENTE_APERTURA[id] = { haciaEuros: aEuros, origen: antes, resultado: el(id).value, principal };
+      }
       confirmarCambio();
     }
 
@@ -2863,20 +2964,24 @@
     }
 
     function renderRegimenes(d) {
+      // Las tres columnas son regímenes «tipo», sin la comisión de apertura (que sólo se paga el
+      // año 1 y está en el resumen y en la fila 1 de la proyección): con comisión, se dice.
+      el('regimenesAyuda').textContent = t('regimenesAyuda') + (d.comisionApertura > 0 ? ' ' + t('regimenesSinApertura') : '');
       const fila = (etiqueta, sel, formato, titulo) => {
         const tt = titulo ? ` class="tooltip-help" title="${titulo.replace(/"/g, '&quot;')}"` : '';
         return `<tr>
           <td class="py-1.5 pr-3 text-brand-textMuted text-left"><span${tt}>${etiqueta}${titulo ? ' ⓘ' : ''}</span></td>
-          <td class="py-1.5 px-3 text-right">${formato(sel(d.regConPrestamo))}</td>
-          <td class="py-1.5 px-3 text-right">${formato(sel(d.regConHipoteca))}</td>
-          <td class="py-1.5 pl-3 text-right">${formato(sel(d.regSinDeuda))}</td>
+          <td class="py-1.5 px-3 text-right">${formato(sel(d.regConPrestamo), d.regConPrestamo)}</td>
+          <td class="py-1.5 px-3 text-right">${formato(sel(d.regConHipoteca), d.regConHipoteca)}</td>
+          <td class="py-1.5 pl-3 text-right">${formato(sel(d.regSinDeuda), d.regSinDeuda)}</td>
         </tr>`;
       };
       el('tblRegimenes').innerHTML = [
         fila(t('alquilerCobrado'), r => r.ingresos, v => `<span class="val-pos">${fmt(v)}</span>`),
         fila(t('gastosDelPiso'), r => r.gastos, v => `<span class="val-neg">− ${fmt(v)}</span>`),
         fila(t('cuotasDeuda'), r => r.cuotas, v => v ? `<span class="val-neg">− ${fmt(v)}</span>` : '—'),
-        fila(t('interesDeducible'), r => r.interes, v => v ? fmt(v) : '—', t('interesDeducibleTip')),
+        fila(t('interesDeducible'), r => r.financiacionDeducida, (v, r) => (v ? fmt(v) : '—') + (r.topeAplicado
+          ? ` <span class="tooltip-help text-[10px] text-brand-amber whitespace-nowrap" title="${escapar(tf('topeAplicadoTip', fmt(r.arrastre)))}">${t('topeAplicado')}</span>` : ''), t('interesDeducibleTip')),
         fila(t('baseFiscal'), r => r.base, v => `<span class="${signo(v)}">${fmt(v)}</span>`, t('baseFiscalTip')),
         fila(t('irpf'), r => r.impuestos, v => v ? `<span class="val-neg">− ${fmt(v)}</span>` : '—'),
         `<tr class="font-bold"><td class="py-2 pr-3 text-left">${t('cajaNetaAnual')}</td>
@@ -3128,7 +3233,10 @@
     function renderFaqApalancamiento(d) {
       const destino = el('faqApalancamiento');
       if (!destino) return;
-      const rendimientoNeto = d.costeTotal > 0 ? (d.alquilerAnual - d.gastosAnuales) / d.costeTotal : 0;
+      // El piso, después de impuestos como la deuda: la rentabilidad neta del régimen sin deuda (renta
+      // menos gastos y menos IRPF, sobre el coste total) más la revalorización. Comparar la renta
+      // antes de IRPF con un coste de deuda ya rebajado por la deducción favorecía al piso.
+      const rendimientoNeto = d.rentabilidadNeta;
       const activo = rendimientoNeto + d.revalorizacion;
       const neto = (tipo) => tipo / 100 * (1 - d.tipoEfectivo);
       const hip = neto(num('tipoHipoteca'));
@@ -3224,6 +3332,14 @@
     };
 
     function aplicarEstado(estado) {
+      // Un valor que no es un número («NaN», «abc», «Infinity») en un campo numérico no se aplica: el
+      // campo se queda con el valor por defecto en vez de caer al mínimo de su rango o enseñar
+      // «Infinity». Vale para un enlace manipulado y para un guardado tocado a mano.
+      estado = { ...estado };
+      CAMPOS.forEach(id => {
+        if (estado[id] === undefined || el(id).tagName !== 'INPUT' || el(id).type !== 'text') return;
+        if (Number.isNaN(leerNumero(estado[id], true))) estado[id] = DEFECTOS[id] ?? el(id).value;
+      });
       // El desplegable del año necesita tener sus opciones antes de poder recibir el valor
       // guardado: asignar un value que no está entre las opciones no hace nada.
       if (estado.anoRef !== undefined) anoRefElegido = parseInt(estado.anoRef, 10) || null;
@@ -3245,15 +3361,18 @@
       // a mano, pero en silencio y sin romper nada: se recorta y se sigue. Va después de poner todos
       // los campos y casillas porque el rango de algunos depende de otros (modo de la apertura).
       const cambio = (id) => estado[id] !== undefined && limitarCampo(id, { silencio: true });
-      const cDesc = cambio('descuentoOferta'), cOferta = cambio('oferta'), cPrecio = cambio('precioAnunciado');
+      // Si el estado trae la oferta, el descuento es DERIVADO de ella y no se recorta: una oferta por
+      // encima del anunciado da un descuento negativo, y recortarlo a 0 pisaba la oferta (se perdía al
+      // recargar, al deshacer y al abrir un enlace). Sólo se recorta lo que teclea el usuario.
+      const ofertaManda = estado.oferta !== undefined;
+      if (!ofertaManda) cambio('descuentoOferta');
+      cambio('oferta'); cambio('precioAnunciado');
       CAMPOS.forEach(id => { if (id !== 'descuentoOferta' && id !== 'oferta' && id !== 'precioAnunciado') cambio(id); });
       // Un estado parcial (un enlace que sólo trae el precio, uno de antes del descuento) no debe
-      // dejar oferta y descuento incoherentes: el que falte sale del otro. Antes el descuento de
-      // los defectos llegaba siempre y esta rama no se ejecutaba nunca.
-      if (estado.descuentoOferta === undefined) descuentoDesdeOferta();
-      else if (estado.oferta === undefined) ofertaDesdeDescuento();
-      else if (cDesc) ofertaDesdeDescuento();
-      else if (cOferta || cPrecio) descuentoDesdeOferta();
+      // dejar oferta y descuento incoherentes: el que falte sale del otro. Con oferta, el descuento
+      // se recalcula siempre desde ella; sólo si trae el descuento y no la oferta, ésta sale de aquél.
+      if (ofertaManda || estado.descuentoOferta === undefined) descuentoDesdeOferta();
+      else ofertaDesdeDescuento();
       // El descuento no tiene data-dec, así que formatearCampos() no lo toca: un «7.5» del enlace
       // se quedaba con punto en español. Se escribe con el formato del idioma.
       if (estado.descuentoOferta !== undefined) fijar('descuentoOferta', num('descuentoOferta'), 2, 0);
@@ -3280,15 +3399,29 @@
     function guardar() {
       clearTimeout(guardarTimer);
       guardarTimer = setTimeout(() => {
-        try {
-          // Las opciones de la comparación viajan con el resto del estado guardado, pero no en el
-          // enlace de compartir: son una herramienta de trabajo, no parte del escenario.
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...leerEstado(), comparar: OPCIONES }));
-          if (avisoGuardado) mostrarIndicador(t(avisoGuardado));
-          avisoGuardado = 'guardado';
-        } catch (e) {}
+        guardarTimer = null;
+        escribirGuardado();
+        if (avisoGuardado) mostrarIndicador(t(avisoGuardado));
+        avisoGuardado = 'guardado';
       }, 600);
     }
+    function escribirGuardado() {
+      try {
+        // Las opciones de la comparación viajan con el resto del estado guardado, pero no en el
+        // enlace de compartir: son una herramienta de trabajo, no parte del escenario.
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...leerEstado(), comparar: OPCIONES }));
+      } catch (e) {}
+    }
+    // El guardado espera 600 ms para no escribir en cada pulsación; un cambio hecho justo antes de
+    // recargar o cerrar la pestaña se perdía en esa espera. Al esconder o descargar la página se
+    // escribe ya, sin indicador (nadie lo va a ver) y sin dejar el temporizador pendiente.
+    function guardarYa() {
+      if (CARGANDO || guardarTimer === null) return;
+      clearTimeout(guardarTimer); guardarTimer = null;
+      escribirGuardado();
+    }
+    window.addEventListener('pagehide', guardarYa);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') guardarYa(); });
 
     function resetDefaults() { avisoGuardado = 'datosReseteados'; OPCIONES = []; aplicarEstado(DEFECTOS); confirmarCambio(); }
 
@@ -3370,6 +3503,10 @@
       if (!rehacer && k !== 'z') return;
       if (document.querySelector('[id$="Modal"].flex')) return;
       const f = document.activeElement;
+      // El editor del nombre de una opción es un campo de texto aparte, sin «valor confirmado» en el
+      // sentido de arriba: Ctrl+Z ahí es del navegador siempre. Si no, restaurar el historial con el
+      // editor abierto cambiaba las opciones por debajo y el nombre se perdía.
+      if (f && f.classList && f.classList.contains('cmp-edit')) return;
       if (f && f.tagName === 'INPUT' && f.type === 'text' && f.value !== f.dataset.confirmado) return;
       ev.preventDefault();
       moverHistorial(rehacer ? 1 : -1);
@@ -3575,8 +3712,14 @@
     // Doble clic sobre el nombre, o clic (o Enter) en el lápiz: se convierte en un campo en su sitio,
     // con el texto seleccionado.
     // Enter o salir del campo guardan; Escape cancela; vacío vuelve al nombre por defecto.
+    //
+    // `cierreEdicion` es el cierre del editor abierto, si lo hay: quien vaya a actuar sobre la tabla
+    // (✕, Cargar, el lápiz de otra opción) lo confirma antes, porque mientras hay un editor
+    // pintarComparacion no repinta y la acción no se vería.
+    let cierreEdicion = null;
     function renombrarOpcion(etiqueta) {
-      const o = OPCIONES.find(x => x.letra === etiqueta.dataset.renombrar);
+      const letra = etiqueta.dataset.renombrar;
+      const o = OPCIONES.find(x => x.letra === letra);
       if (!o || etiqueta.querySelector('.cmp-edit')) return;
       const campo = document.createElement('input');
       campo.type = 'text'; campo.className = 'cmp-edit'; campo.maxLength = MAX_NOMBRE;
@@ -3584,9 +3727,15 @@
       let cerrado = false;
       const cerrar = (guardarNombre) => {
         if (cerrado) return; cerrado = true;
-        if (guardarNombre) o.nombre = limpiarNombre(campo.value);
+        cierreEdicion = null;
+        // La opción se busca por su letra en la lista de ahora, no con la referencia de cuando se
+        // abrió el editor: si entre medias se restauró el historial, OPCIONES son otros objetos y el
+        // nombre se escribía en uno que ya no está.
+        const actual = OPCIONES.find(x => x.letra === letra);
+        if (guardarNombre && actual) actual.nombre = limpiarNombre(campo.value);
         campo.remove(); ultimaTabla = null; confirmarCambio();
       };
+      cierreEdicion = cerrar;
       campo.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); cerrar(true); }
         else if (ev.key === 'Escape') { ev.preventDefault(); cerrar(false); }
@@ -3611,8 +3760,13 @@
       if (!boton) return;
       if (ev.type === 'mousedown') { if (ev.button !== 0) return; ev.preventDefault(); }
       else if (ev.detail !== 0) return;
-      if (boton.dataset.lapiz !== undefined) renombrarOpcion(boton.closest('[data-renombrar]'));
-      else if (boton.dataset.quitar) quitarComparacion(boton.dataset.quitar); else cargarOpcion(boton.dataset.cargar);
+      // Se leen los datos del botón antes de cerrar el editor: al confirmarlo la tabla se repinta y
+      // este botón pasa a ser uno suelto, ya fuera de la página.
+      const lapiz = boton.dataset.lapiz !== undefined, letra = lapiz ? boton.closest('[data-renombrar]').dataset.renombrar : null;
+      const quitar = boton.dataset.quitar, cargar = boton.dataset.cargar;
+      if (cierreEdicion) cierreEdicion(true);
+      if (lapiz) renombrarOpcion(document.querySelector(`#comparar [data-renombrar="${letra}"]`));
+      else if (quitar) quitarComparacion(quitar); else cargarOpcion(cargar);
     }
 
     function anadirComparacion() {
@@ -3966,14 +4120,13 @@
         if (campo.tagName === 'SELECT') { campo.addEventListener('change', confirmarCambio); return; }
         campo.addEventListener('input', () => { if (cifrasEscritas(campo) >= cifrasMinimas(id)) render(); });
         campo.addEventListener('change', () => { limitarYEnlazar(id); confirmarCambio(); });
-        if (campo.hasAttribute('data-money') || campo.hasAttribute('data-dec')) {
-          campo.addEventListener('blur', () => {
-            if (id !== 'descuentoOferta') limitarYEnlazar(id);
-            const [dmax, dmin] = decimalesCampo(id);
-            fijar(id, num(id), dmax, dmin);
-            confirmarCambio();
-          });
-        }
+        // Al salir de cualquier campo de texto se le da su formato (el idioma activo, sus decimales).
+        campo.addEventListener('blur', () => {
+          if (id !== 'descuentoOferta') limitarYEnlazar(id);
+          const [dmax, dmin] = decimalesCampo(id);
+          fijar(id, num(id), dmax, dmin);
+          confirmarCambio();
+        });
       });
       CASILLAS.forEach(id => el(id).addEventListener('change', confirmarCambio));
       for (const id of ['comparar', 'compararUna']) {

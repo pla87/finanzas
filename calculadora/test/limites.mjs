@@ -182,7 +182,8 @@ check('con horizonte 10 el año de referencia se recorta a 10', (await val('anoR
 await poner('horizonte', '30');
 check('  al subirlo a 30 vuelve a 30 (no se queda pegado en 10)', (await val('anoRef')) === '30', await val('anoRef'));
 await poner('horizonte', '');
-check('  vaciar el horizonte lo deja en 1', (await val('horizonte')) === '1');
+// Vacío no se fuerza al mínimo: se restaura lo último confirmado y se avisa (revision3, punto 2).
+check('  vaciar el horizonte restaura el último valor confirmado (30)', (await val('horizonte')) === '30', await val('horizonte'));
 await poner('horizonte', '30');
 check('  y recuperarlo devuelve el año 30', (await val('anoRef')) === '30', await val('anoRef'));
 await p.evaluate(() => { const s = document.getElementById('anoRef'); s.value = '12'; s.dispatchEvent(new Event('change', { bubbles: true })); });

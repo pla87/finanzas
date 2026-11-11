@@ -161,12 +161,13 @@ await p.evaluate(() => { document.getElementById('langBtn').click(); });
 // --- el indicador: ♻️ dice «Datos reseteados» y un guardado normal sigue diciendo «Guardado» ---
 await p.evaluate(() => { document.getElementById('saveIndicator').textContent = ''; resetDefaults(); });
 await p.waitForTimeout(900);
-check('tras ♻️ el indicador dice «Datos reseteados»', (await p.textContent('#saveIndicator')) === 'Datos reseteados', await p.textContent('#saveIndicator'));
+// Ahora lleva además «· Ctrl+Z para deshacer» y un botón «Deshacer» (revision3 los vigila).
+check('tras ♻️ el indicador dice «Datos reseteados»', (await p.textContent('#saveIndicator')).startsWith('Datos reseteados'), await p.textContent('#saveIndicator'));
 await p.fill('#alquiler', '1.300'); await p.press('#alquiler', 'Tab'); await p.waitForTimeout(900);
 check('el guardado siguiente vuelve a decir «Guardado»', (await p.textContent('#saveIndicator')) === 'Guardado', await p.textContent('#saveIndicator'));
 await p.evaluate(() => { document.getElementById('langBtn').click(); resetDefaults(); });
 await p.waitForTimeout(900);
-check('en inglés, «Data reset»', (await p.textContent('#saveIndicator')) === 'Data reset', await p.textContent('#saveIndicator'));
+check('en inglés, «Data reset»', (await p.textContent('#saveIndicator')).startsWith('Data reset'), await p.textContent('#saveIndicator'));
 await p.evaluate(() => document.getElementById('langBtn').click());
 await p.waitForTimeout(100);
 
@@ -247,7 +248,7 @@ await p.evaluate(() => resetDefaults());
 check('sin botones de guardar ni cargar, y el de compartir va el último con dos iconos',
   await p.evaluate(() => !document.getElementById('btnGuardar') && !document.getElementById('btnCargar') && !document.getElementById('backupInput')
     && typeof exportData === 'undefined' && typeof importData === 'undefined'
-    && document.querySelector('header button:last-of-type').id === 'btnCompartir'
+    && document.querySelector('header .flex-nowrap button:last-of-type').id === 'btnCompartir'
     && document.getElementById('btnCompartir').textContent.trim() === '🔗💾'));
 check('el modal de compartir lleva 🧮 y 💾', await p.evaluate(() => {
   const m = [...document.querySelectorAll('#shareModal button[onclick^="compartir"]')].map(b => b.textContent);

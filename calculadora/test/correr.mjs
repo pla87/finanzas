@@ -9,7 +9,7 @@ const AQUI = fileURLToPath(new URL('./', import.meta.url));
 // con la transcripción, lo que diga el resto importa poco.
 const SUITES = [
   ['verificar',      'el motor contra los valores de la hoja original'],
-  ['cruzar',         'el motor contra la transcripción en Python, nueve escenarios'],
+  ['cruzar',         'el motor contra la transcripción en Python, doce escenarios'],
   ['repro2',         'los defectos de la primera auditoría siguen corregidos'],
   ['prioridad',      'la caja amortiza la deuda cara antes que la barata'],
   ['orden',          'y el orden lo deciden los tipos, no el tipo de préstamo'],
@@ -30,6 +30,7 @@ const SUITES = [
   ['limites',        'límites duros y avisos en rojo, lectura de decimales, horizonte y año de referencia'],
   ['defectos',       'tasas por defecto nuevas y enlaces antiguos con los de antes'],
   ['deshacer',       'Ctrl+Z / Ctrl+Y con historial de instantáneas'],
+  ['revision',       'deuda que se cancela a mitad de año, tope de amortización, tramo del 30 %, enlaces parciales y modales'],
 ];
 
 const soloEstas = process.argv.slice(2);

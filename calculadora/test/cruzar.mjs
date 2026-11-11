@@ -15,15 +15,29 @@ const hoja = JSON.parse(readFileSync(new URL('esperado.json', import.meta.url), 
 //    igualdad; los saldos y el patrimonio, que no tocan la base fiscal, siguen cuadrando exactos.
 let fallos = 0;
 const cerca = (a, b, tol) => Math.abs((a ?? 0) - (b ?? 0)) <= tol;
-const DIVERGEN = new Set(['impConPrestamo', 'cajaConPrestamo', 'impConHipoteca', 'cajaConHipoteca']);
+//
+//    La segunda divergencia es la base amortizable: la hoja amortizaba el 3 % de (60 % del precio +
+//    reforma + gastos de compra ENTEROS), y fiscalmente los gastos de adquisición se reparten entre
+//    suelo y construcción como el precio, así que el modelo amortiza el 3 % de 60 % de (precio +
+//    gastos) + reforma. Amortiza menos (9.918 € frente a 10.530 € en el escenario de la hoja), de
+//    modo que sin deuda paga más impuesto y le queda menos caja. Lo que no pasa por la base fiscal
+//    sigue cuadrando al céntimo.
+const MENOR = 'menor', MAYOR = 'mayor';
+const DIVERGEN = new Map([
+  ['impConPrestamo', [MENOR, 'interés real del año']], ['cajaConPrestamo', [MAYOR, 'interés real del año']],
+  ['impConHipoteca', [MENOR, 'interés real del año']], ['cajaConHipoteca', [MAYOR, 'interés real del año']],
+  ['amortizacion', [MENOR, 'sólo la construcción amortiza los gastos de compra']],
+  ['impSinDeuda', [MAYOR, 'amortiza menos, tributa más']], ['cajaSinDeuda', [MENOR, 'amortiza menos, tributa más']]
+]);
 console.log('=== transcripción Python vs. hoja original (escenario por defecto) ===');
 for (const [k, v] of Object.entries(hoja.escalares)) {
   const g = modelo.defecto.salida.escalares[k];
   if (g === undefined) continue;
   if (DIVERGEN.has(k)) {
-    const esperado = k.startsWith('imp') ? g < v : g > v;
+    const [sentido, motivo] = DIVERGEN.get(k);
+    const esperado = sentido === MENOR ? g < v : g > v;
     if (!esperado) { fallos++; console.log(`FALLO ${k} diverge al revés: hoja=${v} py=${g}`); }
-    else console.log(`  diverge ${k.padEnd(16)} hoja=${v.toFixed(2).padStart(10)} py=${g.toFixed(2).padStart(10)}  (interés real del año)`);
+    else console.log(`  diverge ${k.padEnd(16)} hoja=${v.toFixed(2).padStart(10)} py=${g.toFixed(2).padStart(10)}  (${motivo})`);
     continue;
   }
   if (!cerca(g, v, 0.02)) { fallos++; console.log(`FALLO ${k}: hoja=${v} py=${g}`); }

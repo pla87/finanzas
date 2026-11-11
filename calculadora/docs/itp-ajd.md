@@ -38,7 +38,7 @@ se paga en obra nueva junto al IVA del 10% (IGIC del 7% en Canarias).
 | Madrid | 6 % | 0,75 % | — | corroborado | |
 | Murcia | 7,75 % | 1,5 % | **8 → 7,75** | una sola fuente | |
 | Navarra | 6 % | 0,5 % | — | corroborado | |
-| País Vasco | 7 % | 0 % | — | ver nota | |
+| País Vasco | 7 % | 0,5 % | — | ver nota | |
 | La Rioja | 7 % | 1 % | — | corroborado | |
 | Valencia | 9 % | 1,5 % | **10 → 9** | corroborado, cambio de junio de 2026 | |
 
@@ -60,6 +60,13 @@ avisa al elegirlas. Los cortes que se encontraron:
 **País Vasco.** El 4 % que aparece en muchas tablas es el tipo reducido de **vivienda
 habitual**. Un piso comprado para alquilar no es vivienda habitual del comprador, así que lo
 que aplica es el general del 7 %, que es el que trae la tabla. Conviene confirmarlo.
+El AJD de la obra nueva es el 0,5 % en los tres territorios (Bizkaia art. 44 NF 1/2011,
+Gipuzkoa art. 29, Álava art. 56 NF 11/2003; lo recoge la guía de fiscalidad de la vivienda de
+euskadi.eus). La tabla traía un 0 % hasta noviembre de 2026.
+
+**Castilla-La Mancha.** AJD general del 1,5 % (Ley 3/2016); el 0,75 % que aparece en algunas
+tablas es el reducido de vivienda habitual de jóvenes y familias numerosas, que no aplica a un
+piso para alquilar.
 
 **Tipos reducidos que la herramienta no recoge.** Casi todas las comunidades tienen tipos
 rebajados (entre 2 y 4 puntos) para menores de 35 años, familia numerosa, personas con

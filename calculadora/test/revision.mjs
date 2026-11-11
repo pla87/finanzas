@@ -63,9 +63,9 @@ const lectorCuotas = `(d) => { ${SIM}
 }`;
 const verCuotas = async (nombre, cfg, anoCancela) => {
   const filas = await motor(cfg, lectorCuotas);
-  // El año 1 cuenta a medias y no se compara. Del 2 en adelante, la caja implícita tiene que dar
-  // las cuotas del simulador al céntimo.
-  const malas = filas.filter(f => f.n >= 2 && !(Math.abs(f.implicita - f.esperada) < 0.5));
+  // El año 1 es un año completo como los demás, así que se compara igual: la caja implícita tiene
+  // que dar las cuotas del simulador al céntimo desde el primero.
+  const malas = filas.filter(f => !(Math.abs(f.implicita - f.esperada) < 0.5));
   check(`${nombre}: cuotas cobradas = simulación mes a mes`, malas.length === 0,
     malas.slice(0, 2).map(f => `año ${f.n}: cobra ${f.implicita.toFixed(0)}, debería ${f.esperada.toFixed(0)}`).join(' · '));
   const f = filas[anoCancela - 1];
@@ -93,7 +93,7 @@ const tope = await motor({
   campos: { pctConstruccion: '100', tasaAmortizacion: '3', horizonte: '40', alquiler: '2500', reforma: '0', tipoMarginal: '40', baseTributable: '100' },
   casillas: { usarHipoteca: false } },
   `(d) => ({ base: d.baseAmortizable, am: d.amortizacion, tipo: d.tipoEfectivo,
-     deduce: d.filas.map(f => (d.alquilerAnual - d.gastosAnuales) - f.irpf * (f.n === 1 ? 2 : 1) / d.tipoEfectivo) })`);
+     deduce: d.filas.map(f => (d.alquilerAnual - d.gastosAnuales) - f.irpf / d.tipoEfectivo) })`);
 const esperadoDeduce = (n) => Math.min(tope.am, Math.max(tope.base - tope.am * (n - 1), 0));
 const malaDeduccion = tope.deduce.map((x, i) => ({ n: i + 1, x, e: esperadoDeduce(i + 1) })).filter(o => Math.abs(o.x - o.e) > 0.01);
 check('la deducción por amortización no pasa de la base restante', malaDeduccion.length === 0,

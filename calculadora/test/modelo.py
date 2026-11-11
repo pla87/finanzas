@@ -79,21 +79,47 @@ def correr(p):
             interes += i
         return max(s, 0.0), pagado, interes
 
-    def regimen(interes, cuotas, n=1):
-        # La amortización deducida se agota al llegar a la base amortizable.
+    def regimen(interes, cuotas, n=1, comision=0.0, lotes=None):
+        """Un año fiscal de alquiler: (impuesto, caja, datos del límite y del arrastre).
+
+        Art. 23.1.a LIRPF: intereses + gastos de financiación (la comisión de apertura, en el año
+        en que se paga) + reparación y conservación (el mantenimiento) no pueden superar los
+        ingresos íntegros del año. El exceso se deduce en los 4 años siguientes con el mismo
+        límite, lo más antiguo primero; lo que no quepa en ese plazo se pierde. Los gastos del año
+        entran antes que los arrastrados.
+
+        El rendimiento neto negativo por los demás gastos (comunidad, IBI, seguros, amortización)
+        da impuesto 0 y no se compensa: la herramienta no conoce otros ingresos del usuario."""
+        lotes = lotes or []
+        ingresos = C30*12
         deduccion = min(C33, max(BASE_AMORT - C33*(n-1), 0))
-        base = C30*12 - C32 - interes - deduccion
+        propios = interes + comision + C31
+        del_ano = min(propios, ingresos)
+        hueco = ingresos - del_ano
+        usado, perdido, nuevos = 0.0, 0.0, []
+        for ano, importe in lotes:                     # ya van de más antiguo a más reciente
+            if n - ano > 4:                            # el plazo de cuatro años siguientes ya pasó
+                perdido += importe
+                continue
+            u = min(importe, hueco)
+            hueco -= u; usado += u
+            if importe - u > 1e-9: nuevos.append((ano, importe - u))
+        if propios > ingresos: nuevos.append((n, propios - ingresos))
+        base = ingresos - (C32 - C31) - (del_ano + usado) - deduccion
         imp = max(base*tasa, 0)
-        return imp, C30*12 - imp - C32 - cuotas
+        datos = {'deducido': del_ano + usado, 'pendiente': sum(i for _, i in nuevos), 'perdido': perdido, 'lotes': nuevos}
+        return imp, ingresos - imp - C32 - cuotas, datos
 
     # El interés deducible es el del año, no la media de la vida del préstamo: en una cuota
     # francesa está casi todo al principio, y deducir la media desplaza impuestos entre años.
     h1 = ano_deuda(F3, C16, C18) if F3 > 0 else (0, 0, 0)
     p1 = ano_deuda(H3, C22, C23) if H3 > 0 else (0, 0, 0)
     int_hip1, int_pre1 = h1[2], p1[2]
-    C36, C37 = regimen(int_hip1 + int_pre1, h1[1] + p1[1])
-    C38, C39 = regimen(int_hip1, h1[1])
-    C40, C41 = regimen(0, 0)
+    # Las tres columnas del primer año describen el régimen anual, sin la comisión de apertura
+    # (un gasto de una sola vez): el límite sí se aplica, pero sin nada arrastrado de antes.
+    C36, C37, _ = regimen(int_hip1 + int_pre1, h1[1] + p1[1])
+    C38, C39, _ = regimen(int_hip1, h1[1])
+    C40, C41, _ = regimen(0, 0)
 
     # IRPF de la ganancia patrimonial: escala del ahorro, por tramos (el 30 % por encima de 300.000 € desde 2025).
     TRAMOS = [(6000, 0.19), (50000, 0.21), (200000, 0.23), (300000, 0.27), (float('inf'), 0.30)]
@@ -112,6 +138,8 @@ def correr(p):
     filas = []
     G_prev = I_prev = None
     L_prev = 0.0
+    lotes = []
+    perdido_acum = 0.0
     aportado_acum = C13 + com
     flujos = [-(C13 + com)]
     for n in range(1, p['horizonte']+1):
@@ -134,16 +162,11 @@ def correr(p):
         G, cuota_hip, int_hip = ano_deuda(F, C16, C18) if F > 0 else (0.0, 0.0, 0.0)
         I, cuota_pre, int_pre = ano_deuda(H, C22, C23) if H > 0 else (0.0, 0.0, 0.0)
         J = (C3 + C10)*(1+C49)**n - G - I
-        imp_full, caja_full = regimen(int_hip + int_pre, cuota_hip + cuota_pre, n)
-        mitad = 0.5 if n == 1 else 1.0
-        K = caja_full * mitad
-        irpf = imp_full * mitad
-        if n == 1 and com > 0:
-            # La comisión se deduce entera en el primer año, contra la base de esa media
-            # anualidad, y nunca deja un impuesto negativo.
-            base_full = C30*12 - C32 - (int_hip + int_pre) - min(C33, max(BASE_AMORT - C33*(n-1), 0))
-            irpf = max((base_full*mitad - com)*tasa, 0)
-            K += imp_full*mitad - irpf
+        # El año 1 es un año completo, como los demás: la deuda baja doce cuotas y el piso se
+        # revaloriza doce meses, así que el alquiler, los gastos y el IRPF también son de doce.
+        irpf, K, dat = regimen(int_hip + int_pre, cuota_hip + cuota_pre, n, com if n == 1 else 0.0, lotes)
+        lotes = dat['lotes']
+        perdido_acum += dat['perdido']
         base = sobrante
         # Un año en pérdidas se cubre con la caja acumulada y, si no llega, con dinero nuevo.
         disponible = base + K
@@ -162,7 +185,7 @@ def correr(p):
         neto = precio - gastos_venta - imp_venta - G - I + L
         MV = TIR(flujos[:n] + [flujos[n] + neto]) if C13 else None
         filas.append({'n':n,'irpf':irpf,'hipIni':F,'hipFin':G,'preIni':H,'preFin':I,'patrimonio':J,'cajaAno':K,
-                      'aportacion':aportacion,'cajaAcum':L,'anualizada':M,'aportadoAcum':aportado_acum,
+                      'aportacion':aportacion,'cajaAcum':L,'finDeducido':dat['deducido'],'finPendiente':dat['pendiente'],'finPerdido':perdido_acum,'anualizada':M,'aportadoAcum':aportado_acum,
                       'gananciaFiscal':ganancia,'impuestoVenta':imp_venta,'netoVenta':neto,'tirVenta':MV})
         G_prev, I_prev, L_prev = G, I, L
     return {'escalares':{'gastosCompra':C9,'desembolso':C12,'aportado':C13 + com,'comision':com,'cuotaHip':C18,'cuotaPre':C23,
@@ -194,6 +217,15 @@ ESC = {
  # IBI 0,2 % del precio, comunidad 1,2 €/m²·mes, seguro de hogar 2,5 €/m²·año, impagos 0,5
  # mensualidades y mantenimiento 2 % del alquiler anual (la superficie de estos escenarios es de
  # 100 m²). Si alguien cambia una tasa por defecto sin tocar esto, motor y transcripción divergen.
+ # Límite del art. 23.1.a (intereses + financiación + conservación <= ingresos íntegros del año) y
+ # arrastre de cuatro años. Alquiler muy bajo y apertura del 10 %: la comisión no cabe en el año 1,
+ # se arrastra y rebaja el IRPF del año 2 (que sin arrastre pagaría 689 € en vez de 213 €).
+ 'apertura_arrastre': {'C2':100000,'C3':100000,'C4':100000,'C11':10000,'C13':21000,'C26':100,'C27':10,'C28':100,'C30':700,'C31':40,'comHip':0.10,'horizonte':10},
+ # Interés que choca con el límite: hipoteca corta al 6 % sobre un alquiler que no la cubre. El
+ # exceso del año 1 se aprovecha en el 2.
+ 'interes_limite': {'C16':0.06,'C15':6,'C30':1800,'horizonte':10},
+ # Interés tan alto que ningún año deja hueco: el exceso se acumula y lo de más de cuatro años se pierde.
+ 'interes_caduca': {'C16':0.08,'horizonte':12},
  'estimados':     {'estimados':True, 'C26':0.002*500000, 'C27':1.2*100, 'C28':2.5*100, 'C31':0.02*2000*12},
 }
 res = {}

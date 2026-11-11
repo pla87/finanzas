@@ -126,6 +126,15 @@ for (let i = 0; i < esperado.filas.length; i++) {
   }
   if (Math.abs(g.cajaAno - e.cajaAno) > 0.02) divergentes++;
 }
+// Tercera divergencia: el año 1. La hoja lo contaba como media anualidad (suponía la compra a mitad
+// de año) mientras la deuda bajaba doce cuotas y el piso se revalorizaba doce meses; la herramienta
+// lo cuenta entero, como todos los demás. Se comprueba la causa y no una cifra: la caja del año 1 de
+// la hoja es la mitad de su caja anual, y la de la herramienta es su caja anual entera.
+const [h1, g1] = [esperado.filas[0], d.filas[0]];
+const anio1Ok = Math.abs(h1.cajaAno * 2 - esperado.escalares.cajaConHipoteca) < 0.02
+  && Math.abs(g1.cajaAno - d.escalares.cajaConHipoteca) < 0.02 && g1.cajaAno > h1.cajaAno;
+if (!anio1Ok) fallos++;
+console.log(`${anio1Ok ? 'dif ' : 'FALLO'} cajaAno año 1       hoja=${h1.cajaAno.toFixed(4).padStart(14)} web=${g1.cajaAno.toFixed(4).padStart(14)}  (año 1 completo: la hoja contaba media anualidad)`);
 const cruce = d.filas.findIndex((f, i) => f.cajaAno < esperado.filas[i].cajaAno) + 1;
 console.log(`dif  la caja diverge los ${divergentes} años y se queda por debajo de la hoja desde el año ${cruce || '—'}`);
 if (divergentes !== esperado.filas.length) { fallos++; console.log('FALLO: se esperaba divergencia en todos los años'); }

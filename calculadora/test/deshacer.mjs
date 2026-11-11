@@ -28,7 +28,7 @@ const tecla = async (k) => { await p.evaluate(() => document.activeElement && do
 let h = await hist();
 check('al arrancar hay una sola instantánea, el punto de partida', h.n === 1 && h.i === 0, JSON.stringify(h));
 await tecla('Control+z');
-check('Ctrl+Z sin nada que deshacer lo dice y no toca nada', (await indicador()) === 'Nada que deshacer' && (await val('alquiler')) === '1.250');
+check('Ctrl+Z sin nada que deshacer lo dice y no toca nada', (await indicador()) === 'Nada que deshacer' && (await val('alquiler')) === '1.250', JSON.stringify([await indicador(), await val('alquiler')]));
 
 // ---------- 2) un paso por cambio confirmado ----------
 await poner('alquiler', '1400');

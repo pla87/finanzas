@@ -1,6 +1,6 @@
 # Pruebas
 
-Veintidós suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
+Veintitrés suites que abren la herramienta en un Chromium de verdad y comprueban lo que hace.
 No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba donde vive.
 
 ## Correrlas
@@ -9,7 +9,7 @@ No hay unidades ni mocks: el motor vive dentro del HTML, así que se prueba dond
 cd test
 npm install            # sólo la primera vez
 npx playwright install chromium   # idem, salvo en contenedores que ya lo traen
-npm test               # las veintidós
+npm test               # las veintitrés
 npm test -- verificar cruzar      # sólo algunas
 ```
 
@@ -24,8 +24,8 @@ Las dos primeras son la red de seguridad de verdad; las demás cuidan comportami
 guardados en `esperado.json`.
 
 **`cruzar`** — el motor contra `modelo.py`, una transcripción independiente del modelo escrita
-en Python a partir de las mismas fórmulas, en nueve escenarios (con y sin préstamo personal, con
-una y otra amortización acelerada, piso barato, sin entrada, comisión de apertura y gastos estimados con las tasas por defecto). Dos implementaciones escritas por
+en Python a partir de las mismas fórmulas, en doce escenarios (con y sin préstamo personal, con
+una y otra amortización acelerada, piso barato, sin entrada, deuda que se cancela a mitad de año, cuarenta años sin deuda para agotar la amortización fiscal, comisión de apertura y gastos estimados con las tasas por defecto). Dos implementaciones escritas por
 separado que coinciden al céntimo es lo que da confianza en las ramas que el escenario por
 defecto no toca. `modelo.py` genera `modelo.json`, que está versionado para que las pruebas
 corran sin Python; el ejecutor lo regenera si `python3` está disponible.
@@ -44,12 +44,16 @@ las deshaga sin querer.
 | **ROCE** | caja sobre lo aportado | caja + principal amortizado, y aparte con revalorización |
 | **Caja negativa** | se arrastraba sin coste | la cubre la caja acumulada y, si no llega, una aportación tuya |
 | **Amortización anticipada** | la misma caja se gastaba dos veces con las dos aceleradas | se reparte en un solo sentido |
+| **Base amortizable** | 60 % del precio + reforma + gastos de compra enteros | 60 % de (precio + gastos de compra) + reforma: los gastos se reparten entre suelo y construcción como el precio |
+| **Amortización fiscal** | sin tope | se agota al deducir toda la base amortizable (al 3 %, a los 33 años) |
+| **Año en que una deuda se cancela** | doce cuotas enteras | sólo los meses que hacen falta, con su interés real |
+| **Tramo alto del ahorro** | 28 % | 30 % por encima de 300.000 € (Ley 7/2024) |
 | **Orden de amortización** | siempre el préstamo personal primero | primero la deuda con el tipo más alto |
 | **Payback** | `#N/A` cuando no llegaba | dice cuánto falta y por qué |
 
 La del interés es la que más se nota: en una cuota francesa el interés está casi todo al
 principio, así que deducir la media hacía pagar de más los primeros años y de menos los últimos.
-`verificar` y `cruzar` comprueban la **dirección** de esa divergencia y el año del cruce —el 17
+`verificar` y `cruzar` comprueban la **dirección** de esa divergencia y el año del cruce —el 15
 en el escenario por defecto— en vez de exigir igualdad; en saldos, patrimonio y cuotas siguen
 exigiendo igualdad exacta al céntimo.
 
@@ -58,7 +62,7 @@ exigiendo igualdad exacta al céntimo.
 | Suite | Qué defiende |
 |---|---|
 | `verificar` | paridad con la hoja original |
-| `cruzar` | paridad con la transcripción en Python, nueve escenarios |
+| `cruzar` | paridad con la transcripción en Python, doce escenarios |
 | `repro2` | los siete defectos de la primera auditoría siguen corregidos |
 | `prioridad` | la caja amortiza la deuda cara antes que la barata |
 | `orden` | y el orden lo deciden los tipos, no el tipo de préstamo |
@@ -77,6 +81,7 @@ exigiendo igualdad exacta al céntimo.
 | `apertura` | la comisión de apertura: sube lo aportado, se deduce en el año 1, y viaja por guardado, enlace y comparador; en % o en € con el conmutador (conserva el importe al alternar) |
 | `limites` | límite duro (recorta y redondea al salir del campo y al cargar de guardado o enlace), avisos en rojo con su title, `2,375` leído como decimal en un tipo, tope del horizonte, año de referencia que no se queda pegado y «1 año» |
 | `defectos` | IBI 0,2 % y mantenimiento 2 % por defecto; los enlaces sin `ver=2` se leen con 0,24 % y 5 % |
+| `revision` | deuda que se cancela a mitad de año contra una simulación mes a mes, tope de la amortización fiscal, base amortizable, tramo del 30 %, textos del interés sin «media», año 0 con comisión, enlaces parciales, modales accesibles (Escape, foco, aria), unidades y escala autonómica en inglés, «-0», selects inválidos e inflación ≤ −100 % |
 | `deshacer` | Ctrl+Z / Ctrl+Y: un paso por cambio confirmado, máximo 100, rehacer que se borra con un cambio nuevo, y Ctrl+Z nativo dentro de un campo con texto sin confirmar |
 
 ## Escribirlas

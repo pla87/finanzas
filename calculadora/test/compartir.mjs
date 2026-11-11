@@ -147,7 +147,7 @@ const compartido = await p.evaluate(async () => {
   return { calculos, herramienta, copiado };
 });
 check('con cálculos, el mensaje lleva las cifras y el enlace va aparte',
-  /247\.000.*1\.250.*bruta 5,3%.*caja.*\/mes.*anualizada a 30 años 6,9%/.test(compartido.calculos.text) && compartido.calculos.url.startsWith('https://pacolucena.com/calculadora/'),
+  /247\.000.*1\.250.*bruta 5,3%.*caja.*\/mes.*anualizada a 30 años 6,8%/.test(compartido.calculos.text) && compartido.calculos.url.startsWith('https://pacolucena.com/calculadora/'),
   compartido.calculos.text);
 check('la herramienta sola lleva un texto genérico y su dirección',
   /alquiler residencial/.test(compartido.herramienta.text) && compartido.herramienta.url === 'https://pacolucena.com/calculadora/', compartido.herramienta.text);

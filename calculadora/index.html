@@ -765,11 +765,11 @@
         <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
           <h3 class="text-sm font-bold border-b border-brand-border pb-3" data-i18n="paramsMultiplicadores">Multiplicadores de gasto</h3>
           <p class="text-[10px] text-brand-textMuted leading-snug" data-i18n="paramsMultiplicadoresAyuda">Reglas del pulgar para estimar cada gasto recurrente.</p>
-          <div class="fila"><label for="tasaIbi" class="tooltip-help" data-i18n="ibi" data-i18n-title="ibiTip">IBI</label><div class="control"><span class="unidad">% precio</span><input type="text" inputmode="decimal" id="tasaIbi" value="0.2" class="campo"></div></div>
-          <div class="fila"><label for="tasaComunidad" class="tooltip-help" data-i18n="comunidad" data-i18n-title="comunidadTip">Comunidad</label><div class="control"><span class="unidad">€/m²·mes</span><input type="text" inputmode="decimal" id="tasaComunidad" value="1.2" class="campo"></div></div>
-          <div class="fila"><label for="tasaSeguroHogar" data-i18n="seguroHogar">Seguro de hogar</label><div class="control"><span class="unidad">€/m²·año</span><input type="text" inputmode="decimal" id="tasaSeguroHogar" value="2.5" class="campo"></div></div>
-          <div class="fila"><label for="tasaImpagos" class="tooltip-help" data-i18n="seguroImpagos" data-i18n-title="seguroImpagosTip">Seguro de impagos</label><div class="control"><span class="unidad">mensualid.</span><input type="text" inputmode="decimal" id="tasaImpagos" value="0.5" class="campo"></div></div>
-          <div class="fila"><label for="tasaMantenimiento" class="tooltip-help" data-i18n="mantenimiento" data-i18n-title="mantenimientoTip">Mantenimiento</label><div class="control"><span class="unidad">% alquiler</span><input type="text" inputmode="decimal" id="tasaMantenimiento" value="2" class="campo"></div></div>
+          <div class="fila"><label for="tasaIbi" class="tooltip-help" data-i18n="ibi" data-i18n-title="ibiTip">IBI</label><div class="control"><span class="unidad" data-i18n="uPrecio">% precio</span><input type="text" inputmode="decimal" id="tasaIbi" value="0.2" class="campo"></div></div>
+          <div class="fila"><label for="tasaComunidad" class="tooltip-help" data-i18n="comunidad" data-i18n-title="comunidadTip">Comunidad</label><div class="control"><span class="unidad" data-i18n="uM2Mes">€/m²·mes</span><input type="text" inputmode="decimal" id="tasaComunidad" value="1.2" class="campo"></div></div>
+          <div class="fila"><label for="tasaSeguroHogar" data-i18n="seguroHogar">Seguro de hogar</label><div class="control"><span class="unidad" data-i18n="uM2Ano">€/m²·año</span><input type="text" inputmode="decimal" id="tasaSeguroHogar" value="2.5" class="campo"></div></div>
+          <div class="fila"><label for="tasaImpagos" class="tooltip-help" data-i18n="seguroImpagos" data-i18n-title="seguroImpagosTip">Seguro de impagos</label><div class="control"><span class="unidad" data-i18n="uMensualidades">mensualid.</span><input type="text" inputmode="decimal" id="tasaImpagos" value="0.5" class="campo"></div></div>
+          <div class="fila"><label for="tasaMantenimiento" class="tooltip-help" data-i18n="mantenimiento" data-i18n-title="mantenimientoTip">Mantenimiento</label><div class="control"><span class="unidad" data-i18n="uAlquiler">% alquiler</span><input type="text" inputmode="decimal" id="tasaMantenimiento" value="2" class="campo"></div></div>
         </div>
 
         <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
@@ -779,7 +779,7 @@
           <div class="fila"><label for="pctConstruccion" class="tooltip-help" data-i18n="pctConstruccion" data-i18n-title="pctConstruccionTip">Peso de la construcción</label><div class="control"><span class="unidad">%</span><input type="text" inputmode="decimal" id="pctConstruccion" value="60" class="campo"></div></div>
           <div class="fila"><label for="tasaAmortizacion" class="tooltip-help" data-i18n="tasaAmortizacion" data-i18n-title="tasaAmortizacionTip">Tasa de amortización</label><div class="control"><span class="unidad">%</span><input type="text" inputmode="decimal" id="tasaAmortizacion" value="3" class="campo"></div></div>
           <h4 class="text-xs font-bold uppercase tracking-wider text-brand-textMuted pt-2 border-t border-brand-border" data-i18n="paramsVenta">Al vender</h4>
-          <div class="fila"><label for="pctGastosVenta" class="tooltip-help" data-i18n="gastosVenta" data-i18n-title="gastosVentaTip">Gastos de venta</label><div class="control"><span class="hueco-candado"></span><span class="unidad">% precio</span><input type="text" inputmode="decimal" id="pctGastosVenta" value="5" class="campo"></div></div>
+          <div class="fila"><label for="pctGastosVenta" class="tooltip-help" data-i18n="gastosVenta" data-i18n-title="gastosVentaTip">Gastos de venta</label><div class="control"><span class="hueco-candado"></span><span class="unidad" data-i18n="uPrecio">% precio</span><input type="text" inputmode="decimal" id="pctGastosVenta" value="5" class="campo"></div></div>
           <div class="fila"><label for="pctGananciaVenta" class="tooltip-help" data-i18n="tipoGanancia" data-i18n-title="tipoGananciaTip">Tipo sobre la ganancia</label><div class="control"><button type="button" class="lock-btn" onclick="alternarBloqueo('pctGananciaVenta')" id="lockPctGananciaVenta"></button><span class="unidad">%</span><input type="text" inputmode="decimal" id="pctGananciaVenta" value="21" data-dec="2" class="campo"></div></div>
           <input type="checkbox" id="autoPctGananciaVenta" checked class="hidden">
         </div>
@@ -800,10 +800,10 @@
 
   <!-- Compartir: la herramienta tal cual, o con los cálculos que se ven ahora en la dirección. -->
   <div id="shareModal" class="hidden fixed inset-0 z-50 bg-black/60 items-center justify-center p-4" onclick="if(event.target===this)closeModal('shareModal')">
-    <div class="bg-brand-card border border-brand-border rounded-xl max-w-sm w-full p-6 space-y-4">
+    <div role="dialog" aria-modal="true" aria-labelledby="shareTitulo" tabindex="-1" class="bg-brand-card border border-brand-border rounded-xl max-w-sm w-full p-6 space-y-4 outline-none">
       <div class="flex items-start justify-between gap-4 border-b border-brand-border pb-3">
-        <h2 class="text-lg font-bold" data-i18n="compartirTitulo">Compartir</h2>
-        <button onclick="closeModal('shareModal')" class="text-brand-textMuted hover:text-brand-accent text-xl leading-none">✕</button>
+        <h2 id="shareTitulo" class="text-lg font-bold" data-i18n="compartirTitulo">Compartir</h2>
+        <button type="button" onclick="closeModal('shareModal')" aria-label="Cerrar" data-i18n-aria="cerrar" class="text-brand-textMuted hover:text-brand-accent text-xl leading-none"><span aria-hidden="true">✕</span></button>
       </div>
       <button type="button" onclick="compartir(false)" class="w-full text-left p-3 rounded-lg border border-brand-border hover:border-brand-accent transition">
         <div class="text-sm font-bold"><span aria-hidden="true">🧮</span> <span data-i18n="compartirHerramienta">La calculadora</span></div>
@@ -817,23 +817,23 @@
   </div>
 
   <div id="helpModal" class="hidden fixed inset-0 z-50 bg-black/60 items-center justify-center p-4" onclick="if(event.target===this)closeModal('helpModal')">
-    <div class="bg-brand-card border border-brand-border rounded-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto scrollbar-thin p-6 space-y-4">
+    <div role="dialog" aria-modal="true" aria-labelledby="helpTitulo" tabindex="-1" class="bg-brand-card border border-brand-border rounded-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto scrollbar-thin p-6 space-y-4 outline-none">
       <div class="flex items-start justify-between gap-4 border-b border-brand-border pb-3">
-        <h2 class="text-lg font-bold" data-i18n="ayudaTitulo">Cómo funciona el modelo</h2>
-        <button onclick="closeModal('helpModal')" class="text-brand-textMuted hover:text-brand-accent text-xl leading-none">✕</button>
+        <h2 id="helpTitulo" class="text-lg font-bold" data-i18n="ayudaTitulo">Cómo funciona el modelo</h2>
+        <button type="button" onclick="closeModal('helpModal')" aria-label="Cerrar" data-i18n-aria="cerrar" class="text-brand-textMuted hover:text-brand-accent text-xl leading-none"><span aria-hidden="true">✕</span></button>
       </div>
       <div class="space-y-3 text-xs leading-relaxed text-brand-textMuted" id="ayudaCuerpo"></div>
     </div>
   </div>
 
   <div id="faqModal" class="hidden fixed inset-0 z-50 bg-black/60 items-center justify-center p-4" onclick="if(event.target===this)closeModal('faqModal')">
-    <div class="bg-brand-card border border-brand-border rounded-xl max-w-3xl w-full max-h-[88vh] overflow-y-auto scrollbar-thin p-6">
+    <div role="dialog" aria-modal="true" aria-labelledby="faqTitulo" tabindex="-1" class="bg-brand-card border border-brand-border rounded-xl max-w-3xl w-full max-h-[88vh] overflow-y-auto scrollbar-thin p-6 outline-none">
       <div class="flex items-start justify-between gap-4 border-b border-brand-border pb-3 mb-2">
         <div>
-          <h2 class="text-lg font-bold" data-i18n="faqTitulo">Preguntas de finanzas</h2>
+          <h2 id="faqTitulo" class="text-lg font-bold" data-i18n="faqTitulo">Preguntas de finanzas</h2>
           <p class="text-[11px] text-brand-textMuted mt-0.5" data-i18n="faqSub">Por qué las cifras se comportan como se comportan. Los ejemplos numéricos salen del escenario que tengas cargado.</p>
         </div>
-        <button onclick="closeModal('faqModal')" class="text-brand-textMuted hover:text-brand-accent text-xl leading-none">✕</button>
+        <button type="button" onclick="closeModal('faqModal')" aria-label="Cerrar" data-i18n-aria="cerrar" class="text-brand-textMuted hover:text-brand-accent text-xl leading-none"><span aria-hidden="true">✕</span></button>
       </div>
       <div id="faqCuerpo"></div>
     </div>
@@ -915,6 +915,7 @@
         limiteRecorte: 'Ajustado al rango permitido: de {0} a {1}{2}.',
         limiteSufEntero: ' (solo enteros)', limiteSufPaso: ' (de {0} en {0})',
         limiteUnidadAnos: 'años', limiteUnidadMeses: 'meses',
+        cerrar: 'Cerrar', uPrecio: '% precio', uAlquiler: '% alquiler', uM2Mes: '€/m²·mes', uM2Ano: '€/m²·año', uMensualidades: 'mensualid.',
         deshecho: 'Deshecho', rehecho: 'Rehecho', nadaQueDeshacer: 'Nada que deshacer', nadaQueRehacer: 'Nada que rehacer',
         modoAperturaTip: 'Escribir la comisión de apertura en porcentaje del principal o en euros. Al cambiar, el importe en euros no varía.',
         modoAperturaPct: 'Comisión de apertura en porcentaje del principal (pulsa para pasar a euros)',
@@ -949,7 +950,7 @@
         avisoTipoMarginal: 'Por encima del 54 % queda fuera de lo que aplica el IRPF: revisa el tipo marginal.',
         avisoTasaAmortizacion: 'El máximo fiscal de amortización de un inmueble es el 3 % anual: por encima Hacienda no lo admite.',
         avisoGastosVenta: 'Más del 10 % del precio en gastos de venta es mucho más de lo habitual (agencia, plusvalía municipal y gestiones suelen rondar el 5 %).',
-        avisoGananciaVenta: 'Por encima del 28 % no hay ningún tramo de la escala del ahorro del IRPF (el último es el 28 %).',
+        avisoGananciaVenta: 'Por encima del 30 % no hay ningún tramo de la escala del ahorro del IRPF (el último es el 30 %).',
         compartirTextoAcel: 'Piso de {0} alquilado a {1}/mes: rentabilidad bruta {2}, caja {3}/mes ({6}/mes van a amortizar deuda), anualizada a {4} años {5}.',
         kpiDeuda: 'FIN DE DEUDA',
         kpiDeudaTip: 'Año en el que se cancela toda la deuda: hipoteca y préstamo personal.\nCon amortización acelerada, la caja acumulada se destina a reducir principal y se adelanta.',
@@ -1030,7 +1031,7 @@
         precioPagado: 'Precio pagado', cajaPrimerAno: 'CAJA DEL PRIMER AÑO COMPLETO',
         alquilerCobrado: 'Alquiler cobrado', gastosDelPiso: 'Gastos del piso', cuotasDeuda: 'Cuotas de deuda',
         irpf: 'IRPF del alquiler', cajaNetaAnual: 'Caja neta anual', cajaNetaMensual: 'Caja neta mensual',
-        notaFiscal: 'Base fiscal: {0} de alquiler − {1} de gastos − {2} de interés medio − {3} de amortización = {4}. Tributa el {5} de esa base al {6}.',
+        notaFiscal: 'Base fiscal: {0} de alquiler − {1} de gastos − {2} de interés pagado − {3} de amortización = {4}. Tributa el {5} de esa base al {6}.',
         tabProyeccion: '📈 Proyección', tabCaja: '💵 Flujo de caja', tabTablas: '🔥 Tablas de rentabilidad', tabParams: '⚙️ Parámetros',
         graficaPatrimonio: 'Patrimonio, deuda y caja', graficaRentabilidad: 'Rentabilidad anualizada acumulada',
         serieGanancia: 'Ganancia sobre lo invertido', serieDeuda: 'Deuda viva', serieCaja: 'Caja acumulada',
@@ -1058,16 +1059,16 @@
         regimenesTitulo: 'Los tres regímenes de caja',
         regimenesAyuda: 'La caja anual del piso cambia según qué deuda siga viva. Cifras del primer año: con la indexación activada, alquiler y gastos crecen cada año y la proyección aplica el régimen que toque con los importes de ese año.',
         colConcepto: 'Concepto', colConPrestamo: 'Con préstamo e hipoteca', colSoloHipoteca: 'Sólo con hipoteca', colSinDeuda: 'Sin deuda',
-        interesDeducible: 'Interés deducible', interesDeducibleTip: 'Interés medio anual de los préstamos vivos, deducible del rendimiento del alquiler.',
-        baseFiscal: 'Base fiscal', baseFiscalTip: 'Alquiler menos gastos, interés medio y amortización.',
+        interesDeducible: 'Interés deducible', interesDeducibleTip: 'Interés que pagan en el año los préstamos vivos (en esta tabla, el primero), deducible del rendimiento del alquiler.',
+        baseFiscal: 'Base fiscal', baseFiscalTip: 'Alquiler menos gastos, interés pagado en el año y amortización.',
         desgloseGastos: 'Desglose de gastos anuales', baseImponible: 'Base imponible del alquiler',
         desgloseIngresos: 'A dónde va el alquiler',
         desgloseIngresosSub: 'Reparto de los {0} que entran en los {1} años proyectados, entre lo que se gasta, lo que paga la deuda y lo que queda.',
         desgloseIngresosSubAport: 'Reparto de los {0} de alquiler más {1} de aportaciones tuyas a lo largo de {2} años.',
         repartoGastos: 'Gastos del piso', repartoIrpf: 'IRPF del alquiler', repartoIntereses: 'Intereses de la deuda',
         repartoAmortizacion: 'Amortización de principal', repartoCaja: 'Caja que te queda',
-        baseAmortizable: 'Base amortizable', baseAmortizableTip: 'Construcción (parte del precio) + reforma + gastos de compra.',
-        amortizacionAnual: 'Amortización anual', interesMedioHip: 'Interés medio de la hipoteca',
+        baseAmortizable: 'Base amortizable', baseAmortizableTip: 'Construcción (parte del precio y de los gastos de compra) + reforma.',
+        amortizacionAnual: 'Amortización anual',
         interesAno1Hip: 'Interés de la hipoteca, año 1', interesAno1Pre: 'Interés del préstamo, año 1',
         interesAno1Tip: 'Interés que se paga el primer año, que es el que se deduce. La media de toda la vida del\npréstamo sería {0}: en una cuota francesa el interés está casi todo al principio, y el\nmodelo deduce el de cada año, no esa media.',
         tipoEfectivo: 'Tipo efectivo sobre la base',
@@ -1083,11 +1084,11 @@
         gastosVenta: 'Gastos de venta',
         gastosVentaTip: 'Lo que se lleva vender, como porcentaje del precio: comisión de la agencia con su IVA,\nplusvalía municipal, certificados y notaría.',
         tipoGanancia: 'Tipo sobre la ganancia',
-        tipoGananciaTip: 'IRPF de la ganancia patrimonial. Con el candado cerrado se aplica la escala del ahorro\n-19% hasta 6.000 €, 21% hasta 50.000, 23% hasta 200.000, 27% hasta 300.000 y 28% por\nencima- y el campo enseña el tipo efectivo que sale para el año elegido.\n\nSon los tramos vigentes hasta donde alcanza este modelo, no una fuente fiscal: ábrelo y\npon el tuyo si tu caso es otro.',
+        tipoGananciaTip: 'IRPF de la ganancia patrimonial. Con el candado cerrado se aplica la escala del ahorro\n-19% hasta 6.000 €, 21% hasta 50.000, 23% hasta 200.000, 27% hasta 300.000 y 30% por\nencima- y el campo enseña el tipo efectivo que sale para el año elegido.\n\nSon los tramos vigentes hasta donde alcanza este modelo, no una fuente fiscal: ábrelo y\npon el tuyo si tu caso es otro.',
         tipoMarginal: 'Tipo marginal IRPF', tipoMarginalTip: 'Tu tipo marginal de IRPF: el que se aplica al último euro que ganas.',
         baseTributable: 'Parte que tributa', baseTributableTip: 'Porcentaje del rendimiento neto que llega a tributar. De fábrica el 50 %: la reducción general\npor alquilar una vivienda como residencia habitual es del 50 % (contratos firmados desde el\n26 de mayo de 2023). Puede ser del 60, 70 o 90 %; mira «Cómo funciona el modelo».',
-        pctConstruccion: 'Peso de la construcción', pctConstruccionTip: 'Parte del precio que corresponde a la construcción y no al suelo.\nSólo la construcción se amortiza.',
-        tasaAmortizacion: 'Tasa de amortización', tasaAmortizacionTip: 'Amortización anual deducible sobre la base amortizable\n(construcción + reforma + gastos de compra).',
+        pctConstruccion: 'Peso de la construcción', pctConstruccionTip: 'Parte del precio que corresponde a la construcción y no al suelo.\nSólo la construcción se amortiza, y los gastos de compra se reparten\nigual que el precio.',
+        tasaAmortizacion: 'Tasa de amortización', tasaAmortizacionTip: 'Amortización anual deducible sobre la base amortizable\n(construcción + reforma). Los gastos de compra entran en la parte\nque corresponde a la construcción.',
         revalorizacion: 'Revalorización', revalorizacionTip: 'Lo que sube el valor del piso cada año. Con el candado cerrado va a la par de la\ninflación, que es el supuesto neutro. Ábrelo si esperas que la zona corra por su cuenta.',
         horizonte: 'Años proyectados', indexar: 'Indexar alquiler y gastos',
         indexarTip: 'Sube el alquiler y los gastos cada año al ritmo de la inflación.\n\nLas cuotas de hipoteca y préstamo se quedan en euros nominales: son a tipo fijo,\ny que la inflación las licúe es la ventaja de endeudarse. La amortización fiscal\ntampoco se indexa, porque se calcula sobre el coste histórico de compra.',
@@ -1099,7 +1100,7 @@
         ayuda1t: 'Qué calcula.', ayuda1: 'Compras un piso con una hipoteca y, si quieres, un préstamo personal; lo que no cubran lo pones de tu bolsillo. La herramienta proyecta año a año la deuda viva, el valor del inmueble, la caja que genera y la rentabilidad anualizada acumulada.',
         ayuda2t: 'Las cuotas.', ayuda2: 'Hipoteca y préstamo son de cuota constante (sistema francés) y se amortizan mes a mes. El saldo que ves cada año es el que queda tras las doce cuotas.',
         ayuda3t: 'La amortización acelerada.', ayuda3: 'Si la activas, la caja acumulada no se queda en tu bolsillo: cada año se descuenta del principal pendiente y el contador de caja vuelve a cero. Cuando están activas las dos, cobra primero la deuda con el tipo más alto, que suele ser el préstamo personal pero no tiene por qué: el orden lo deciden los tipos que hayas puesto.',
-        ayuda4t: 'Los impuestos.', ayuda4: 'Del alquiler anual se restan los gastos, el interés medio de los préstamos y la amortización fiscal. Sobre lo que queda se aplica tu tipo marginal, pero sólo a la parte que tributa. El interés se aproxima por su media a lo largo de la vida del préstamo, no año a año.',
+        ayuda4t: 'Los impuestos.', ayuda4: 'Del alquiler anual se restan los gastos, el interés que se paga ese año por los préstamos y la amortización fiscal. Sobre lo que queda se aplica tu tipo marginal, pero sólo a la parte que tributa. El interés es el real de cada año, no un reparto uniforme: en una cuota francesa pesa mucho al principio y poco al final.',
         ayudaIrpft: 'La reducción del alquiler.', ayudaIrpf: 'La «parte que tributa» arranca en el 50 %. Desde la Ley 12/2023, para los contratos firmados desde el 26 de mayo de 2023, la reducción general por alquilar una vivienda como residencia habitual es del 50 % del rendimiento neto. Puede ser del 60 % (si hiciste obras de rehabilitación en los dos años anteriores), del 70 % (inquilino de 18 a 35 años en zona tensionada, o vivienda social) o del 90 % (nuevo contrato en zona tensionada con una rebaja de más del 5 % sobre la renta anterior). Si te corresponde otra, cámbiala en Parámetros: con un 60 % de reducción tributa el 40 %, con un 70 % el 30 % y con un 90 % el 10 %.',
         ayuda5t: 'El año 0 y el primer año.', ayuda5: 'El año 0 es el momento de la compra: acabas de pagar los impuestos y los gastos, así que la ganancia sobre lo invertido arranca en negativo justo por ese importe. El año 1 cuenta la caja a medias, suponiendo la compra a mitad de año.',
         ayuda6t: 'La ganancia sobre lo invertido', ayuda6: 'compara lo que tendrías al final de cada año (valor del piso menos deuda viva, más la caja acumulada) con la liquidez que pusiste. La rentabilidad anualizada convierte esa misma comparación en un tipo anual compuesto.',
@@ -1177,6 +1178,7 @@
         limiteRecorte: 'Adjusted to the allowed range: {0} to {1}{2}.',
         limiteSufEntero: ' (whole numbers only)', limiteSufPaso: ' (in steps of {0})',
         limiteUnidadAnos: 'years', limiteUnidadMeses: 'months',
+        cerrar: 'Close', uPrecio: '% of price', uAlquiler: '% of rent', uM2Mes: '€/m²·month', uM2Ano: '€/m²·year', uMensualidades: 'rent months',
         deshecho: 'Undone', rehecho: 'Redone', nadaQueDeshacer: 'Nothing to undo', nadaQueRehacer: 'Nothing to redo',
         modoAperturaTip: 'Enter the arrangement fee as a percentage of the principal or as an amount in euros. Switching keeps the euro amount unchanged.',
         modoAperturaPct: 'Arrangement fee as a percentage of the principal (press to switch to euros)',
@@ -1211,7 +1213,7 @@
         avisoTipoMarginal: 'Above 54% is outside what income tax applies: check the marginal rate.',
         avisoTasaAmortizacion: 'The tax limit for depreciating a property is 3% a year: above that the tax office does not accept it.',
         avisoGastosVenta: 'More than 10% of the price in selling costs is well above usual (agency, municipal capital-gains tax and paperwork tend to be around 5%).',
-        avisoGananciaVenta: 'Above 28% there is no band in the income-tax savings scale (the top one is 28%).',
+        avisoGananciaVenta: 'Above 30% there is no band in the income-tax savings scale (the top one is 30%).',
         compartirTextoAcel: '{0} flat rented at {1}/month: gross yield {2}, cash flow {3}/month ({6}/month goes to pay down debt), annualised over {4} years {5}.',
         kpiDeuda: 'DEBT CLEARED',
         kpiDeudaTip: 'The year all debt is repaid: mortgage and personal loan.\nWith accelerated repayment the accumulated cash pays down principal and brings this forward.',
@@ -1292,7 +1294,7 @@
         precioPagado: 'Price paid', cajaPrimerAno: 'CASH IN THE FIRST FULL YEAR',
         alquilerCobrado: 'Rent collected', gastosDelPiso: 'Running costs', cuotasDeuda: 'Debt instalments',
         irpf: 'Income tax on rent', cajaNetaAnual: 'Net annual cash', cajaNetaMensual: 'Net monthly cash',
-        notaFiscal: 'Taxable base: {0} of rent − {1} of costs − {2} of average interest − {3} of depreciation = {4}. {5} of that base is taxed at {6}.',
+        notaFiscal: 'Taxable base: {0} of rent − {1} of costs − {2} of interest paid − {3} of depreciation = {4}. {5} of that base is taxed at {6}.',
         tabProyeccion: '📈 Projection', tabCaja: '💵 Cash flow', tabTablas: '🔥 Yield tables', tabParams: '⚙️ Parameters',
         graficaPatrimonio: 'Net worth, debt and cash', graficaRentabilidad: 'Cumulative annualised return',
         serieGanancia: 'Gain on capital invested', serieDeuda: 'Debt outstanding', serieCaja: 'Accumulated cash',
@@ -1320,16 +1322,16 @@
         regimenesTitulo: 'The three cash regimes',
         regimenesAyuda: "Annual cash changes with whichever debt is still alive. First-year figures: with indexation on, rent and costs grow each year and the projection applies the right regime with that year's amounts.",
         colConcepto: 'Item', colConPrestamo: 'Loan and mortgage', colSoloHipoteca: 'Mortgage only', colSinDeuda: 'Debt free',
-        interesDeducible: 'Deductible interest', interesDeducibleTip: 'Average annual interest on live borrowing, deductible against rental income.',
-        baseFiscal: 'Taxable base', baseFiscalTip: 'Rent less costs, average interest and depreciation.',
+        interesDeducible: 'Deductible interest', interesDeducibleTip: 'Interest paid in the year on live borrowing (the first one, in this table), deductible against rental income.',
+        baseFiscal: 'Taxable base', baseFiscalTip: 'Rent less costs, interest paid in the year and depreciation.',
         desgloseGastos: 'Annual costs breakdown', baseImponible: 'Rental taxable base',
         desgloseIngresos: 'Where the rent goes',
         desgloseIngresosSub: 'How the {0} collected over {1} years splits between running costs, the debt and what is left.',
         desgloseIngresosSubAport: 'How {0} of rent plus {1} of your own contributions split over {2} years.',
         repartoGastos: 'Running costs', repartoIrpf: 'Income tax on rent', repartoIntereses: 'Interest on debt',
         repartoAmortizacion: 'Principal repaid', repartoCaja: 'Cash left to you',
-        baseAmortizable: 'Depreciable base', baseAmortizableTip: 'Building (share of the price) + refurbishment + purchase costs.',
-        amortizacionAnual: 'Annual depreciation', interesMedioHip: 'Average mortgage interest',
+        baseAmortizable: 'Depreciable base', baseAmortizableTip: 'Building (share of the price and of the purchase costs) + refurbishment.',
+        amortizacionAnual: 'Annual depreciation',
         interesAno1Hip: 'Mortgage interest, year 1', interesAno1Pre: 'Loan interest, year 1',
         interesAno1Tip: 'Interest paid in the first year, which is what gets deducted. The average over the life of\nthe loan would be {0}: on a constant instalment almost all the interest sits at the start,\nand the model deducts each year\u2019s own figure, not that average.',
         tipoEfectivo: 'Effective rate on the base',
@@ -1345,11 +1347,11 @@
         gastosVenta: 'Selling costs',
         gastosVentaTip: 'What selling takes, as a percentage of the price: agency fee with its VAT, municipal capital\ngains tax, certificates and notary.',
         tipoGanancia: 'Rate on the gain',
-        tipoGananciaTip: 'Capital gains tax. Locked, it applies the Spanish savings scale — 19% up to €6,000, 21% to\n€50,000, 23% to €200,000, 27% to €300,000 and 28% above — and the field shows the effective\nrate that comes out for the chosen year.\n\nThese are the bands in force as far as this model knows, not a tax source: unlock it and\nenter your own if your case differs.',
+        tipoGananciaTip: 'Capital gains tax. Locked, it applies the Spanish savings scale — 19% up to €6,000, 21% to\n€50,000, 23% to €200,000, 27% to €300,000 and 30% above — and the field shows the effective\nrate that comes out for the chosen year.\n\nThese are the bands in force as far as this model knows, not a tax source: unlock it and\nenter your own if your case differs.',
         tipoMarginal: 'Marginal income tax rate', tipoMarginalTip: 'Your marginal rate: the one applied to the last euro you earn.',
         baseTributable: 'Share actually taxed', baseTributableTip: 'Share of net rental income that ends up taxed. Set to 50% out of the box: the general\nrelief for letting a home as a main residence is 50% (contracts signed from 26 May 2023).\nIt can be 60, 70 or 90%; see "How the model works".',
-        pctConstruccion: 'Building share of price', pctConstruccionTip: 'The share of the price that is building rather than land.\nOnly the building is depreciated.',
-        tasaAmortizacion: 'Depreciation rate', tasaAmortizacionTip: 'Annual deductible depreciation on the depreciable base\n(building + refurbishment + purchase costs).',
+        pctConstruccion: 'Building share of price', pctConstruccionTip: 'The share of the price that is building rather than land.\nOnly the building is depreciated, and purchase costs are split\nthe same way as the price.',
+        tasaAmortizacion: 'Depreciation rate', tasaAmortizacionTip: 'Annual deductible depreciation on the depreciable base\n(building + refurbishment). Purchase costs count in the\nbuilding share.',
         revalorizacion: 'Appreciation', revalorizacionTip: 'How much the flat gains in value each year. Locked, it tracks inflation, which is\nthe neutral assumption. Unlock it if you expect the area to run on its own.',
         horizonte: 'Years projected', indexar: 'Index rent and costs',
         indexarTip: 'Raises rent and running costs each year at the rate of inflation.\n\nMortgage and loan instalments stay in nominal euros: they are fixed rate, and\ninflation eroding them is the point of borrowing. Depreciation is not indexed\neither, being computed on historic purchase cost.',
@@ -1361,7 +1363,7 @@
         ayuda1t: 'What it computes.', ayuda1: 'You buy a flat with a mortgage and, optionally, a personal loan; whatever they do not cover you put in yourself. The tool projects debt outstanding, property value, cash generated and the cumulative annualised return, year by year.',
         ayuda2t: 'The instalments.', ayuda2: 'Mortgage and loan are constant-instalment (French amortisation) and repay monthly. The balance shown each year is what remains after the twelve instalments.',
         ayuda3t: 'Accelerated repayment.', ayuda3: 'Switch it on and accumulated cash does not stay in your pocket: each year it comes off the outstanding principal and the cash counter resets. With both on, whichever debt carries the higher rate is paid first — usually the personal loan, but not necessarily: the rates you enter decide the order.',
-        ayuda4t: 'The tax.', ayuda4: 'Costs, average loan interest and depreciation come off the annual rent. Your marginal rate applies to what is left, but only to the share that is actually taxed. Interest is approximated by its average over the life of the loan, not year by year.',
+        ayuda4t: 'The tax.', ayuda4: 'Costs, the interest paid that year on the loans and depreciation come off the annual rent. Your marginal rate applies to what is left, but only to the share that is actually taxed. Interest is the real figure for each year, not an even spread: on a constant instalment it weighs heavily at the start and lightly at the end.',
         ayudaIrpft: 'The letting relief.', ayudaIrpf: 'The "share actually taxed" starts at 50%. Since Law 12/2023, for contracts signed from 26 May 2023, the general relief for letting a home as a main residence is 50% of net rental income. It can be 60% (if you carried out refurbishment works in the previous two years), 70% (tenant aged 18 to 35 in a stressed area, or social housing) or 90% (a new contract in a stressed area with a rent cut of more than 5% on the previous one). If another applies to you, change it in Parameters: with a 60% relief 40% is taxed, with 70% it is 30% and with 90% it is 10%.',
         ayuda5t: 'Year 0 and year one.', ayuda5: 'Year 0 is the moment of purchase: you have just paid the taxes and costs, so the gain on capital invested starts negative by exactly that amount. Year one counts cash at half, assuming a mid-year purchase.',
         ayuda6t: 'The gain on capital invested', ayuda6: 'compares what you would hold at the end of each year (property value less debt outstanding, plus accumulated cash) with the cash you put in. The annualised return turns that same comparison into a compound annual rate.',
@@ -1404,20 +1406,22 @@
     // fuente fiscal. Canarias va con IGIC en vez de IVA, de ahí su campo.
     //
     // `escala` marca las comunidades que no tienen un tipo único sino tramos por valor: el que
-    // trae la tabla es el del primer tramo, y la herramienta lo avisa al elegirlas.
+    // trae la tabla es el del primer tramo, y la herramienta lo avisa al elegirlas. Lleva su
+    // descripción en castellano (`escala`) y en inglés (`escalaEn`): es texto que se lee dentro de
+    // una frase, y dejarlo en un solo idioma mezclaba los dos.
     //
     // Los nombres van en castellano en los dos idiomas: son nombres propios y traducirlos sólo
     // complica reconocerlos.
     const CCAA = {
       andalucia:      { nombre: 'Andalucía', itp: 7, ajd: 1.2 },
       aragon:         { nombre: 'Aragón', itp: 8, ajd: 1.5 },
-      asturias:       { nombre: 'Asturias', itp: 8, ajd: 1.2, escala: '8% / 9% / 10% por tramos de valor' },
-      baleares:       { nombre: 'Baleares', itp: 8, ajd: 1.2, escala: '8% hasta 400.000 €, luego 9%, 10%, 12% y 13%' },
+      asturias:       { nombre: 'Asturias', itp: 8, ajd: 1.2, escala: '8% / 9% / 10% por tramos de valor', escalaEn: '8% / 9% / 10% by value bands' },
+      baleares:       { nombre: 'Baleares', itp: 8, ajd: 1.2, escala: '8% hasta 400.000 €, luego 9%, 10%, 12% y 13%', escalaEn: '8% up to €400,000, then 9%, 10%, 12% and 13%' },
       canarias:       { nombre: 'Canarias', itp: 6.5, ajd: 0.75, iva: 7 },
       cantabria:      { nombre: 'Cantabria', itp: 9, ajd: 1.5 },
       castillaLeon:   { nombre: 'Castilla y León', itp: 8, ajd: 1.5 },
       castillaMancha: { nombre: 'Castilla-La Mancha', itp: 9, ajd: 1.5 },
-      cataluna:       { nombre: 'Cataluña', itp: 10, ajd: 1.5, escala: '10% hasta 600.000 €, luego 11%, 12% y 13%' },
+      cataluna:       { nombre: 'Cataluña', itp: 10, ajd: 1.5, escala: '10% hasta 600.000 €, luego 11%, 12% y 13%', escalaEn: '10% up to €600,000, then 11%, 12% and 13%' },
       ceutaMelilla:   { nombre: 'Ceuta y Melilla', itp: 6, ajd: 0.5 },
       extremadura:    { nombre: 'Extremadura', itp: 8, ajd: 1.5 },
       galicia:        { nombre: 'Galicia', itp: 8, ajd: 1.5 },
@@ -1426,7 +1430,7 @@
       navarra:        { nombre: 'Navarra', itp: 6, ajd: 0.5 },
       paisVasco:      { nombre: 'País Vasco', itp: 7, ajd: 0 },
       rioja:          { nombre: 'La Rioja', itp: 7, ajd: 1 },
-      valencia:       { nombre: 'Valencia', itp: 9, ajd: 1.5, escala: '9%, y 11% por encima de 1.000.000 €' }
+      valencia:       { nombre: 'Valencia', itp: 9, ajd: 1.5, escala: '9%, y 11% por encima de 1.000.000 €', escalaEn: '9%, and 11% above €1,000,000' }
     };
     // Preguntas frecuentes de finanzas. Van fuera del diccionario porque son párrafos con
     // formato, no etiquetas sueltas. La del apalancamiento deja un hueco que render() rellena
@@ -1485,7 +1489,7 @@
           <p><strong>Vender pronto es ruinoso.</strong> En el escenario de ejemplo, vender el primer año deja una anualizada del <strong>−19,2%</strong>: has pagado los gastos de compra y encima pagas los de venta, sobre un piso que apenas ha subido. La cifra no se pone en positivo hasta el <strong>año 3</strong>, y hasta ahí lo que has hecho es financiar una mudanza cara.</p>
           <p><strong>Y hay un óptimo, que no es el final.</strong> La anualizada vendiendo llega a su máximo sobre el <strong>año 13</strong> con un <strong>6,8%</strong>, y a partir de ahí baja despacio: es la misma curva de siempre, con los gastos de compra ya digeridos y el apalancamiento apagándose, sólo que además carga los gastos de venta.</p>
           <p><strong>La diferencia con la columna de al lado es lo que se lleva vender.</strong> Empieza en 13 puntos el primer año y se va estrechando hasta menos de uno a los treinta, porque un coste fijo pesa cada vez menos repartido entre más años.</p>
-          <p>Lo que más sorprende del cálculo es la amortización: cada año te has deducido una parte del valor del inmueble, y esa deducción <strong>resta del valor de adquisición</strong> al vender. Al cabo de treinta años la base de la que partes ha bajado de 272.290 € a 116.149 €, y la ganancia que tributa es esos 156.000 € mayor. No es un impuesto nuevo: es el que fuiste aplazando.</p>` },
+          <p>Lo que más sorprende del cálculo es la amortización: cada año te has deducido una parte del valor del inmueble, y esa deducción <strong>resta del valor de adquisición</strong> al vender. Al cabo de treinta años la base de la que partes ha bajado de 272.290 € a 122.373 €, y la ganancia que tributa es esos 150.000 € mayor. No es un impuesto nuevo: es el que fuiste aplazando.</p>` },
 
         { q: '¿Qué se está dejando fuera?', a: `
           <p>Es un modelo simplificado y conviene saber por dónde falla:</p>
@@ -1493,7 +1497,7 @@
             <li><strong>Los meses sin inquilino son una media</strong>, repartida por igual en todos los años: en la vida real vienen de golpe y justo cuando peor viene.</li>
             <li><strong>No hay derramas</strong> ni sorpresas de la comunidad.</li>
             <li><strong>La plusvalía municipal va dentro de los gastos de venta</strong>, a ojo: depende del municipio y de los años que lo tengas.</li>
-            <li><strong>El interés deducible es la media</strong> de la vida del préstamo, no el de cada año. Al principio pagas más interés del que se descuenta, y al final menos.</li>
+            <li><strong>Se deduce todo el interés pagado cada año</strong>, sin el límite que la ley pone a intereses y reparaciones frente a los ingresos íntegros del alquiler (art. 23.1.a de la LIRPF). Si los gastos financieros son muy altos frente al alquiler, la deducción real puede ser menor.</li>
             <li><strong>El dinero que metes después no renta nada por su cuenta.</strong> Un año que no se paga solo se cubre primero con la caja acumulada y, si no llega, con una aportación tuya que aparece en su columna y entra en el cálculo de la rentabilidad. Lo que el modelo no hace es cobrarte por ese dinero ni suponer que lo sacas de otra inversión.</li>
             <li><strong>Los tipos de ITP y AJD son orientativos</strong> y cambian con cada presupuesto autonómico.</li>
           </ul>` }
@@ -1551,7 +1555,7 @@
           <p><strong>Selling early is ruinous.</strong> In the example scenario, selling in year one gives an annualised <strong>−19.2%</strong>: you have paid the buying costs and now the selling costs too, on a flat that has barely moved. The figure does not turn positive until <strong>year 3</strong>; before that all you have financed is an expensive house move.</p>
           <p><strong>And there is an optimum, which is not the end.</strong> The annualised return on sale peaks around <strong>year 13</strong> at <strong>6.8%</strong> and drifts down after that: the same curve as always, with the purchase costs digested and leverage decaying, only now carrying the selling costs as well.</p>
           <p><strong>The gap with the column next door is what selling takes.</strong> It starts at 13 points in year one and narrows to under one by year thirty, because a fixed cost weighs less the more years it is spread over.</p>
-          <p>The surprising part of the calculation is depreciation: each year you deducted a slice of the building's value, and that deduction <strong>comes off the acquisition value</strong> when you sell. After thirty years the base you start from has fallen from €272,290 to €116,149, and the taxable gain is €156,000 larger. It is not a new tax: it is the one you were deferring.</p>` },
+          <p>The surprising part of the calculation is depreciation: each year you deducted a slice of the building's value, and that deduction <strong>comes off the acquisition value</strong> when you sell. After thirty years the base you start from has fallen from €272,290 to €122,373, and the taxable gain is €150,000 larger. It is not a new tax: it is the one you were deferring.</p>` },
 
         { q: 'What is being left out?', a: `
           <p>It is a simplified model, and it is worth knowing where it breaks:</p>
@@ -1559,7 +1563,7 @@
             <li><strong>Void months are an average</strong>, spread evenly across the years: in real life they arrive all at once and at the worst possible time.</li>
             <li><strong>No special levies</strong> or surprises from the building.</li>
             <li><strong>Municipal capital gains tax sits inside the selling costs</strong>, as a rough figure: it depends on the town and on how long you hold.</li>
-            <li><strong>Deductible interest is an average</strong> over the life of the loan, not each year's. Early on you pay more interest than is deducted, and later less.</li>
+            <li><strong>All the interest paid each year is deducted</strong>, without the cap the law puts on interest and repairs against gross rental income (art. 23.1.a LIRPF). If financing costs are very high against the rent, the real deduction can be lower.</li>
             <li><strong>Money you put in later earns nothing on its own.</strong> A year that does not pay for itself is covered first from accumulated cash and, failing that, by a contribution of yours that shows in its own column and counts towards the return. What the model does not do is charge you for that money or assume you pulled it out of another investment.</li>
             <li><strong>ITP and AJD rates are indicative</strong> and change with every regional budget.</li>
           </ul>` }
@@ -1595,9 +1599,13 @@
     // useGrouping 'always' es lo que fuerza el separador de miles también en cifras de cuatro
     // dígitos: es-ES no las agrupa por defecto y "2664 €" quedaba suelto entre "18.226 €".
     const nf = (d) => new Intl.NumberFormat(t('locale'), { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: 'always' });
-    const fmt = (v) => new Intl.NumberFormat(t('locale'), { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, useGrouping: 'always' }).format(Number(v) || 0);
-    const fmtNum = (v, d = 0) => nf(d).format(Number(v) || 0);
-    const fmtPct = (v, d = 1) => (v === null || v === undefined || !isFinite(v)) ? '—' : nf(d).format(v * 100) + '%';
+    // Lo que no llega a medio punto de la última cifra que se enseña se escribe como cero a secas:
+    // Intl pinta «-0 €» y «-0,0%» para -0,4 y -0,0004, y un signo menos delante de nada parece una
+    // pérdida donde no la hay.
+    const sinCeroNegativo = (v, d) => Math.abs(v) < 0.5 / Math.pow(10, d) ? 0 : v;
+    const fmt = (v) => new Intl.NumberFormat(t('locale'), { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, useGrouping: 'always' }).format(sinCeroNegativo(Number(v) || 0, 0));
+    const fmtNum = (v, d = 0) => nf(d).format(sinCeroNegativo(Number(v) || 0, d));
+    const fmtPct = (v, d = 1) => (v === null || v === undefined || !isFinite(v)) ? '—' : nf(d).format(sinCeroNegativo(v * 100, d)) + '%';
 
     const el = (id) => document.getElementById(id);
 
@@ -1861,6 +1869,9 @@
       return [e.hasAttribute('data-dec-max') ? +e.dataset.decMax : min, min];
     }
 
+    // Las unidades de LIMITES que llevan palabras (no sólo %, € o m²) y por tanto se traducen.
+    const UNIDAD_TRADUCIDA = { '€/m²·mes': 'uM2Mes', '€/m²·año': 'uM2Ano', 'mensualid.': 'uMensualidades' };
+
     // Cómo se cuenta un extremo del rango, con su unidad.
     function fmtLimite(v, lim) {
       const maxDec = lim.u === '%' ? 4 : Math.min(lim.dec, 2);
@@ -1870,7 +1881,7 @@
         : fmt(v);
       if (lim.u === 'anos') return singular(`${cifra(v)} ${t('limiteUnidadAnos')}`);
       if (lim.u === 'meses') return `${cifra(v)} ${t('limiteUnidadMeses')}`;
-      return `${cifra(v)} ${lim.u}`;
+      return `${cifra(v)} ${UNIDAD_TRADUCIDA[lim.u] ? t(UNIDAD_TRADUCIDA[lim.u]) : lim.u}`;
     }
 
     // El aviso fugaz de recorte, fijo y junto al campo (alineado a su borde derecho, que es donde
@@ -1976,7 +1987,7 @@
       poner('tipoMarginal', num('tipoMarginal') > 54 && t('avisoTipoMarginal'));
       poner('tasaAmortizacion', num('tasaAmortizacion') > 3 && t('avisoTasaAmortizacion'));
       poner('pctGastosVenta', num('pctGastosVenta') > 10 && t('avisoGastosVenta'));
-      poner('pctGananciaVenta', num('pctGananciaVenta') > 28 && t('avisoGananciaVenta'));
+      poner('pctGananciaVenta', num('pctGananciaVenta') > 30 && t('avisoGananciaVenta'));
       return av;
     }
 
@@ -2228,7 +2239,12 @@
 
       const pctConstruccion = num('pctConstruccion') / 100;
       const tasaAmortizacion = num('tasaAmortizacion') / 100;
-      const baseAmortizable = oferta * pctConstruccion + reforma + gastosCompra;
+      // Fiscalmente sólo se amortiza la construcción, no el suelo. El precio ya entra en esa
+      // proporción, y los gastos de adquisición (impuestos, notaría, comisión) se reparten entre
+      // suelo y construcción igual que el precio, así que van en la misma proporción. La reforma
+      // es obra: entera. Al vender no hace falta repartir nada: ahí el valor de adquisición lleva
+      // los gastos enteros y sólo se le resta lo ya amortizado.
+      const baseAmortizable = (oferta + gastosCompra) * pctConstruccion + reforma;
       const amortizacion = tasaAmortizacion * baseAmortizable;
       const tipoEfectivo = (num('tipoMarginal') / 100) * (num('baseTributable') / 100);
 
@@ -2244,15 +2260,18 @@
       // salir) un «300» o un «99999999» a medias no puede poner a proyectar siglos.
       const horizonte = Math.min(Math.max(Math.round(num('horizonte')), 1), LIMITES.horizonte.max);
       const indexar = yes('indexar');
-      const indice = (n) => indexar ? Math.pow(1 + inflacion, n - 1) : 1;
+      // Con una inflación de -100 % o peor la base no es positiva y la potencia daría 0 o NaN:
+      // igual que en aHoy, ahí no hay índice que valga y se deja la cifra sin indexar.
+      const indice = (n) => indexar && 1 + inflacion > 0 ? Math.pow(1 + inflacion, n - 1) : 1;
       // Euros del año n traídos a euros de hoy. La guarda es para una inflación de -100% o peor,
       // que dividiría por cero; ahí no hay deflactor que valga y se deja la cifra nominal.
       const aHoy = (v, n) => 1 + inflacion > 0 ? v / Math.pow(1 + inflacion, n) : v;
 
       // Escala del ahorro del IRPF, que es donde tributa la ganancia de una venta. Va aquí como
       // punto de partida editable, igual que los tipos de ITP: los tramos cambian con cada
-      // reforma y el candado está para poner el tipo que te toque.
-      const TRAMOS_GANANCIA = [[6000, 0.19], [50000, 0.21], [200000, 0.23], [300000, 0.27], [Infinity, 0.28]];
+      // reforma y el candado está para poner el tipo que te toque. Desde 2025 (Ley 7/2024) lo que
+      // pasa de 300.000 € tributa al 30 %, no al 28.
+      const TRAMOS_GANANCIA = [[6000, 0.19], [50000, 0.21], [200000, 0.23], [300000, 0.27], [Infinity, 0.30]];
       function impuestoPorTramos(ganancia) {
         let resto = ganancia, anterior = 0, cuota = 0;
         for (const [tope, tipo] of TRAMOS_GANANCIA) {
@@ -2275,12 +2294,25 @@
       const impuestoGanancia = (ganancia) =>
         tipoVentaManual ? ganancia * tipoVentaFijo : impuestoPorTramos(ganancia);
 
-      // Reparte la cuota anual entre interés y principal a partir de lo que baja el saldo. Sale
-      // por diferencia, no por fórmula, para que interés + principal sea siempre la cuota incluso
-      // el año en que la deuda se cancela a mitad y la cuota real fue menor.
-      const desglosarCuota = (ini, fin, cuotaAnual) => {
-        const interes = Math.min(Math.max(cuotaAnual - Math.max(ini - fin, 0), 0), cuotaAnual);
-        return { interes, principal: cuotaAnual - interes };
+      // Lo que pasa con una deuda durante un año: cuánto se paga, cuánto es interés y con qué
+      // saldo se sale. Si el saldo sobrevive al año, son doce cuotas enteras y el interés sale por
+      // diferencia (cuotas − lo que baja el saldo). Si la deuda se cancela dentro del año, no se
+      // cobran doce cuotas: se corre mes a mes y el último pago es sólo el saldo más su interés
+      // del mes. Con doce cuotas y la diferencia tomada como interés, el año de cancelación se
+      // cobraba de más y casi todo ese exceso aparecía como interés deducible.
+      const tramoAno = (ini, tipo, cuota) => {
+        if (!(ini > 0)) return { fin: 0, cuotas: 0, interes: 0, principal: 0 };
+        const fin = saldoTrasUnAno(ini, tipo, cuota);
+        if (fin > 0) {
+          const interes = Math.min(Math.max(cuota * 12 - (ini - fin), 0), cuota * 12);
+          return { fin, cuotas: cuota * 12, interes, principal: cuota * 12 - interes };
+        }
+        let saldo = ini, cuotas = 0, interes = 0;
+        for (let m = 0; m < 12 && saldo > 0; m++) {
+          const i = saldo * tipo / 12, pago = Math.min(cuota, saldo + i);
+          saldo = saldo + i - pago; cuotas += pago; interes += i;
+        }
+        return { fin: 0, cuotas, interes, principal: cuotas - interes };
       };
 
       // El interés deducible es el que se paga ese año, no la media de la vida del préstamo.
@@ -2288,19 +2320,22 @@
       // 8.704 € el primer año frente a 4.892 € de media, y deducir la media hacía pagar de más
       // en los primeros años y de menos en los últimos. El total a treinta años apenas cambia;
       // lo que cambia es en qué año cae cada euro, que es de lo que vive una TIR.
+      //
+      // La amortización fiscal tampoco sigue restando para siempre: se agota cuando se ha deducido
+      // toda la base amortizable (al 3 % anual, a los 33 años y cuatro meses). En la venta ya se
+      // topaba; aquí el año n deduce lo que quede de base, con un máximo de la cuota anual.
       const regimen = (interes, cuotas, n) => {
         const f = indice(n);
         const ingresos = alquilerAnual * f;
         const gastos = gastosAnuales * f;
-        const base = ingresos - gastos - interes - amortizacion;
+        const deduccion = Math.min(amortizacion, Math.max(baseAmortizable - amortizacion * (n - 1), 0));
+        const base = ingresos - gastos - interes - deduccion;
         const impuestos = Math.max(base * tipoEfectivo, 0);
-        return { ingresos, gastos, interes, base, impuestos, cuotas, caja: ingresos - impuestos - gastos - cuotas };
+        return { ingresos, gastos, interes, base, impuestos, cuotas, deduccion, caja: ingresos - impuestos - gastos - cuotas };
       };
 
       // Las tres columnas del primer año se calculan con el interés de ese primer año.
-      const primerAno = (principal, tipo, cuota) => principal > 0
-        ? desglosarCuota(principal, saldoTrasUnAno(principal, tipo, cuota), cuota * 12)
-        : { interes: 0, principal: 0 };
+      const primerAno = (principal, tipo, cuota) => tramoAno(principal, tipo, cuota);
       const hip1 = primerAno(principalHip, tipoHip, cuotaHip);
       const pre1 = primerAno(principalPre, tipoPre, cuotaPre);
       const regConPrestamo = regimen(hip1.interes + pre1.interes,
@@ -2315,9 +2350,8 @@
       // cabe dentro del motor. La caja decrece con el tipo, así que la bisección es directa.
       const cajaConTipo = (t) => {
         const cuota = pmt(t / 12, plazoHip * 12, principalHip);
-        const fin = saldoTrasUnAno(principalHip, t, cuota);
-        const interes = desglosarCuota(principalHip, fin, cuota * 12).interes + pre1.interes;
-        return regimen(interes, cuota * 12 + (principalPre > 0 ? cuotaPre * 12 : 0), 1).caja;
+        const h = tramoAno(principalHip, t, cuota);
+        return regimen(h.interes + pre1.interes, h.cuotas + pre1.cuotas, 1).caja;
       };
       const TIPO_MAX = 0.30;
       const rupturaCaja = (() => {
@@ -2374,15 +2408,12 @@
           hipIni = saldos.hip;
           preIni = saldos.pre;
         }
-        const hipFin = saldoTrasUnAno(hipIni, tipoHip, cuotaHip);
-        const preFin = saldoTrasUnAno(preIni, tipoPre, cuotaPre);
+        const dh = tramoAno(hipIni, tipoHip, cuotaHip);
+        const dp = tramoAno(preIni, tipoPre, cuotaPre);
+        const hipFin = dh.fin, preFin = dp.fin;
         const patrimonio = (valor + reforma) * Math.pow(1 + revalorizacion, n) - hipFin - preFin;
 
-        const cuotaHipAno = hipIni > 0 ? cuotaHip * 12 : 0;
-        const cuotaPreAno = preIni > 0 ? cuotaPre * 12 : 0;
-        const dh = desglosarCuota(hipIni, hipFin, cuotaHipAno);
-        const dp = desglosarCuota(preIni, preFin, cuotaPreAno);
-        const reg = regimen(dh.interes + dp.interes, cuotaHipAno + cuotaPreAno, n);
+        const reg = regimen(dh.interes + dp.interes, dh.cuotas + dp.cuotas, n);
         const mitad = n === 1 ? 0.5 : 1;
         let cajaAno = reg.caja * mitad;
         let irpfAno = reg.impuestos * mitad;
@@ -2445,6 +2476,7 @@
         const tirVentaReal = tirVenta === null ? null
           : (1 + inflacion > 0 ? (1 + tirVenta) / (1 + inflacion) - 1 : tirVenta);
         filas.push({ n, hipIni, hipFin, preIni, preFin, deuda: hipFin + preFin, patrimonio, cajaAno, irpf: irpfAno,
+          cuotas: reg.cuotas, interes: reg.interes,
           aportacion, cajaAcum,
           patrimonioReal: aHoy(patrimonio, n), cajaAcumReal: aHoy(cajaAcum, n),
           netoVentaReal: aHoy(netoVenta, n), tirVentaReal,
@@ -2457,13 +2489,14 @@
 
       // El año 0 es el instante de la compra: acabas de pagar impuestos y gastos, y todavía no ha
       // pasado un solo mes de alquiler ni de revalorización. La ganancia arranca por tanto en
-      // -gastos de compra (más el descuento, si compraste por debajo de valor).
+      // -gastos de compra (más el descuento, si compraste por debajo de valor) y, si la hay, la
+      // comisión de apertura: es dinero que ya has puesto y que no vuelve, y entra en lo aportado.
       const fila0 = {
         n: 0,
         deuda: principalHip + principalPre,
         cajaAcum: 0,
         patrimonio: valor + reforma - principalHip - principalPre,
-        ganancia: valor + reforma - costeTotal
+        ganancia: valor + reforma - principalHip - principalPre - aportado
       };
 
       // El año que elige el desplegable de la tarjeta grande. Se recorta al horizonte por si
@@ -2501,7 +2534,7 @@
         precioAnunciado, oferta, valor, superficie, reforma, comision, obraNueva, region,
         pctImpuestos, pctNotaria, gastosCompra, costeTotal, aportado,
         comisionHip, comisionPre, comisionApertura, recortes,
-        usarHipoteca, pctFinanciado, principalHip, cuotaHip, plazoHip,
+        usarHipoteca, pctFinanciado, principalHip, cuotaHip, plazoHip, tipoHip, tipoPre,
         usarPrestamo, topePrestamo, principalPre, cuotaPre, plazoPre,
         alquiler, alquilerAnual, comunidad, ibi, seguroHogar, seguroImpagos, mantenimiento, gastosAnuales,
         baseAmortizable, amortizacion, tipoEfectivo, interesHipAnual, interesPreAnual,
@@ -2562,7 +2595,7 @@
       // por encima del corte tiene que abrir el candado y poner el suyo, y conviene decírselo.
       const nota = el('notaEscala');
       nota.classList.toggle('hidden', !d.region.escala);
-      if (d.region.escala) nota.textContent = tf('avisoEscala', d.region.nombre, d.region.escala);
+      if (d.region.escala) nota.textContent = tf('avisoEscala', d.region.nombre, IDIOMA === 'en' ? d.region.escalaEn : d.region.escala);
 
       el('outGastosCompra').textContent = fmt(d.gastosCompra);
       el('outCosteTotal').textContent = fmt(d.costeTotal);
@@ -3095,6 +3128,7 @@
       document.title = t('titulo');
       document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
       document.querySelectorAll('[data-i18n-title]').forEach(e => { e.title = t(e.dataset.i18nTitle); });
+      document.querySelectorAll('[data-i18n-aria]').forEach(e => { e.setAttribute('aria-label', t(e.dataset.i18nAria)); });
       // El botón enseña la bandera del idioma al que se va, no la del actual.
       el('langIcon').innerHTML = IDIOMA === 'es' ? BANDERAS.gb : BANDERAS.es;
       [['langBtn', 'btnIdioma'], ['themeToggleBtn', 'btnTema'], ['btnCompartir', 'btnCompartir'], ['btnReset', 'btnReset'], ['btnFaq', 'btnFaq'], ['btnAyuda', 'btnAyuda']]
@@ -3170,15 +3204,31 @@
       // Un escenario guardado antes de que IVA y amortización acelerada fueran casillas los trae
       // como 'si'/'no'; la cadena 'no' no puede contar como marcada.
       CASILLAS.forEach(id => { if (estado[id] !== undefined) el(id).checked = estado[id] === true || estado[id] === 'si'; });
+      // Un desplegable al que llega un valor que no es ninguna de sus opciones (?c=xyz, un guardado
+      // tocado a mano) se queda en blanco y el motor, por su cuenta, usa otro: lo que se ve y lo que
+      // se calcula no coinciden. Cae al valor por defecto, que sí está entre las opciones.
+      CAMPOS.forEach(id => {
+        const e = el(id);
+        if (e.tagName !== 'SELECT' || id === 'anoRef' || estado[id] === undefined || e.selectedIndex >= 0) return;
+        e.value = DEFECTOS[id] ?? '';
+        if (e.selectedIndex < 0) e.selectedIndex = 0;
+      });
       // Lo que llega de fuera (guardado, enlace) pasa por los mismos límites duros que lo escrito
       // a mano, pero en silencio y sin romper nada: se recorta y se sigue. Va después de poner todos
       // los campos y casillas porque el rango de algunos depende de otros (modo de la apertura).
       const cambio = (id) => estado[id] !== undefined && limitarCampo(id, { silencio: true });
       const cDesc = cambio('descuentoOferta'), cOferta = cambio('oferta'), cPrecio = cambio('precioAnunciado');
       CAMPOS.forEach(id => { if (id !== 'descuentoOferta' && id !== 'oferta' && id !== 'precioAnunciado') cambio(id); });
-      if (cDesc) ofertaDesdeDescuento();
+      // Un estado parcial (un enlace que sólo trae el precio, uno de antes del descuento) no debe
+      // dejar oferta y descuento incoherentes: el que falte sale del otro. Antes el descuento de
+      // los defectos llegaba siempre y esta rama no se ejecutaba nunca.
+      if (estado.descuentoOferta === undefined) descuentoDesdeOferta();
+      else if (estado.oferta === undefined) ofertaDesdeDescuento();
+      else if (cDesc) ofertaDesdeDescuento();
       else if (cOferta || cPrecio) descuentoDesdeOferta();
-      if (estado.descuentoOferta === undefined && estado.oferta !== undefined) descuentoDesdeOferta();
+      // El descuento no tiene data-dec, así que formatearCampos() no lo toca: un «7.5» del enlace
+      // se quedaba con punto en español. Se escribe con el formato del idioma.
+      if (estado.descuentoOferta !== undefined) fijar('descuentoOferta', num('descuentoOferta'), 2, 0);
       ESTIMABLES.forEach(pintarCandado);
       FUENTES.forEach(pintarFuente);
       formatearCampos();
@@ -3597,12 +3647,44 @@
       el('kpiToggle').setAttribute('aria-expanded', String(abrir));
       el('kpiFlecha').style.transform = abrir ? 'rotate(180deg)' : '';
     }
+    // Los tres modales (preguntas, ayuda, compartir) son diálogos de verdad: al abrir se lleva el
+    // foco dentro, el tabulador no sale de ellos, Escape los cierra, y al cerrar el foco vuelve al
+    // botón que los abrió. Sin esto un lector de pantalla seguía leyendo la página de detrás y quien
+    // navega con teclado se perdía tras el diálogo.
+    const FOCO_PREVIO = {};
     function openModal(id) {
-      // Los dos únicos ids que se pasan aquí están escritos en el HTML: helpModal y faqModal.
-      el(id).classList.remove('hidden');
-      el(id).classList.add('flex');
+      // Los únicos ids que se pasan aquí están escritos en el HTML: helpModal, faqModal y shareModal.
+      const modal = el(id);
+      FOCO_PREVIO[id] = document.activeElement;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      modal.querySelector('[role="dialog"]').focus({ preventScroll: true });
     }
-    function closeModal(id) { el(id).classList.add('hidden'); el(id).classList.remove('flex'); }
+    function closeModal(id) {
+      const modal = el(id);
+      const estabaAbierto = modal.classList.contains('flex');
+      modal.classList.add('hidden'); modal.classList.remove('flex');
+      // Sólo se devuelve el foco si el modal estaba abierto y quien lo abrió sigue en la página.
+      const previo = FOCO_PREVIO[id];
+      delete FOCO_PREVIO[id];
+      if (estabaAbierto && previo && previo !== document.body && document.body.contains(previo)) previo.focus({ preventScroll: true });
+    }
+    document.addEventListener('keydown', (ev) => {
+      const abiertos = document.querySelectorAll('[id$="Modal"].flex');
+      if (!abiertos.length) return;
+      const modal = abiertos[abiertos.length - 1];
+      if (ev.key === 'Escape') { ev.preventDefault(); closeModal(modal.id); return; }
+      if (ev.key !== 'Tab') return;
+      // Trampa de foco: de la última cosa enfocable se vuelve a la primera, y al revés.
+      const dentro = [...modal.querySelectorAll('button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])')]
+        .filter(x => !x.disabled && x.offsetParent !== null);
+      if (!dentro.length) { ev.preventDefault(); return; }
+      const primero = dentro[0], ultimo = dentro[dentro.length - 1], activo = document.activeElement;
+      const panel = modal.querySelector('[role="dialog"]');
+      if (ev.shiftKey && (activo === primero || activo === panel)) { ev.preventDefault(); ultimo.focus(); }
+      else if (!ev.shiftKey && activo === ultimo) { ev.preventDefault(); primero.focus(); }
+      else if (!modal.contains(activo)) { ev.preventDefault(); primero.focus(); }
+    });
 
     // El tooltip nativo necesita hover, que en un móvil no existe: sin esto ninguna de las
     // explicaciones del modelo sería accesible desde una pantalla táctil.
@@ -3771,7 +3853,14 @@
       if (tema === 'd' || tema === 'l') applyTheme(tema === 'd' ? 'dark' : 'light');
       // Sin «ver», o con ver=1, el enlace es de antes de los defectos nuevos.
       const defectos = (parseInt(params.get(CLAVE_VERSION), 10) || 1) >= 2 ? DEFECTOS : { ...DEFECTOS, ...DEFECTOS_V1 };
-      if (Object.keys(estado).length) aplicarEstado({ ...defectos, ...estado });
+      if (Object.keys(estado).length) {
+        const completo = { ...defectos, ...estado };
+        // Oferta y descuento van atados: si el enlace trae uno solo, el otro no se rellena con el
+        // de los defectos (daría una pareja incoherente) sino que lo deduce aplicarEstado.
+        if (estado.descuentoOferta === undefined) delete completo.descuentoOferta;
+        else if (estado.oferta === undefined) delete completo.oferta;
+        aplicarEstado(completo);
+      }
       // La comparación del enlace sustituye a la guardada, pasando por el mismo filtro que lo
       // guardado en el navegador: lo que no tenga la forma esperada se descarta.
       if (hayOpciones) OPCIONES = leerOpciones(decodificarOpciones(params.get(CLAVE_OPCIONES)));

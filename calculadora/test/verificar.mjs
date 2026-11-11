@@ -86,14 +86,27 @@ const cerca = (a, b, tol = 0.02) => Math.abs((a ?? 0) - (b ?? 0)) <= tol;
 // interés real supere al medio: menos impuesto y más caja. Lo demás tiene que cuadrar exacto.
 // roce entra aquí porque es caja sobre aportado: la tolerancia absoluta de 0,02 no distingue
 // un 1,76% de un 2,22%, y esta divergencia hay que verla, no dejarla pasar por el redondeo.
-const DIVERGEN = new Set(['impConPrestamo', 'cajaConPrestamo', 'impConHipoteca', 'cajaConHipoteca', 'roce']);
+//
+// La segunda divergencia es la base amortizable: la hoja amortizaba el 3 % de (60 % del precio +
+// reforma + gastos de compra enteros); fiscalmente los gastos de adquisición se reparten entre suelo
+// y construcción igual que el precio, así que el modelo amortiza el 3 % de 60 % de (precio +
+// gastos) + reforma. Amortiza menos, y sin deuda paga más impuesto y retiene menos caja.
+const MENOR = 'menor', MAYOR = 'mayor';
+const DIVERGEN = new Map([
+  ['impConPrestamo', [MENOR, 'interés real del año']], ['cajaConPrestamo', [MAYOR, 'interés real del año']],
+  ['impConHipoteca', [MENOR, 'interés real del año']], ['cajaConHipoteca', [MAYOR, 'interés real del año']],
+  ['roce', [MAYOR, 'interés real del año']],
+  ['amortizacion', [MENOR, 'gastos de compra sólo en la parte de construcción']],
+  ['impSinDeuda', [MAYOR, 'amortiza menos, tributa más']], ['cajaSinDeuda', [MENOR, 'amortiza menos, tributa más']]
+]);
 console.log('--- escalares ---');
 for (const [k, v] of Object.entries(esperado.escalares)) {
   const got = d.escalares[k];
   if (DIVERGEN.has(k)) {
-    const ok = k.startsWith('imp') ? got < v : got > v;
+    const [sentido, motivo] = DIVERGEN.get(k);
+    const ok = sentido === MENOR ? got < v : got > v;
     if (!ok) fallos++;
-    console.log(`${ok ? 'dif ' : 'FALLO'} ${k.padEnd(18)} hoja=${Number(v).toFixed(4).padStart(14)} web=${Number(got).toFixed(4).padStart(14)}  (interés real del año)`);
+    console.log(`${ok ? 'dif ' : 'FALLO'} ${k.padEnd(18)} hoja=${Number(v).toFixed(4).padStart(14)} web=${Number(got).toFixed(4).padStart(14)}  (${motivo})`);
     continue;
   }
   const ok = cerca(got, v, Math.max(0.02, Math.abs(v) * 1e-9));

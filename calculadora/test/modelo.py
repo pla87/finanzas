@@ -34,12 +34,6 @@ def TIR(flujos):
             alto = medio
     return (bajo + alto) / 2
 
-def FV(rate, nper, pmt, pv):
-    # FV(rate,nper,pmt,pv) de Excel, con type=0
-    if abs(rate) < 1e-12: return -(pv + pmt * nper)
-    g = (1 + rate) ** nper
-    return -(pv * g + pmt * (g - 1) / rate)
-
 def correr(p):
     C2,C3,C4 = p['C2'],p['C3'],p['C4']
     C7,C8,C10,C11 = p['C7'],p['C8'],p['C10'],p['C11']
@@ -55,7 +49,10 @@ def correr(p):
     C26,C27,C28,C30,C31 = p['C26'],p['C27'],p['C28'],p['C30'],p['C31']
     C29 = C30/2
     C32 = C27*12 + C26 + C28 + C29 + C31
-    C33 = 0.03*(C4*0.6 + C10 + C9)
+    # Fiscalmente sólo se amortiza la construcción: el precio y los gastos de compra entran en la
+    # proporción del 60 % de construcción, y la reforma entera.
+    BASE_AMORT = 0.6*(C4 + C9) + C10
+    C33 = 0.03*BASE_AMORT
     C49 = p['C49']
 
     F3 = C4 - C11
@@ -67,26 +64,39 @@ def correr(p):
     com_pre = p.get('comPre', 0.0) * max(H3, 0)
     com = com_hip + com_pre
 
-    def desglosar(ini, fin, cuota_anual):
-        """Interés y principal de un año, por diferencia de saldo."""
-        interes = min(max(cuota_anual - max(ini - fin, 0), 0), cuota_anual)
-        return interes, cuota_anual - interes
+    def ano_deuda(ini, tipo, cuota):
+        """Un año de una deuda: (saldo final, cuotas pagadas, interés). Sin fórmula cerrada: mes a
+        mes, y el último pago es sólo el saldo más su interés, así que el año en que la deuda se
+        cancela no se cobran doce cuotas. Es deliberadamente distinto de lo que hace el motor
+        (cerrado si el saldo sobrevive), para que el cruce compruebe las dos formas."""
+        s, pagado, interes = ini, 0.0, 0.0
+        for _ in range(12):
+            if s <= 0: break
+            i = s*tipo/12
+            pago = min(cuota, s + i)
+            s = s + i - pago
+            pagado += pago
+            interes += i
+        return max(s, 0.0), pagado, interes
 
-    def regimen(interes, cuotas):
-        base = C30*12 - C32 - interes - C33
+    def regimen(interes, cuotas, n=1):
+        # La amortización deducida se agota al llegar a la base amortizable.
+        deduccion = min(C33, max(BASE_AMORT - C33*(n-1), 0))
+        base = C30*12 - C32 - interes - deduccion
         imp = max(base*tasa, 0)
         return imp, C30*12 - imp - C32 - cuotas
 
     # El interés deducible es el del año, no la media de la vida del préstamo: en una cuota
     # francesa está casi todo al principio, y deducir la media desplaza impuestos entre años.
-    int_hip1 = desglosar(F3, max(FV(C16/12, 12, C18, -F3), 0), C18*12)[0] if F3 > 0 else 0
-    int_pre1 = desglosar(H3, max(FV(C22/12, 12, C23, -H3), 0), C23*12)[0] if H3 > 0 else 0
-    C36, C37 = regimen(int_hip1 + int_pre1, C18*12 + (C23*12 if H3 > 0 else 0))
-    C38, C39 = regimen(int_hip1, C18*12)
+    h1 = ano_deuda(F3, C16, C18) if F3 > 0 else (0, 0, 0)
+    p1 = ano_deuda(H3, C22, C23) if H3 > 0 else (0, 0, 0)
+    int_hip1, int_pre1 = h1[2], p1[2]
+    C36, C37 = regimen(int_hip1 + int_pre1, h1[1] + p1[1])
+    C38, C39 = regimen(int_hip1, h1[1])
     C40, C41 = regimen(0, 0)
 
-    # IRPF de la ganancia patrimonial: escala del ahorro, por tramos.
-    TRAMOS = [(6000, 0.19), (50000, 0.21), (200000, 0.23), (300000, 0.27), (float('inf'), 0.28)]
+    # IRPF de la ganancia patrimonial: escala del ahorro, por tramos (el 30 % por encima de 300.000 € desde 2025).
+    TRAMOS = [(6000, 0.19), (50000, 0.21), (200000, 0.23), (300000, 0.27), (float('inf'), 0.30)]
     def impuesto_ganancia(g):
         resto, anterior, cuota = g, 0, 0.0
         for tope, tipo in TRAMOS:
@@ -121,21 +131,17 @@ def correr(p):
                     saldos[cual] -= pago
                     sobrante -= pago
             F, H = saldos['hip'], saldos['pre']
-        G = max(FV(C16/12, 12, C18, -F), 0) if F > 0 else 0
-        I = max(FV(C22/12, 12, C23, -H), 0) if H > 0 else 0
+        G, cuota_hip, int_hip = ano_deuda(F, C16, C18) if F > 0 else (0.0, 0.0, 0.0)
+        I, cuota_pre, int_pre = ano_deuda(H, C22, C23) if H > 0 else (0.0, 0.0, 0.0)
         J = (C3 + C10)*(1+C49)**n - G - I
-        cuota_hip = C18*12 if F > 0 else 0
-        cuota_pre = C23*12 if H > 0 else 0
-        int_hip = desglosar(F, G, cuota_hip)[0]
-        int_pre = desglosar(H, I, cuota_pre)[0]
-        imp_full, caja_full = regimen(int_hip + int_pre, cuota_hip + cuota_pre)
+        imp_full, caja_full = regimen(int_hip + int_pre, cuota_hip + cuota_pre, n)
         mitad = 0.5 if n == 1 else 1.0
         K = caja_full * mitad
         irpf = imp_full * mitad
         if n == 1 and com > 0:
             # La comisión se deduce entera en el primer año, contra la base de esa media
             # anualidad, y nunca deja un impuesto negativo.
-            base_full = C30*12 - C32 - (int_hip + int_pre) - C33
+            base_full = C30*12 - C32 - (int_hip + int_pre) - min(C33, max(BASE_AMORT - C33*(n-1), 0))
             irpf = max((base_full*mitad - com)*tasa, 0)
             K += imp_full*mitad - irpf
         base = sobrante
@@ -151,8 +157,7 @@ def correr(p):
         precio = (C3 + C10)*(1+C49)**n
         gastos_venta = precio*pct_venta
         # La amortización acumulada topa en la base amortizable: al 3% se agota a los 33 años.
-        base_amortizable = C4*0.6 + C10 + C9
-        ganancia = max(precio - gastos_venta - ((C4 + C9 + C10) - min(C33*n, base_amortizable)), 0)
+        ganancia = max(precio - gastos_venta - ((C4 + C9 + C10) - min(C33*n, BASE_AMORT)), 0)
         imp_venta = impuesto_ganancia(ganancia)
         neto = precio - gastos_venta - imp_venta - G - I + L
         MV = TIR(flujos[:n] + [flujos[n] + neto]) if C13 else None
@@ -177,6 +182,12 @@ ESC = {
  'pre_no_acel':   {'C13':100000,'C24':'No'},
  'barato':        {'C2':120000,'C3':120000,'C4':120000,'C11':20000,'C13':32000,'C30':900},
  'sin_entrada':   {'C11':0,'C13':51000},
+ # La deuda se cancela a mitad de año: hipoteca a 10,5 años (el año 11 sólo cobra seis meses) y
+ # acelerada, que la cancela dentro de un año completo.
+ 'cancela_medio': {'C11':250000, 'C13':301000, 'C15':10.5},
+ 'cancela_acel':  {'C11':250000, 'C13':301000, 'C15':25, 'C19':'Sí', 'C30':3500},
+ # Cuarenta años: la amortización fiscal se agota al año 34 y el tipo del ahorro llega al 30 %.
+ 'tope_amort':    {'horizonte':40, 'C11':500000, 'C13':551000},
  # Comisión de apertura del 1 % en la hipoteca y del 2 % en el préstamo personal.
  'comision':      {'C13':100000,'comHip':0.01,'comPre':0.02},
  # Gastos ESTIMADOS con las tasas por defecto de la herramienta, en vez de cifras escritas a mano:

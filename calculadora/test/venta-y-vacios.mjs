@@ -88,12 +88,12 @@ check('vender el primer año es ruinoso', v.filas[0].tir < -0.15,
   `${(v.filas[0].tir * 100).toFixed(1)}% · neto ${eur(v.filas[0].neto)} sobre lo aportado`);
 check('el primer año no hay ganancia que tributar', v.filas[0].gan === 0 && v.filas[0].imp === 0);
 
-// La escala por tramos: más ganancia, tipo efectivo mayor, y nunca fuera del 19-28%.
+// La escala por tramos: más ganancia, tipo efectivo mayor, y nunca fuera del 19-30%.
 const tipos = v.filas.filter(f => f.gan > 0).map(f => f.imp / f.gan);
 check('el tipo efectivo crece con la ganancia',
   tipos.every((t, i) => i === 0 || t >= tipos[i - 1] - 1e-12),
   `${(tipos[0] * 100).toFixed(1)}% → ${(tipos[tipos.length - 1] * 100).toFixed(1)}%`);
-check('y se queda dentro de la escala', tipos.every(t => t >= 0.19 - 1e-9 && t <= 0.28 + 1e-9));
+check('y se queda dentro de la escala', tipos.every(t => t >= 0.19 - 1e-9 && t <= 0.30 + 1e-9));
 
 // Abrir el candado impone un tipo plano. El candado vive en la pestaña de parámetros.
 await p.click('.tab-btn >> text=⚙️ Parámetros >> visible=true'); await p.waitForTimeout(200);

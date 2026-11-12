@@ -12426,13 +12426,17 @@ function copyContactEmail(btn) {
 function copyShareUrl() {
   const input = document.getElementById('shareUrlInput');
   if (!input) return;
+  // Sin permiso de portapapeles (o fuera de https) la promesa se rechaza: en vez de no decir
+  // nada, se deja el enlace seleccionado para copiarlo a mano, como hace el botón de correo.
+  const aMano = () => { input.focus(); input.select(); window.prompt('Copia el enlace:', input.value); };
+  if (!navigator.clipboard || !navigator.clipboard.writeText) { aMano(); return; }
   navigator.clipboard.writeText(input.value).then(() => {
     const fb = document.getElementById('shareCopiedFeedback');
     if (fb) {
       fb.classList.remove('hidden');
       setTimeout(() => fb.classList.add('hidden'), 2500);
     }
-  });
+  }).catch(aMano);
 }
 	
     window.addEventListener('DOMContentLoaded', () => {

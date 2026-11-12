@@ -692,22 +692,24 @@
 
   <!-- Pestañas -->
   <section class="max-w-7xl mx-auto">
-    <div class="flex gap-2 sm:gap-5 border-b border-brand-border mb-5 overflow-x-auto scrollbar-thin text-[11px] sm:text-sm font-semibold">
-      <button class="tab-btn text-brand-accent border-b-2 border-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('proyeccionTab', this)"><span class="sm:hidden" data-i18n="tabProyeccionCorto"></span><span class="hidden sm:inline" data-i18n="tabProyeccion"></span></button>
-      <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('cajaTab', this)"><span class="sm:hidden" data-i18n="tabCajaCorto"></span><span class="hidden sm:inline" data-i18n="tabCaja"></span></button>
-      <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('tablasTab', this)"><span class="sm:hidden" data-i18n="tabTablasCorto"></span><span class="hidden sm:inline" data-i18n="tabTablas"></span></button>
-      <button class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('paramsTab', this)"><span class="sm:hidden" data-i18n="tabParamsCorto"></span><span class="hidden sm:inline" data-i18n="tabParams"></span></button>
+    <!-- role="tablist" agrupa los botones para el lector de pantalla; aria-selected lo mantiene switchTab. -->
+    <div role="tablist" class="flex gap-2 sm:gap-5 border-b border-brand-border mb-5 overflow-x-auto scrollbar-thin text-[11px] sm:text-sm font-semibold">
+      <button role="tab" aria-selected="true" class="tab-btn text-brand-accent border-b-2 border-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('proyeccionTab', this)"><span class="sm:hidden" data-i18n="tabProyeccionCorto"></span><span class="hidden sm:inline" data-i18n="tabProyeccion"></span></button>
+      <button role="tab" aria-selected="false" class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('cajaTab', this)"><span class="sm:hidden" data-i18n="tabCajaCorto"></span><span class="hidden sm:inline" data-i18n="tabCaja"></span></button>
+      <button role="tab" aria-selected="false" class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('tablasTab', this)"><span class="sm:hidden" data-i18n="tabTablasCorto"></span><span class="hidden sm:inline" data-i18n="tabTablas"></span></button>
+      <button role="tab" aria-selected="false" class="tab-btn text-brand-textMuted hover:text-brand-accent pb-2 whitespace-nowrap" onclick="switchTab('paramsTab', this)"><span class="sm:hidden" data-i18n="tabParamsCorto"></span><span class="hidden sm:inline" data-i18n="tabParams"></span></button>
     </div>
 
-    <div id="proyeccionTab" class="tab-content space-y-6">
+    <div id="proyeccionTab" role="tabpanel" class="tab-content space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-brand-card border border-brand-border rounded-xl p-5">
           <h3 class="text-sm font-bold mb-3" data-i18n="graficaPatrimonio">Patrimonio, deuda y caja</h3>
-          <div class="h-72"><canvas id="chartPatrimonio"></canvas></div>
+          <!-- Si Chart.js no carga, renderCharts oculta el lienzo y enseña el aviso en su sitio. -->
+          <div class="h-72"><canvas id="chartPatrimonio" role="img" aria-label="Líneas de ganancia, deuda viva y caja acumulada a lo largo de la proyección" data-i18n-aria="ariaPatrimonio" class="grafica-lienzo"></canvas><p class="grafica-aviso text-xs text-brand-textMuted text-center px-4 pt-16" hidden data-i18n="graficasNoDisponibles"></p></div>
         </div>
         <div class="bg-brand-card border border-brand-border rounded-xl p-5">
           <h3 class="text-sm font-bold mb-3" data-i18n="graficaRentabilidad">Rentabilidad anualizada acumulada</h3>
-          <div class="h-72"><canvas id="chartRentabilidad"></canvas></div>
+          <div class="h-72"><canvas id="chartRentabilidad" role="img" aria-label="Línea de la rentabilidad anualizada acumulada, año a año" data-i18n-aria="ariaRentabilidad" class="grafica-lienzo"></canvas><p class="grafica-aviso text-xs text-brand-textMuted text-center px-4 pt-16" hidden data-i18n="graficasNoDisponibles"></p></div>
         </div>
       </div>
       <div class="bg-brand-card border border-brand-border rounded-xl p-5">
@@ -725,7 +727,7 @@
       </div>
     </div>
 
-    <div id="cajaTab" class="tab-content hidden space-y-6">
+    <div id="cajaTab" role="tabpanel" class="tab-content hidden space-y-6">
       <div class="bg-brand-card border border-brand-border rounded-xl p-5">
         <h3 class="text-sm font-bold mb-1" data-i18n="regimenesTitulo">Los tres regímenes de caja</h3>
         <p class="text-[11px] text-brand-textMuted mb-4" id="regimenesAyuda" data-i18n="regimenesAyuda">La caja anual del piso cambia según qué deuda siga viva.</p>
@@ -746,12 +748,12 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-brand-card border border-brand-border rounded-xl p-5">
           <h3 class="text-sm font-bold mb-3" data-i18n="desgloseGastos">Desglose de gastos anuales</h3>
-          <div class="h-64 max-sm:h-80"><canvas id="chartGastos"></canvas></div>
+          <div class="h-64 max-sm:h-80"><canvas id="chartGastos" role="img" aria-label="Anillo con los gastos anuales: comunidad, IBI, seguro del hogar, seguro de impagos y mantenimiento" data-i18n-aria="ariaGastos" class="grafica-lienzo"></canvas><p class="grafica-aviso text-xs text-brand-textMuted text-center px-4 pt-16" hidden data-i18n="graficasNoDisponibles"></p></div>
         </div>
         <div class="bg-brand-card border border-brand-border rounded-xl p-5">
           <h3 class="text-sm font-bold mb-1" data-i18n="desgloseIngresos">A dónde va el alquiler</h3>
           <p class="text-[11px] text-brand-textMuted mb-3" id="desgloseIngresosSub">--</p>
-          <div class="h-64 max-sm:h-80"><canvas id="chartIngresos"></canvas></div>
+          <div class="h-64 max-sm:h-80"><canvas id="chartIngresos" role="img" aria-label="Anillo con el reparto del alquiler entre gastos, IRPF, intereses, amortización y caja que queda" data-i18n-aria="ariaIngresos" class="grafica-lienzo"></canvas><p class="grafica-aviso text-xs text-brand-textMuted text-center px-4 pt-16" hidden data-i18n="graficasNoDisponibles"></p></div>
         </div>
       </div>
       <div class="bg-brand-card border border-brand-border rounded-xl p-5">
@@ -760,7 +762,7 @@
       </div>
     </div>
 
-    <div id="tablasTab" class="tab-content hidden space-y-6">
+    <div id="tablasTab" role="tabpanel" class="tab-content hidden space-y-6">
       <div class="bg-brand-card border border-brand-border rounded-xl p-5">
         <h3 class="text-sm font-bold mb-1" data-i18n="tablaPreciosTitulo">Coste total máximo por rentabilidad exigida</h3>
         <p class="text-[11px] text-brand-textMuted mb-4" data-i18n="tablaPreciosAyuda">Hasta cuánto puede costarte la operación entera.</p>
@@ -782,7 +784,7 @@
       </div>
     </div>
 
-    <div id="paramsTab" class="tab-content hidden space-y-6">
+    <div id="paramsTab" role="tabpanel" class="tab-content hidden space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-3">
           <h3 class="text-sm font-bold border-b border-brand-border pb-3" data-i18n="paramsMultiplicadores">Multiplicadores de gasto</h3>
@@ -1061,6 +1063,11 @@
         regimenesSinApertura: 'No incluyen la comisión de apertura, que sólo se paga el año 1: está en la fila 1 de la proyección y en el resumen.',
         tabProyeccion: '📈 Proyección', tabCaja: '💵 Flujo de caja', tabTablas: '🔥 Tablas de rentabilidad', tabParams: '⚙️ Parámetros',
         graficaPatrimonio: 'Patrimonio, deuda y caja', graficaRentabilidad: 'Rentabilidad anualizada acumulada',
+        graficasNoDisponibles: 'Gráficas no disponibles: no se ha podido cargar la librería. Las cifras están en la tabla «Año a año».',
+        ariaPatrimonio: 'Líneas de ganancia, deuda viva y caja acumulada a lo largo de la proyección',
+        ariaRentabilidad: 'Línea de la rentabilidad anualizada acumulada, año a año',
+        ariaGastos: 'Anillo con los gastos anuales: comunidad, IBI, seguro del hogar, seguro de impagos y mantenimiento',
+        ariaIngresos: 'Anillo con el reparto del alquiler entre gastos, IRPF, intereses, amortización y caja que queda',
         serieGanancia: 'Ganancia sobre lo invertido', serieDeuda: 'Deuda viva', serieCaja: 'Caja acumulada',
         serieRentabilidad: 'Rentabilidad anualizada', anoAAno: 'Año a año',
         leyendaTabla: 'Columnas «€ de hoy»: con la inflación descontada. Rojo: negativo. Fila rosada: año en que pones dinero. Celda verde: el año en que recuperas lo aportado.',
@@ -1332,6 +1339,11 @@
         regimenesSinApertura: 'They leave out the arrangement fee, which is paid in year 1 only: it is in row 1 of the projection and in the summary.',
         tabProyeccion: '📈 Projection', tabCaja: '💵 Cash flow', tabTablas: '🔥 Yield tables', tabParams: '⚙️ Parameters',
         graficaPatrimonio: 'Net worth, debt and cash', graficaRentabilidad: 'Cumulative annualised return',
+        graficasNoDisponibles: 'Charts unavailable: the library could not be loaded. The figures are in the year-by-year table.',
+        ariaPatrimonio: 'Lines of gain, outstanding debt and accumulated cash over the projection',
+        ariaRentabilidad: 'Line of cumulative annualised return, year by year',
+        ariaGastos: 'Doughnut of annual running costs: community fees, property tax, home insurance, non-payment insurance and maintenance',
+        ariaIngresos: 'Doughnut of how the rent splits between running costs, income tax, interest, principal repaid and cash left',
         serieGanancia: 'Gain on capital invested', serieDeuda: 'Debt outstanding', serieCaja: 'Accumulated cash',
         serieRentabilidad: 'Annualised return', anoAAno: 'Year by year',
         leyendaTabla: 'Columns tagged “today’s €” are net of inflation. Red: negative. Pink row: a year you put money in. Green cell: the year you get your cash back.',
@@ -3227,7 +3239,12 @@
     }
 
     function renderCharts(d) {
-      if (typeof Chart === 'undefined') return;
+      // Sin Chart.js (CDN bloqueado o caído) no hay nada que dibujar: el lienzo se oculta y el
+      // aviso ocupa su sitio, para que la tarjeta no quede vacía sin explicación.
+      const sinLibreria = typeof Chart === 'undefined';
+      document.querySelectorAll('.grafica-lienzo').forEach(c => { c.hidden = sinLibreria; });
+      document.querySelectorAll('.grafica-aviso').forEach(p => { p.hidden = !sinLibreria; });
+      if (sinLibreria) return;
       Object.values(charts).forEach(c => c && c.destroy());
       charts = {};
 
@@ -3392,6 +3409,8 @@
       document.querySelectorAll('.tab-btn').forEach(e => {
         e.classList.remove('text-brand-accent', 'border-b-2', 'border-brand-accent');
         e.classList.add('text-brand-textMuted');
+        // aria-selected debe seguir a la pestaña activa: un lector que no lo vea no sabría dónde está.
+        e.setAttribute('aria-selected', String(e === btn));
       });
       el(tabId).classList.remove('hidden');
       btn.classList.add('text-brand-accent', 'border-b-2', 'border-brand-accent');

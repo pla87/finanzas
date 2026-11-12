@@ -5240,8 +5240,9 @@ let capitalGainsTaxPaid = 0;
     // que ya ha tributado como rendimiento del trabajo: ese importe es su precio de adquisición.
     // Sin sumarlo al coste, cada RSU se contabilizaba como plusvalía latente íntegra y disparaba
     // el tipo aplicado a las desinversiones.
-    if (netRSU1 + netRSU2 > 0) growthLots.push(makeLot(netRSU1 + netRSU2, netRSU1 + netRSU2));
-    cGrowth += (netRSU1 + netRSU2);
+    // Se incorporan DESPUÉS de calcular los dividendos, como hace runSimulation(): la cartera viva
+    // de la que cuelga el dividendo de las acciones con rendimiento propio es la de antes de la
+    // entrega. Sumarlas antes inflaba esa proporción y el optimizador cobraba de más.
 
 let grossSavingsP1 = 0, grossSavingsP2 = 0;
 
@@ -5273,6 +5274,8 @@ let grossSavingsP1 = 0, grossSavingsP2 = 0;
 
     const savingsTaxTotal = calculateSavingsTax(grossSavingsP1) + (hasPartner ? calculateSavingsTax(grossSavingsP2) : 0);
     const totalNetDivAndInterests = (grossSavingsP1 + grossSavingsP2) - savingsTaxTotal;
+    if (netRSU1 + netRSU2 > 0) growthLots.push(makeLot(netRSU1 + netRSU2, netRSU1 + netRSU2));
+    cGrowth += (netRSU1 + netRSU2);
 
     const grossCashLaborAndPensions = res1.salaryBase + (res1.isSev ? res1.sevAmount : 0) + res1.paro + publicPensionP1 +
                                      res2.salaryBase + (res2.isSev ? res2.sevAmount : 0) + res2.paro + publicPensionP2;
@@ -10820,6 +10823,8 @@ function buildStateObject() {
     familyExpenses,
     hasPartner,
     childrenAges,
+    // Lo que lee Balance, que no distingue pareja de hijos: el tamaño del hogar.
+    familyMembers: (hasPartner ? 2 : 1) + childrenAges.length,
     customYearlyRouting,
     realEstateEvents,
     chattelEvents,
@@ -10940,16 +10945,44 @@ function applyStateObject(parsed) {
   if (parsed.familyExpenses) familyExpenses = parsed.familyExpenses;
 
   // 3. Estado de Pareja e Hijos
-  if (parsed.hasPartner !== undefined) {
-    hasPartner = !!parsed.hasPartner;
+  // Balance guarda el hogar como un número (`familyMembers`) y no sabe de parejas ni de edades; este
+  // simulador necesita saber quién es pareja y cuántos años tiene cada hijo. Con el número solo
+  // (fichero de Balance) el hogar se ajusta a él: 1 = sin pareja ni hijos, 2 = pareja, N>=3 =
+  // pareja y N-2 hijos. Si el fichero trae además el detalle y cuadra con el número, manda el
+  // detalle (trae las edades de verdad); si no cuadra, el usuario cambió el hogar en Balance y
+  // manda el número. Antes se ignoraba el número, y un hogar de 2 volvía de aquí como 4.
+  let avisoEdadesHijos = false;
+  const miembros = (typeof parsed.familyMembers === 'number' && Number.isFinite(parsed.familyMembers))
+    ? Math.max(1, Math.floor(parsed.familyMembers)) : null;
+  const detalleCuadra = parsed.hasPartner !== undefined && Array.isArray(parsed.childrenAges)
+    && (parsed.hasPartner ? 2 : 1) + parsed.childrenAges.length === miembros;
+  if (miembros !== null && !detalleCuadra) {
+    const hijosPrevios = childrenAges.length;
+    // El selector de hijos llega a 5: más no se puede representar.
+    const hijos = Math.min(5, Math.max(0, miembros - 2));
+    hasPartner = miembros >= 2;
+    // Las edades que el fichero no trae se conservan de las que ya había y los hijos que sobran
+    // entran con la edad con la que se añade un hijo a mano (1). Si el número de hijos cambia, no
+    // se sabe a qué hijo corresponde cada edad: se avisa para que el usuario las revise.
+    childrenAges = childrenAges.slice(0, hijos);
+    while (childrenAges.length < hijos) childrenAges.push(1);
+    avisoEdadesHijos = hijos > 0 && hijos !== hijosPrevios;
     const partnerEl = document.getElementById('exp_hasPartner');
     if (partnerEl) partnerEl.value = hasPartner ? 'yes' : 'no';
-  }
-
-  if (parsed.childrenAges) {
-    childrenAges = parsed.childrenAges;
     const countEl = document.getElementById('exp_childrenCount');
     if (countEl) countEl.value = String(childrenAges.length);
+  } else {
+    if (parsed.hasPartner !== undefined) {
+      hasPartner = !!parsed.hasPartner;
+      const partnerEl = document.getElementById('exp_hasPartner');
+      if (partnerEl) partnerEl.value = hasPartner ? 'yes' : 'no';
+    }
+
+    if (parsed.childrenAges) {
+      childrenAges = parsed.childrenAges;
+      const countEl = document.getElementById('exp_childrenCount');
+      if (countEl) countEl.value = String(childrenAges.length);
+    }
   }
 
   // 4. Enrutamiento anual personalizado, Activos y Deudas
@@ -11090,6 +11123,7 @@ function applyStateObject(parsed) {
   syncParamSliders('rentInflationParam', false);
   updateRetireAgeUI();
   updateRetireAgeP2UI();
+  return avisoEdadesHijos;
 }
 
 function restoreSampleData() {
@@ -11133,7 +11167,7 @@ function exportData() {
 // conocida y que lo que venga tenga el tipo que el código luego da por hecho: un `[]`, un número o
 // el JSON de otra cosa no son copias, y una lista que no es lista o una carrera sin etapas
 // reventaban a mitad de aplicarla, con medio plan nuevo y medio viejo.
-const BACKUP_KNOWN_KEYS = ['careers', 'familyExpenses', 'hasPartner', 'childrenAges', 'customYearlyRouting',
+const BACKUP_KNOWN_KEYS = ['careers', 'familyExpenses', 'hasPartner', 'childrenAges', 'familyMembers', 'customYearlyRouting',
   'realEstateEvents', 'chattelEvents', 'assetsData', 'liabilitiesData', 'exchangeRates', 'macro'];
 function validateBackupShape(parsed) {
   const esObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -11181,8 +11215,9 @@ function importData(e) {
       catch (err) { alert("❌ El archivo no es un JSON válido."); return; }
       const motivo = validateBackupShape(parsed);
       if (motivo) { alert("❌ No se ha cargado nada: " + motivo); return; }
+      let avisoEdades = false;
       try {
-        applyStateObject(parsed);
+        avisoEdades = applyStateObject(parsed);
       } catch (err) {
         console.error(err);
         let restaurado = false;
@@ -11190,7 +11225,9 @@ function importData(e) {
         alert("❌ Error al procesar el archivo de respaldo." + (restaurado ? " Se ha conservado tu plan anterior." : ""));
         return;
       }
-      alert("✅ Modelo completo cargado correctamente.");
+      alert("✅ Modelo completo cargado correctamente." + (avisoEdades
+        ? "\n\nEl fichero solo trae el número de personas del hogar, no las edades de los hijos: revisa las edades de los hijos en el apartado de gastos familiares."
+        : ""));
     } finally {
       libera();
     }

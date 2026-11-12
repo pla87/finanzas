@@ -1741,3 +1741,89 @@ test('un préstamo familiar sin plazo no rompe la sincronización', () => {
   assert.equal(out.value, 5500);
   assert.equal(out.monthlyPayment, 0);
 });
+
+// --- EL HOGAR EN EL FICHERO COMPARTIDO CON RETIRO ---
+// Balance guarda el hogar como un número (`familyMembers`); Retiro como pareja sí/no y la edad de
+// cada hijo. Un fichero de Retiro que Balance reexporta tiene que devolver ese detalle tal cual
+// (Retiro lo necesita para las edades), pero el número manda: si el usuario cambió el hogar aquí,
+// Retiro se ajusta al número y no al detalle, que ya no cuadra.
+
+test('hogar: un fichero de Retiro con familyMembers usa ese número', () => {
+  const next = parseImportPayload({ familyMembers: 4, hasPartner: true, childrenAges: [5, 2] });
+  assert.equal(next.familyMembers, 4);
+});
+
+test('hogar: un fichero antiguo de Retiro sin familyMembers lo deriva de pareja e hijos', () => {
+  assert.equal(parseImportPayload({ hasPartner: true, childrenAges: [5, 2, 1] }).familyMembers, 5);
+  assert.equal(parseImportPayload({ hasPartner: false, childrenAges: [] }).familyMembers, 1);
+});
+
+test('hogar: el detalle de Retiro (pareja y edades de los hijos) viaja en la vuelta', () => {
+  const next = parseImportPayload({ familyMembers: 4, hasPartner: true, childrenAges: [5, 2], assetsData: [] });
+  assert.deepEqual(next.householdDetail, { hasPartner: true, childrenAges: [5, 2] });
+  const fuera = buildExportPayload({ ...SAMPLE_STATE, familyMembers: next.familyMembers, householdDetail: next.householdDetail });
+  assert.equal(fuera.familyMembers, 4);
+  assert.equal(fuera.hasPartner, true);
+  assert.deepEqual(fuera.childrenAges, [5, 2]);
+});
+
+test('hogar: un balance propio no inventa detalle que Retiro no le dio', () => {
+  const fuera = buildExportPayload(SAMPLE_STATE);
+  assert.equal(fuera.hasPartner, undefined);
+  assert.equal(fuera.childrenAges, undefined);
+  assert.equal(parseImportPayload(JSON.parse(JSON.stringify(fuera))).householdDetail, undefined);
+});
+
+test('hogar: si el número cambia en Balance, lo que se exporta lleva el número nuevo (y manda sobre el detalle)', () => {
+  const detalle = { hasPartner: true, childrenAges: [5, 2] };
+  const fuera = JSON.parse(JSON.stringify(buildExportPayload({ ...SAMPLE_STATE, familyMembers: 3, householdDetail: detalle })));
+  assert.equal(fuera.familyMembers, 3);
+  // El detalle viaja tal cual (solo lo usa Retiro) y ya no cuadra con el número: ahí Retiro se
+  // fía de `familyMembers`. Y Balance, al releerlo, también.
+  assert.equal(parseImportPayload(fuera).familyMembers, 3);
+});
+
+test('hogar: un detalle mal formado no entra', () => {
+  assert.equal(parseImportPayload({ familyMembers: 2, hasPartner: 'si', childrenAges: 'x' }).householdDetail, undefined);
+  assert.deepEqual(parseImportPayload({ familyMembers: 3, hasPartner: true, childrenAges: [4, 'x', -2] }).householdDetail,
+    { hasPartner: true, childrenAges: [4, 0, 0] });
+});
+
+// --- VIVIENDA HABITUAL: RENDIMIENTO DE USO POR DEFECTO ---
+// Sin alquiler imputado escrito, la vivienda habitual rinde de uso un 3,5 % de su valor, la misma
+// cifra que usa Retiro. Con alquiler escrito, manda el alquiler. El uso nunca es dinero que entra.
+
+test('vivienda habitual sin alquiler imputado: uso del 3,5 % del valor, como Retiro', () => {
+  const r = calculateRealEstateReturns(400000, 0, 'habitual', DEFAULT_MACRO_PARAMS);
+  assert.equal(r.useReturnPct, 3.5);
+  assert.equal(calculateRealEstateReturns(400000, undefined, 'habitual', DEFAULT_MACRO_PARAMS).useReturnPct, 3.5);
+  assert.equal(calculateRealEstateReturns(400000, '', 'habitual', DEFAULT_MACRO_PARAMS).useReturnPct, 3.5);
+});
+
+test('vivienda habitual con alquiler imputado: se respeta el alquiler, no el 3,5 %', () => {
+  assert.equal(calculateRealEstateReturns(160000, 750, 'habitual', DEFAULT_MACRO_PARAMS).useReturnPct, 5.63);
+  assert.equal(calculateRealEstateReturns(400000, 500, 'habitual', DEFAULT_MACRO_PARAMS).useReturnPct, 1.5);
+});
+
+test('el uso por defecto no es dinero: el efectivo de la vivienda habitual no cambia', () => {
+  const sin = calculateRealEstateReturns(400000, 0, 'habitual', DEFAULT_MACRO_PARAMS);
+  assert.equal(sin.cashReturnPct, -0.6);
+  assert.equal(sin.netAnnualCashflow, -2400);
+});
+
+test('el 3,5 % es solo de la vivienda habitual: vacío, alquilado y suelo siguen en cero', () => {
+  for (const uso of ['vacant', 'rented', 'land']) {
+    assert.equal(calculateRealEstateReturns(400000, 0, uso, DEFAULT_MACRO_PARAMS).useReturnPct, 0, uso);
+  }
+});
+
+test('una vivienda habitual de Retiro (uso 3,5 y alquiler 0) conserva el 3,5 al entrar y al volver a salir', () => {
+  const deRetiro = { assetsData: [{ id: 're_1', name: 'Vivienda', category: 'real_estate', owner: 'joint', currency: 'EUR',
+    value: 400000, purchasePrice: 280000, purchaseDate: '2019-06', monthlyRent: 0, useType: 'habitual',
+    cashReturnPct: 0, useReturnPct: 3.5, capitalReturnPct: 2, opexPct: 0, hasMaint: true }] };
+  const dentro = parseImportPayload(JSON.parse(JSON.stringify(deRetiro)));
+  assert.equal(dentro.assets[0].useReturnPct, 3.5);
+  const fuera = JSON.parse(JSON.stringify(buildExportPayload({ ...SAMPLE_STATE, assets: dentro.assets })));
+  assert.equal(fuera.assetsData[0].useReturnPct, 3.5);
+  assert.equal(fuera.assetsData[0].monthlyRent, 0);
+});

@@ -128,6 +128,7 @@ export const TRANSLATIONS = {
     use_rented: 'Alquilado',
     use_vacant: 'Vacío',
     use_land: 'Suelo',
+    use_habitual_hint: 'El alquiler imputado es lo que pagarías por alquilar tu casa. Si lo dejas en 0, se imputa un {pct}% del valor al año como uso, la misma cifra que usa Retiro. Es uso, no dinero: no entra en la caja.',
     use_land_hint: 'Un solar o una finca: no se deprecia, no lleva mantenimiento, no da alquiler ni uso y se revaloriza con la inflación. No cuenta como vivienda habitual en el impuesto sobre el patrimonio.',
 
     card_assets_summary: 'Resumen Consolidado de Activos',
@@ -562,7 +563,7 @@ export const TRANSLATIONS = {
     tt_cash_return: 'El porcentaje BRUTO que has declarado para esta posición, antes de impuestos: es el que trae la ficha del fondo o del valor. La columna de euros de al lado ya viene neta, así que las dos no cuadran a propósito.',
     tt_cash_amount: 'Los euros que de verdad te llegan al año, ya pagado el impuesto. Dividendos e intereses tributan por la escala del ahorro sobre el total del balance, y el alquiler a tu tipo marginal.',
     tt_cash_return_re: 'Rendimiento monetario neto recibido en forma de alquiler neto, o coste cuando es negativo.',
-    tt_use_return: 'Ahorro económico anual imputado por vivir en tu propia vivienda en lugar de pagar alquiler.',
+    tt_use_return: 'Ahorro económico anual imputado por vivir en tu propia vivienda en lugar de pagar alquiler. Sin alquiler imputado escrito, se toma un 3,5% del valor de la vivienda habitual.',
     tt_use_return_tangibles: 'Valor obtenido como uso del bien, por ejemplo, como alternativa al alquiler de un vehículo.',
     tt_cap_return: 'Crecimiento patrimonial anual estimado por la apreciación del activo frente a la inflación.',
     tt_amort: 'Calculado mediante el sistema de amortización francés según meses transcurridos.',
@@ -690,6 +691,7 @@ export const TRANSLATIONS = {
     use_rented: 'Rented Out',
     use_vacant: 'Vacant',
     use_land: 'Land',
+    use_habitual_hint: 'Imputed rent is what you would pay to rent your home. Leave it at 0 and {pct}% of the value a year is imputed as use, the same figure Retiro uses. It is use, not money: it never enters cash flow.',
     use_land_hint: 'A plot or a field: it does not depreciate, carries no maintenance, yields no rent or use, and appreciates with inflation. It never counts as your main home for wealth tax.',
 
     card_assets_summary: 'Consolidated Assets Summary',
@@ -1125,7 +1127,7 @@ export const TRANSLATIONS = {
     tt_cash_return: 'The GROSS percentage you entered for this holding, before tax: the one on the fund or share factsheet. The euro column beside it is already net, so the two deliberately do not match.',
     tt_cash_amount: 'The euros that actually reach you each year, after tax. Dividends and interest are taxed through the savings bands on your balance sheet total; rent at your marginal rate.',
     tt_cash_return_re: 'Net cash income from rental profits, or cost when negative.',
-    tt_use_return: 'Imputed financial savings from living in your owned property.',
+    tt_use_return: 'Imputed financial savings from living in your owned property. With no imputed rent entered, 3.5% of the value of your main home is used.',
     tt_use_return_tangibles: 'Imputed utility value gained from using the asset, e.g., as an alternative to renting a vehicle.',
     tt_cap_return: 'Estimated annual capital growth from asset price appreciation.',
     tt_amort: 'Calculated using standard French amortization formula.',

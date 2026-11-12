@@ -22,6 +22,8 @@ export default async function run({ open, assert, near, capturePdf }) {
           const s = JSON.parse(JSON.stringify(base));
           s.hasPartner = false;
           s.childrenAges = [];
+          // El hogar editado a mano: `familyMembers` del estado base (4) ya no lo describe y mandaría.
+          s.familyMembers = 1;
           s.assetsData = [
             { id: 'c1', name: 'Caja', category: 'cash', owner, currency: 'EUR', value: 40000 * f, cashReturnPct: 1, capitalReturnPct: 0 },
             { id: 's1', name: 'Bolsa', category: 'stocks', owner, currency: 'EUR', value: 90000 * f, cashReturnPct: 1.5, capitalReturnPct: 5 },

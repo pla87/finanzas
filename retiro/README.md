@@ -8,7 +8,10 @@ falta dinero líquido.
 
 Es gratuito y no tiene servidor: todo se calcula en el navegador y los datos no salen de él.
 Comparte el formato del fichero de copia con
-[pacolucena.com/balance](https://pacolucena.com/balance/).
+[pacolucena.com/balance](https://pacolucena.com/balance/). El tamaño del hogar viaja como
+`familyMembers` (1 + pareja + hijos), además de `hasPartner` y `childrenAges`: un fichero que
+trae solo el número (el de Balance) ajusta el hogar a él, y si el detalle no cuadra con el número
+manda el número.
 
 ## Desarrollo
 

@@ -127,6 +127,19 @@ entrar y al salir. Lo que solo usa Retiro (titular, gramos de oro, vínculo al
 estándar) se conserva tal cual. La cuota de una deuda con cuadro viaja como 0,
 que en Retiro quiere decir «calcúlala tú».
 
+El **hogar** viaja como un número, `familyMembers` (1 + pareja + hijos), que escriben las
+dos herramientas. Retiro lo guarda además como `hasPartner` y `childrenAges` (las edades de los
+hijos), que Balance no usa: los lee al importar, los conserva en `householdDetail` y los devuelve
+tal cual al exportar, para que Retiro no pierda las edades. Si el detalle no cuadra con el número
+(el usuario cambió el hogar aquí), **manda `familyMembers`**: Retiro ajusta su hogar a él (1 = sin
+pareja ni hijos, 2 = pareja, N>=3 = pareja y N-2 hijos). Un fichero antiguo de Retiro sin
+`familyMembers` sigue entrando por `hasPartner` y `childrenAges`.
+
+La **vivienda habitual** sin alquiler imputado escrito rinde de uso un 3,5 % del valor
+(`USO_VIVIENDA_HABITUAL_PCT`, la misma cifra que Retiro); con alquiler escrito manda el
+alquiler. El uso solo mueve la rentabilidad total, el ROA, el ROE y la cobertura «por uso»: la
+caja, el flujo pasivo, la cobertura de dinero, los niveles FIRE y la auditoría no lo ven.
+
 No cambies el formato sin decirlo: al otro lado hay otra aplicación leyéndolo.
 
 ## El manual

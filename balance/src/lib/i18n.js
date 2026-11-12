@@ -235,7 +235,7 @@ export const TRANSLATIONS = {
     m_l1_desc: 'Patrimonio neto positivo sin contar el valor de la vivienda habitual (pero sí su hipoteca)',
     
     m_l2_title: 'Nivel 2: Crecimiento Saludable',
-    m_l2_desc: 'ROA financiero (sin computar uso) al menos 150 bps (+1.5%) por encima de la inflación esperada',
+    m_l2_desc: 'ROA financiero (sin computar uso) al menos 150 bps (+1,5%) por encima de la inflación esperada',
 
     m_l3_title: 'Nivel 3: Autosuficiencia de Activos',
     m_l3_desc: 'Flujo de caja neto mensual del balance positivo (los activos pagan su propia deuda).',
@@ -567,7 +567,8 @@ export const TRANSLATIONS = {
     tt_roa_financial: 'ROA Financiero: Rendimiento financiero anual puro generado sobre el total de activos, sin computar el ahorro por uso.',
     theme_light_tt: 'Modo Claro',
     theme_dark_tt: 'Modo Oscuro',
-    copied_text: '¡Enlace copiado al portapapeles!'
+    copied_text: '¡Enlace copiado al portapapeles!',
+    copy_failed_text: 'No se ha podido copiar. Selecciona el enlace y cópialo a mano.'
   },
   en: {
     app_title: 'Personal Balance Sheet',
@@ -1124,6 +1125,7 @@ export const TRANSLATIONS = {
     tt_roa_financial: 'Financial ROA: Pure annual financial return generated on total assets, excluding imputed use.',
     theme_light_tt: 'Light Mode',
     theme_dark_tt: 'Dark Mode',
-    copied_text: 'Link copied to clipboard!'
+    copied_text: 'Link copied to clipboard!',
+    copy_failed_text: 'Could not copy. Select the link and copy it by hand.'
   }
 };

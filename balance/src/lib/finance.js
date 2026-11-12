@@ -67,6 +67,49 @@ export const DEFAULT_MACRO_PARAMS = {
   fireTargetMultiple: 25
 };
 
+// --- RANGOS DE LOS PARÁMETROS ---
+// Cada parámetro tiene el rango en el que significa algo. Las rentabilidades y
+// la inflación admiten negativos —un activo que se deprecia, una deflación—;
+// los costes, los impuestos y los tipos de reparto no: un impuesto negativo es
+// una subvención y una retirada de pensión del 150 % dejaba valores negativos
+// en la liquidación. Todos tienen techo, porque sin él un 1e21 escrito por
+// error se propaga hasta el último total. La interfaz recorta al escribir y la
+// importación recorta lo que venga de fuera, así que campo y cálculo ven
+// siempre el mismo número.
+const TASA = [-50, 100];
+const COSTE = [0, 100];
+export const PARAM_LIMITS = {
+  inflationPct: TASA,
+  realEstateAppreciationPct: TASA,
+  stockGrowthPct: TASA,
+  refDividendYieldPct: COSTE,
+  bondYieldPct: COSTE,
+  tipsRealYieldPct: TASA,
+  goldRealReturnPct: TASA,
+  realEstateMaintenancePct: COSTE,
+  rentalOperatingCostsPct: COSTE,
+  marginalIncomeTaxPct: COSTE,
+  rentalPrimaryHomeDeductionPct: COSTE,
+  savingsTaxRatePct: COSTE,
+  pensionWithdrawalTaxPct: COSTE,
+  propertySellingCostsPct: COSTE,
+  tangiblesHaircutPct: COSTE,
+  earlyRepaymentFeePct: COSTE,
+  // Plusvalía latente sobre el coste: puede pasar de 100, pero no de infinito.
+  assumedUnrealizedGainPct: [0, 1000],
+  wealthTaxBonificationPct: COSTE,
+  wealthTaxExemption: [0, 1e10],
+  // 0 significa «el de por defecto»: el motor lo sustituye.
+  fireTargetMultiple: [0, 200]
+};
+
+export function clampParam(key, valor) {
+  const [min, max] = PARAM_LIMITS[key] || [-Infinity, Infinity];
+  const n = Number(valor);
+  if (!Number.isFinite(n)) return n > 0 ? max : (n < 0 ? min : valor);
+  return Math.min(max, Math.max(min, n));
+}
+
 const ASSET_SUBCATEGORIES = ['cash', 'stocks', 'real_estate', 'pensions', 'tangibles'];
 
 // --- SUBTIPOS DENTRO DE LOS BLOQUES ---
@@ -121,7 +164,13 @@ const SUBTIPO_DE_LA_CATEGORIA_RETIRO = { stocks: 'growth', divStocks: 'dividend'
 // diga el crecimiento de la bolsa; la renta fija ligada a inflación cobra la
 // inflación más su tipo real, y el oro se revaloriza con la inflación más el
 // suyo. La renta fija normal no está: su cupón es de cada bono.
-export function syncAssetRatesToMacro(assets, macroParams) {
+//
+// `anteriores` son los parámetros de antes del cambio. Un fondo de crecimiento
+// sigue al parámetro solo si su rentabilidad coincidía con el parámetro
+// anterior: si el usuario le puso la suya (un ETF al 6,5 % con la bolsa al 6),
+// es un dato de la posición y cambiar otro ajuste no se la puede pisar. Sin
+// `anteriores` no hay forma de saber quién seguía a quién y no se toca a nadie.
+export function syncAssetRatesToMacro(assets, macroParams, anteriores) {
   const inflacion = numeroOr(macroParams?.inflationPct, DEFAULT_MACRO_PARAMS.inflationPct);
   return (assets || []).map(a => {
     if (a.subcategory === 'real_estate') {
@@ -138,8 +187,11 @@ export function syncAssetRatesToMacro(assets, macroParams) {
     }
     // Solo los fondos de crecimiento: uno de dividendo crece lo que la bolsa menos lo que
     // reparte, que es como lo modela Retiro, y no se le pisa con la bolsa entera.
-    if (clase === 'growth' && a.stockType === 'fund') {
-      return { ...a, capitalReturnPct: Number(macroParams?.stockGrowthPct) || 0 };
+    if (clase === 'growth' && a.stockType === 'fund' && anteriores) {
+      const antes = numeroOr(anteriores.stockGrowthPct, DEFAULT_MACRO_PARAMS.stockGrowthPct);
+      if (Number(a.capitalReturnPct) === antes) {
+        return { ...a, capitalReturnPct: numeroOr(macroParams?.stockGrowthPct, 0) };
+      }
     }
     return a;
   });
@@ -252,15 +304,15 @@ export function calculateFamilyLoanMonths(principal, annualRatePct, payment) {
 export function calculateRealEstateReturns(value, monthlyRent, useType, macroParams) {
   const val = Math.max(0, Number(value) || 0);
   const rent = Math.max(0, Number(monthlyRent) || 0);
-  const capRate = Math.abs(Number(macroParams.realEstateAppreciationPct ?? macroParams.inflationPct ?? 2.0));
-  const maintRate = -Math.abs(Number(macroParams.realEstateMaintenancePct ?? 0.60));
+  // La revalorización puede ser negativa —un mercado a la baja—; los costes no.
+  const capRate = numeroOr(macroParams.realEstateAppreciationPct ?? macroParams.inflationPct, 2.0);
+  const maintRate = -Math.max(0, numeroOr(macroParams.realEstateMaintenancePct, 0.60));
 
   // El suelo no es una casa: no se deprecia, no lleva mantenimiento, no se
   // alquila ni se habita, y por eso no sigue al mercado de la vivienda sino a
   // la inflación. Lo mismo hace Retiro con este uso.
   if (useType === 'land') {
-    const inflacion = Number(macroParams.inflationPct ?? 2.0);
-    return { cashReturnPct: 0, useReturnPct: 0, capitalReturnPct: Number.isFinite(inflacion) ? inflacion : 2.0, netAnnualCashflow: 0 };
+    return { cashReturnPct: 0, useReturnPct: 0, capitalReturnPct: numeroOr(macroParams.inflationPct, 2.0), netAnnualCashflow: 0 };
   }
 
   if (val <= 0 || isNaN(val)) return { cashReturnPct: 0, useReturnPct: 0, capitalReturnPct: capRate, netAnnualCashflow: 0 };
@@ -272,9 +324,9 @@ export function calculateRealEstateReturns(value, monthlyRent, useType, macroPar
     const netAnnualCashflow = val * (maintRate / 100);
     return { cashReturnPct: maintRate, useReturnPct: Math.round(useReturnPct * 100) / 100, capitalReturnPct: capRate, netAnnualCashflow };
   } else if (useType === 'rented') {
-    const opCostPct = Math.abs(Number(macroParams.rentalOperatingCostsPct ?? 15)) / 100;
-    const marginalTax = Math.abs(Number(macroParams.marginalIncomeTaxPct ?? 37)) / 100;
-    const deductionPct = Math.abs(Number(macroParams.rentalPrimaryHomeDeductionPct ?? 50)) / 100;
+    const opCostPct = Math.max(0, numeroOr(macroParams.rentalOperatingCostsPct, 15)) / 100;
+    const marginalTax = Math.max(0, numeroOr(macroParams.marginalIncomeTaxPct, 37)) / 100;
+    const deductionPct = Math.max(0, numeroOr(macroParams.rentalPrimaryHomeDeductionPct, 50)) / 100;
 
     // Deduct statutory depreciation (estimated on 50% construction value at 3%)
     const estimatedDepreciation = val * 0.50 * 0.03;
@@ -502,8 +554,8 @@ export function assetAnnualCashflow(asset, macroParams, savingsTaxRatePctOverrid
   // negativo es un coste, no una renta: no se le aplica retención.
   if ((sub === 'stocks' || sub === 'cash') && gross > 0) {
     const taxRatePct = savingsTaxRatePctOverride !== undefined && savingsTaxRatePctOverride !== null
-      ? Math.abs(Number(savingsTaxRatePctOverride) || 0)
-      : Math.abs(Number(macroParams.savingsTaxRatePct ?? 21));
+      ? Math.max(0, Number(savingsTaxRatePctOverride) || 0)
+      : Math.max(0, numeroOr(macroParams.savingsTaxRatePct, 21));
     return { gross, net: gross * (1 - taxRatePct / 100), taxRatePct };
   }
 
@@ -520,7 +572,7 @@ export function assetAcquisitionCost(asset, macroParams) {
   const declared = Number(asset.acquisitionCost);
   if (Number.isFinite(declared) && declared > 0) return declared;
 
-  const gainPct = Math.max(0, Number(macroParams.assumedUnrealizedGainPct ?? 30));
+  const gainPct = clampParam('assumedUnrealizedGainPct', numeroOr(macroParams.assumedUnrealizedGainPct, 30));
   return value / (1 + gainPct / 100);
 }
 
@@ -538,7 +590,7 @@ export function assetCapitalGain(asset, macroParams) {
 // la ganancia de todo el balance, no de la de cada pieza.
 export function assetGrossLiquidation(asset, macroParams) {
   const value = Math.max(0, Number(asset.value) || 0);
-  const pct = (key, fallback) => Math.abs(Number(macroParams[key] ?? fallback)) / 100;
+  const pct = (key, fallback) => clampParam(key, numeroOr(macroParams[key], fallback)) / 100;
 
   switch (asset.subcategory) {
     case 'real_estate':
@@ -561,7 +613,7 @@ export function liabilityCancellationCost(liability, macroParams, resolved) {
   const balance = Math.max(0, Number(resolved?.value ?? liability.value) || 0);
   const amortizable = liability.subcategory === 'mortgages' || liability.subcategory === 'personal_loans';
   if (!amortizable) return balance;
-  const feePct = Math.abs(Number(macroParams.earlyRepaymentFeePct ?? 0.25)) / 100;
+  const feePct = clampParam('earlyRepaymentFeePct', numeroOr(macroParams.earlyRepaymentFeePct, 0.25)) / 100;
   return balance * (1 + feePct);
 }
 
@@ -774,7 +826,7 @@ export function deserializeExpenses(familyExpenses) {
 // propósito y la copia de seguridad se los devolvía cambiados sin avisar.
 // Aquí solo cae al valor por defecto lo que de verdad no hay: vacío, ausente o
 // ilegible.
-function numeroOr(v, porDefecto) {
+export function numeroOr(v, porDefecto) {
   if (v === null || v === undefined || v === '') return porDefecto;
   const n = Number(v);
   return Number.isFinite(n) ? n : porDefecto;
@@ -782,6 +834,48 @@ function numeroOr(v, porDefecto) {
 
 // Un ajuste vacío no es un cero. Se conserva la diferencia al ir y volver.
 const nullOrNumber = (v) => numeroOr(v, null);
+// Lo mismo con rango, conservando el vacío.
+const clampNull = (key, v) => (v === null ? null : clampParam(key, v));
+
+// De un valor cualquiera —sacado de un fichero o de localStorage— se queda con
+// los elementos que son objetos. Un `null` o un número dentro de la lista
+// reventaba al leer sus campos, y guardado en localStorage dejaba la aplicación
+// en blanco en cada carga. Devuelve null si ni siquiera es una lista.
+export function listaDeObjetos(v) {
+  if (!Array.isArray(v)) return null;
+  return v.filter(x => x !== null && typeof x === 'object' && !Array.isArray(x));
+}
+
+// Los ids de un fichero pueden venir repetidos (dos copias pegadas a mano).
+// Se queda el primero y se reasigna el resto: con ids repetidos, editar o
+// borrar una fila tocaba también la otra. El primero conserva el suyo porque
+// es al que apuntan los vínculos de las hipotecas.
+function conIdsUnicos(items, prefijo) {
+  const vistos = new Set();
+  return items.map((it, i) => {
+    let id = it.id;
+    if (vistos.has(String(id))) {
+      let n = 0;
+      do { id = `${prefijo}_${Date.now()}_${i}_${n++}`; } while (vistos.has(String(id)));
+    }
+    vistos.add(String(id));
+    return id === it.id ? it : { ...it, id };
+  });
+}
+
+// Deshacer un borrado sin perder lo que se hizo después. Antes se devolvía la
+// lista de antes tal cual: borrar todo, añadir un activo y deshacer se llevaba
+// el recién añadido. Aquí manda el orden de lo borrado, pero si un elemento
+// sigue en la lista actual se queda su versión actual (puede haberse editado),
+// y lo que solo existe ahora se añade al final.
+export function restoreDeleted(previous, current) {
+  const actuales = new Map((current || []).map(c => [c.id, c]));
+  const previos = new Set((previous || []).map(p => p.id));
+  return [
+    ...(previous || []).map(p => actuales.has(p.id) ? actuales.get(p.id) : p),
+    ...(current || []).filter(c => !previos.has(c.id))
+  ];
+}
 
 // Los importes no admiten negativos: deber −100 € o tener −5.000 € en el banco
 // no significa nada, y aguas abajo salen colchones de liquidez negativos y
@@ -831,24 +925,24 @@ export function deserializeMacro(macroSrc) {
   const src = macroSrc || {};
   return {
     ...DEFAULT_MACRO_PARAMS,
-    inflationPct: numeroOr(src.inflation ?? src.inflationPct, DEFAULT_MACRO_PARAMS.inflationPct),
+    inflationPct: clampParam('inflationPct', numeroOr(src.inflation ?? src.inflationPct, DEFAULT_MACRO_PARAMS.inflationPct)),
     // Un fichero anterior a este parámetro no lo trae: se hereda la inflación,
     // que es exactamente lo que la herramienta usaba entonces.
-    realEstateAppreciationPct: numeroOr(
+    realEstateAppreciationPct: clampParam('realEstateAppreciationPct', numeroOr(
       src.reAppreciation ?? src.realEstateAppreciationPct ?? src.propertyInflation ?? src.inflation ?? src.inflationPct,
       DEFAULT_MACRO_PARAMS.realEstateAppreciationPct
-    ),
-    stockGrowthPct: numeroOr(src.stockGrowth ?? src.stockGrowthPct, DEFAULT_MACRO_PARAMS.stockGrowthPct),
-    refDividendYieldPct: numeroOr(src.divYield ?? src.refDividendYieldPct, DEFAULT_MACRO_PARAMS.refDividendYieldPct),
-    bondYieldPct: numeroOr(src.bondYield ?? src.bondYieldPct, DEFAULT_MACRO_PARAMS.bondYieldPct),
-    tipsRealYieldPct: numeroOr(src.tipsRealYield ?? src.tipsRealYieldPct, DEFAULT_MACRO_PARAMS.tipsRealYieldPct),
-    goldRealReturnPct: numeroOr(src.goldRealReturn ?? src.goldRealReturnPct, DEFAULT_MACRO_PARAMS.goldRealReturnPct),
-    realEstateMaintenancePct: numeroOr(src.reMaint ?? src.realEstateMaintenancePct, DEFAULT_MACRO_PARAMS.realEstateMaintenancePct),
-    rentalOperatingCostsPct: numeroOr(src.reOpex ?? src.rentalOperatingCostsPct, DEFAULT_MACRO_PARAMS.rentalOperatingCostsPct),
-    rentalPrimaryHomeDeductionPct: numeroOr(src.reDeduction ?? src.rentalPrimaryHomeDeductionPct, DEFAULT_MACRO_PARAMS.rentalPrimaryHomeDeductionPct),
-    marginalIncomeTaxPct: numeroOr(src.marginalTax ?? src.marginalIncomeTaxPct, DEFAULT_MACRO_PARAMS.marginalIncomeTaxPct),
-    savingsTaxRatePct: numeroOr(src.savingsTax ?? src.savingsTaxRatePct, DEFAULT_MACRO_PARAMS.savingsTaxRatePct),
-    fireTargetMultiple: numeroOr(src.fireMultiple ?? src.fireTargetMultiple, DEFAULT_MACRO_PARAMS.fireTargetMultiple),
+    )),
+    stockGrowthPct: clampParam('stockGrowthPct', numeroOr(src.stockGrowth ?? src.stockGrowthPct, DEFAULT_MACRO_PARAMS.stockGrowthPct)),
+    refDividendYieldPct: clampParam('refDividendYieldPct', numeroOr(src.divYield ?? src.refDividendYieldPct, DEFAULT_MACRO_PARAMS.refDividendYieldPct)),
+    bondYieldPct: clampParam('bondYieldPct', numeroOr(src.bondYield ?? src.bondYieldPct, DEFAULT_MACRO_PARAMS.bondYieldPct)),
+    tipsRealYieldPct: clampParam('tipsRealYieldPct', numeroOr(src.tipsRealYield ?? src.tipsRealYieldPct, DEFAULT_MACRO_PARAMS.tipsRealYieldPct)),
+    goldRealReturnPct: clampParam('goldRealReturnPct', numeroOr(src.goldRealReturn ?? src.goldRealReturnPct, DEFAULT_MACRO_PARAMS.goldRealReturnPct)),
+    realEstateMaintenancePct: clampParam('realEstateMaintenancePct', numeroOr(src.reMaint ?? src.realEstateMaintenancePct, DEFAULT_MACRO_PARAMS.realEstateMaintenancePct)),
+    rentalOperatingCostsPct: clampParam('rentalOperatingCostsPct', numeroOr(src.reOpex ?? src.rentalOperatingCostsPct, DEFAULT_MACRO_PARAMS.rentalOperatingCostsPct)),
+    rentalPrimaryHomeDeductionPct: clampParam('rentalPrimaryHomeDeductionPct', numeroOr(src.reDeduction ?? src.rentalPrimaryHomeDeductionPct, DEFAULT_MACRO_PARAMS.rentalPrimaryHomeDeductionPct)),
+    marginalIncomeTaxPct: clampParam('marginalIncomeTaxPct', numeroOr(src.marginalTax ?? src.marginalIncomeTaxPct, DEFAULT_MACRO_PARAMS.marginalIncomeTaxPct)),
+    savingsTaxRatePct: clampParam('savingsTaxRatePct', numeroOr(src.savingsTax ?? src.savingsTaxRatePct, DEFAULT_MACRO_PARAMS.savingsTaxRatePct)),
+    fireTargetMultiple: clampParam('fireTargetMultiple', numeroOr(src.fireMultiple ?? src.fireTargetMultiple, DEFAULT_MACRO_PARAMS.fireTargetMultiple)),
 
     // Solo de Balance. Un fichero de Retiro no los trae y se quedan con el
     // valor por defecto, que es justo lo que se quiere.
@@ -856,13 +950,13 @@ export function deserializeMacro(macroSrc) {
     wealthTaxPayers: Math.max(1, Math.round(Number(src.wealthPayers ?? src.wealthTaxPayers ?? DEFAULT_MACRO_PARAMS.wealthTaxPayers) || 1)),
     // `null` significa «los de la comunidad», así que no puede pasar por
     // Number(): lo convertiría en un cero que anularía el mínimo exento.
-    wealthTaxExemption: nullOrNumber(src.wealthExemption ?? src.wealthTaxExemption),
-    wealthTaxBonificationPct: nullOrNumber(src.wealthBonification ?? src.wealthTaxBonificationPct),
-    pensionWithdrawalTaxPct: numeroOr(src.pensionWithdrawalTax ?? src.pensionWithdrawalTaxPct, DEFAULT_MACRO_PARAMS.pensionWithdrawalTaxPct),
-    propertySellingCostsPct: numeroOr(src.propertySellingCosts ?? src.propertySellingCostsPct, DEFAULT_MACRO_PARAMS.propertySellingCostsPct),
-    tangiblesHaircutPct: numeroOr(src.tangiblesHaircut ?? src.tangiblesHaircutPct, DEFAULT_MACRO_PARAMS.tangiblesHaircutPct),
-    earlyRepaymentFeePct: numeroOr(src.earlyRepaymentFee ?? src.earlyRepaymentFeePct, DEFAULT_MACRO_PARAMS.earlyRepaymentFeePct),
-    assumedUnrealizedGainPct: numeroOr(src.assumedUnrealizedGain ?? src.assumedUnrealizedGainPct, DEFAULT_MACRO_PARAMS.assumedUnrealizedGainPct)
+    wealthTaxExemption: clampNull('wealthTaxExemption', nullOrNumber(src.wealthExemption ?? src.wealthTaxExemption)),
+    wealthTaxBonificationPct: clampNull('wealthTaxBonificationPct', nullOrNumber(src.wealthBonification ?? src.wealthTaxBonificationPct)),
+    pensionWithdrawalTaxPct: clampParam('pensionWithdrawalTaxPct', numeroOr(src.pensionWithdrawalTax ?? src.pensionWithdrawalTaxPct, DEFAULT_MACRO_PARAMS.pensionWithdrawalTaxPct)),
+    propertySellingCostsPct: clampParam('propertySellingCostsPct', numeroOr(src.propertySellingCosts ?? src.propertySellingCostsPct, DEFAULT_MACRO_PARAMS.propertySellingCostsPct)),
+    tangiblesHaircutPct: clampParam('tangiblesHaircutPct', numeroOr(src.tangiblesHaircut ?? src.tangiblesHaircutPct, DEFAULT_MACRO_PARAMS.tangiblesHaircutPct)),
+    earlyRepaymentFeePct: clampParam('earlyRepaymentFeePct', numeroOr(src.earlyRepaymentFee ?? src.earlyRepaymentFeePct, DEFAULT_MACRO_PARAMS.earlyRepaymentFeePct)),
+    assumedUnrealizedGainPct: clampParam('assumedUnrealizedGainPct', numeroOr(src.assumedUnrealizedGain ?? src.assumedUnrealizedGainPct, DEFAULT_MACRO_PARAMS.assumedUnrealizedGainPct))
   };
 }
 
@@ -950,7 +1044,7 @@ function cuotaDelCuadro(l) {
   const n = Math.round(Number(l.durationMonths));
   if (!Number.isFinite(n) || n < 1) return false;
   if (l.subcategory === 'personal_loans') return true;
-  return l.subcategory === 'mortgages' && numeroOr(l.initialPrincipal, 0) > 0 && !l.noMonthlyPayment;
+  return l.subcategory === 'mortgages' && numeroOr(l.initialPrincipal, 0) > 0;
 }
 
 export function serializeLiabilities(liabilities, { baseCurrency }) {
@@ -996,7 +1090,10 @@ export function serializeLiabilities(liabilities, { baseCurrency }) {
     // declarada y el saldo se le desviaba unos céntimos al año; en una variable, calculada
     // además con el tipo del día en que se guardó, la desviación era de euros.
     monthlyPayment: cuotaDelCuadro(l) ? 0 : numeroOr(l.monthlyPayment, 0),
-    noMonthlyPayment: !!l.noMonthlyPayment,
+    // Lo que dice el motor, no la casilla a pelo: una hipoteca con cuadro o un
+    // préstamo personal pagan su cuota aunque la casilla venga marcada, y
+    // Retiro leería «sin cuota» en una deuda que sí la paga.
+    noMonthlyPayment: resolveLiability(l).noMonthlyPayment,
     // Campos propios de esta herramienta. Retire los ignora, pero si no
     // viajaran, una hipoteca variable volvería convertida en fija.
     rateType: l.rateType === 'variable' ? 'variable' : 'fixed',
@@ -1006,8 +1103,9 @@ export function serializeLiabilities(liabilities, { baseCurrency }) {
 }
 
 export function deserializeAssets(rawAssets, importedMacro) {
-  if (!Array.isArray(rawAssets)) return null;
-  return rawAssets
+  const lista = listaDeObjetos(rawAssets);
+  if (!lista) return null;
+  return conIdsUnicos(lista
     .filter(a => !a.isPurchasedInSim)
     .map((a, idx) => {
       // `category` es la clave del fichero, la que escriben las dos
@@ -1033,9 +1131,12 @@ export function deserializeAssets(rawAssets, importedMacro) {
         stockClass = a.stockClass;
       }
 
-      let cashPct = Number(a.cashReturnPct) || 0;
-      let usePct = Number(a.useReturnPct) || 0;
-      let capPct = Number(a.capitalReturnPct) || 0;
+      // Con rango, como las fichas: un 1e21 de un fichero ajeno llegaba hasta
+      // el último total.
+      const tasa = (v) => Math.min(1000, Math.max(-100, Number(v) || 0));
+      let cashPct = tasa(a.cashReturnPct);
+      let usePct = tasa(a.useReturnPct);
+      let capPct = tasa(a.capitalReturnPct);
 
       if (sub === 'real_estate') {
         const r = calculateRealEstateReturns(a.value, a.monthlyRent, a.useType || 'habitual', importedMacro);
@@ -1088,14 +1189,20 @@ export function deserializeAssets(rawAssets, importedMacro) {
               ? { acquisitionCost: Number(a.purchasePrice) }
               : {}))
       };
-    });
+    }), 'asset');
 }
 
 export function deserializeLiabilities(rawLiabs) {
-  if (!Array.isArray(rawLiabs)) return null;
+  const lista = listaDeObjetos(rawLiabs);
+  if (!lista) return null;
   const ahora = new Date();
-  const sanitized = rawLiabs
+  const sanitized = lista
     .filter(l => !String(l.id).startsWith('mort_re_buy_'))
+    // La casilla «sin cuota» no cuenta en una deuda con cuadro: resolveLiability
+    // la ignora ahí, y dejarla viva hacía que el fichero contara otra cosa que
+    // el motor.
+    .map(l => (l.subcategory === 'mortgages' || l.subcategory === 'personal_loans') && l.noMonthlyPayment
+      ? { ...l, noMonthlyPayment: resolveLiability(l).noMonthlyPayment } : l)
     .map((l, idx) => {
       // Las deudas sin cuadro —tarjeta, préstamo personal, familiar— se
       // convierten al modelo de aquí: aquí el saldo es lo que se debe HOY, y
@@ -1142,7 +1249,7 @@ export function deserializeLiabilities(rawLiabs) {
       // caer al principal, un préstamo saldado resucitaba por su importe
       // original en cuanto se recargaba la copia.
       value: importe(l.value, importe(l.initialPrincipal)),
-      interestRatePct: numeroOr(l.interestRatePct, 0),
+      interestRatePct: Math.min(100, Math.max(0, numeroOr(l.interestRatePct, 0))),
       monthlyPayment: importe(l.monthlyPayment),
       initialPrincipal: importe(l.initialPrincipal, importe(l.value)),
       startDate: l.startDate || `${new Date().getFullYear()}-01`,
@@ -1156,7 +1263,7 @@ export function deserializeLiabilities(rawLiabs) {
       // Un cero guardado significa «sin ancla», no «saldo cero».
       ...(Number(l.balanceOverride) > 0 ? { balanceOverride: Number(l.balanceOverride) } : {})
     }));
-  return syncLiabilitiesAmortization(sanitized);
+  return syncLiabilitiesAmortization(conIdsUnicos(sanitized, 'liab'));
 }
 
 export function buildExportPayload(state) {
@@ -1177,7 +1284,18 @@ export function buildExportPayload(state) {
 
 // Devuelve solo los campos presentes en el archivo. El llamante decide
 // cómo aplicarlos al estado.
-export function parseImportPayload(parsed, { expenseFallback } = {}) {
+// Claves por las que se reconoce una copia de seguridad. Cualquier JSON válido
+// no es una copia: un `{}` o un `[]` se aceptaban y dejaban el balance vacío.
+const CLAVES_DE_COPIA = ['assetsData', 'assets', 'liabilitiesData', 'liabilities', 'familyExpenses',
+  'expenses', 'macro', 'macroParams', 'familyMembers', 'hasPartner', 'baseCurrency', 'selectedCountry'];
+
+// `macroFallback` son los parámetros en vigor: si el fichero no trae los suyos,
+// con ellos se calculan los inmuebles que sí traiga.
+export function parseImportPayload(parsed, { expenseFallback, macroFallback } = {}) {
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)
+      || !CLAVES_DE_COPIA.some(k => parsed[k] !== undefined)) {
+    throw new Error('archivo no válido');
+  }
   const out = {};
 
   if (parsed.baseCurrency === 'USD' || parsed.baseCurrency === 'EUR') {
@@ -1198,9 +1316,14 @@ export function parseImportPayload(parsed, { expenseFallback } = {}) {
     out.familyMembers = (parsed.hasPartner ? 2 : 1) + numChildren;
   }
 
-  out.macroParams = deserializeMacro(parsed.macro || parsed.macroParams);
-  out.assets = deserializeAssets(parsed.assetsData || parsed.assets, out.macroParams);
-  out.liabilities = deserializeLiabilities(parsed.liabilitiesData || parsed.liabilities);
+  // Una sección ausente no es una sección vacía: sin ella el llamante conserva
+  // lo que ya tiene en vez de vaciarlo.
+  const macroDelFichero = parsed.macro || parsed.macroParams;
+  if (macroDelFichero && typeof macroDelFichero === 'object') out.macroParams = deserializeMacro(macroDelFichero);
+  const activos = deserializeAssets(parsed.assetsData || parsed.assets, out.macroParams || macroFallback || DEFAULT_MACRO_PARAMS);
+  if (activos) out.assets = activos;
+  const pasivos = deserializeLiabilities(parsed.liabilitiesData || parsed.liabilities);
+  if (pasivos) out.liabilities = pasivos;
 
   // Ver retireUnsupportedCurrencies. Lo convertido se devuelve para avisar.
   out.currencyConversions = [];
@@ -1296,10 +1419,11 @@ export function summarizeImport(next, current, baseCurrency, exchangeRates) {
   };
 
   return {
-    assets:      { from: (current.assets || []).length,      to: next.assets ? next.assets.length : 0 },
-    liabilities: { from: (current.liabilities || []).length, to: next.liabilities ? next.liabilities.length : 0 },
-    assetValue:      { from: sum(current.assets),      to: sum(next.assets) },
-    liabilityValue:  { from: sum(current.liabilities), to: sum(next.liabilities) },
+    // Lo que el fichero no trae se queda como está, y así se cuenta.
+    assets:      { from: (current.assets || []).length,      to: next.assets ? next.assets.length : (current.assets || []).length },
+    liabilities: { from: (current.liabilities || []).length, to: next.liabilities ? next.liabilities.length : (current.liabilities || []).length },
+    assetValue:      { from: sum(current.assets),      to: next.assets ? sum(next.assets) : sum(current.assets) },
+    liabilityValue:  { from: sum(current.liabilities), to: next.liabilities ? sum(next.liabilities) : sum(current.liabilities) },
     // Los gastos solo cambian si el archivo los trae.
     expenses: next.expenses
       ? { from: monthly(current.expenses), to: monthly(next.expenses) }

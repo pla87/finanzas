@@ -25,7 +25,9 @@ import {
   liabilityCancellationCost,
   lifeCoverage,
   convertToBase,
-  assetClassOf
+  assetClassOf,
+  pensionTypeOf,
+  numeroOr
 } from './finance.js';
 import { COUNTRY_PRESETS } from './presets.js';
 import { wealthTaxDue } from './wealthTax.js';
@@ -147,7 +149,11 @@ export function computeBalance({
   const totalCapitalGain = assets.reduce(
     (sum, a) => sum + toBase(assetCapitalGain(a, macroParams), a.currency), 0
   );
-  const capitalGainsTax = savingsTaxOnIncome(totalCapitalGain);
+  // Dividendos e intereses del año y plusvalía de la venta caen en la misma
+  // base del ahorro, así que la plusvalía se grava ENCIMA de la renta que ya
+  // hay: antes cada una recorría la escala desde el primer tramo y el total
+  // salía más barato que la ley. Lo que cuesta vender es la diferencia.
+  const capitalGainsTax = savingsTaxOnIncome(grossSavingsIncome + totalCapitalGain) - savingsTaxDue;
 
   let totalLiabilities = 0;
   let debtInterestBase = 0;
@@ -212,8 +218,15 @@ export function computeBalance({
   // patrimonio entero —como la escala del ahorro sobre la renta entera— y entra
   // en el coste obligatorio junto al gasto y las cuotas de deuda. Para la
   // inmensa mayoría de los balances sale cero y no cambia nada.
+  // Los derechos consolidados de los planes de pensiones están exentos (Ley
+  // 19/1991, art. 4, apartado Cinco). Siguen en el patrimonio neto, pero no en
+  // la base del impuesto. Los seguros de ahorro no figuran en esa lista.
+  const pensionPlansBase = assets.reduce(
+    (sum, a) => sum + (a.subcategory === 'pensions' && pensionTypeOf(a) === 'plan' ? toBase(a.value, a.currency) : 0), 0
+  );
   const wealthTax = wealthTaxDue({
     netWorth,
+    exemptAssets: pensionPlansBase,
     primaryHomeValue: primaryHomeAssetVal,
     primaryHomeDebt,
     regionKey: macroParams.wealthTaxRegion,
@@ -251,7 +264,7 @@ export function computeBalance({
   const assetCashflowSurplus = monthlyPassiveCashflow - monthlyDebtPayments - monthlyWealthTax;
   const netMonthlyCashflow = assetCashflowSurplus - totalMonthlyExpenses;
 
-  const expectedInflationRate = Number(macroParams.inflationPct || 2.0);
+  const expectedInflationRate = numeroOr(macroParams.inflationPct, 2.0);
 
   // Runway Calculation: Strictly liquid assets divided by mandatory burn (debt service + living costs)
   const totalBurn = monthlyDebtPayments + totalMonthlyExpenses + monthlyWealthTax;
@@ -371,7 +384,11 @@ export function computeBalance({
   }
 
   // Puntuaciones Auditoría
-  const expensiveDebt = liabilities.filter(l => Number(l.interestRatePct) > 5.0 && Number(l.value) > 0);
+  // Con el tipo efectivo y el saldo resuelto, como el resto del motor: una
+  // hipoteca variable guardada con un tipo viejo, o una tarjeta ya devuelta,
+  // daban un aviso que no correspondía a lo que enseña el balance.
+  const expensiveDebt = liabilities.filter(l =>
+    effectiveInterestRatePct(l, euriborPct) > 5.0 && resolveLiability(l, new Date(), { euriborPct }).value > 0);
   const lowYieldPensions = assets.filter(a => a.subcategory === 'pensions' && Number(a.capitalReturnPct) < expectedInflationRate && Number(a.value) > 0);
   const unremuneratedCash = assets.filter(a => a.subcategory === 'cash' && Number(a.cashReturnPct) <= 0.5 && Number(a.value) > 0);
 
@@ -430,5 +447,38 @@ export function computeBalance({
     expensiveDebt, lowYieldPensions, unremuneratedCash, excessExpensesList,
     foreignCurrencyAssetsBase, foreignCurrencyPct,
     rentalCashflowMonthly, dividendCashflowMonthly, interestCashflowMonthly, tangiblesCashflowMonthly
+  };
+}
+
+// La entrada de `buildAudit` a partir de lo que calcula el motor. Una sola
+// definición para la interfaz y para el barrido: cuando cada uno la armaba por
+// su cuenta, la interfaz se dejó el desglose por clases y la auditoría trataba
+// los bonos y el oro como renta variable, mientras el barrido —que sí lo
+// pasaba— daba todo por bueno. `esc` trae lo que no sale del motor: los
+// activos, las divisas y los parámetros.
+export function entradaAuditoria(c, { assets = [], baseCurrency = 'EUR', exchangeRates = {}, macroParams = {} } = {}) {
+  return {
+    totalAssets: c.totalAssets,
+    totalLiabilities: c.totalLiabilities,
+    netWorth: c.netWorth,
+    ltv: c.ltv,
+    liquidCash: c.liquidCash,
+    runwayMonths: c.runwayTotalMonths,
+    totalAnnualExpenses: c.totalAnnualExpenses,
+    totalMonthlyExpenses: c.totalMonthlyExpenses,
+    monthlyDebtPayments: c.monthlyDebtPayments,
+    monthlyWealthTax: c.monthlyWealthTax,
+    monthlyPassiveCashflow: c.monthlyPassiveCashflow,
+    coveragePct: c.coverage.pct,
+    assetCategoryTotals: c.assetCategoryTotals,
+    assetClassTotals: c.assetClassTotals,
+    holdings: assets.map(a => ({ name: a.name, valueBase: convertToBase(a.value, a.currency, baseCurrency, exchangeRates) })),
+    foreignCurrencyPct: c.foreignCurrencyPct,
+    expensiveDebt: c.expensiveDebt,
+    lowYieldPensions: c.lowYieldPensions,
+    unremuneratedCash: c.unremuneratedCash,
+    excessExpenses: c.excessExpensesList,
+    macroParams,
+    effectiveSavingsRatePct: c.effectiveSavingsRatePct
   };
 }

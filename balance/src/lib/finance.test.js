@@ -291,10 +291,10 @@ test('la ida y vuelta conserva activos, pasivos y ajustes de entorno', () => {
   assert.equal(back.liabilities[0].value, 2500);
 });
 
-test('importar: un archivo sin activos deja las listas vacías, no indefinidas', () => {
+test('importar: un archivo sin activos ni deudas no trae listas: se conserva lo que hay', () => {
   const back = parseImportPayload({ baseCurrency: 'EUR' });
-  assert.equal(back.assets, null);
-  assert.equal(back.liabilities, null);
+  assert.equal(back.assets, undefined);
+  assert.equal(back.liabilities, undefined);
 });
 
 test('importar: se descartan las compras simuladas y las hipotecas virtuales', () => {
@@ -435,7 +435,7 @@ test('supuestos: la ligada a inflación y el oro siguen a la inflación; los bon
     { subcategory: 'stocks', stockClass: 'bonds', stockType: 'fund', cashReturnPct: 3.3, capitalReturnPct: 0 },
     { subcategory: 'stocks', stockClass: 'growth', stockType: 'fund', cashReturnPct: 0, capitalReturnPct: 6 },
     { subcategory: 'stocks', stockClass: 'dividend', stockType: 'shares', cashReturnPct: 4, capitalReturnPct: 3 }
-  ], macro);
+  ], macro, { ...DEFAULT_MACRO_PARAMS, stockGrowthPct: 6 });
   assert.equal(tips.cashReturnPct, 5.5);
   assert.equal(oro.capitalReturnPct, 4.5);
   assert.equal(oro.cashReturnPct, 0);

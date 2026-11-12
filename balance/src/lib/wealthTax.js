@@ -44,6 +44,10 @@ export const SOLIDARITY_TAX_BRACKETS = [
 // Exención de la vivienda habitual, estatal y por contribuyente.
 export const PRIMARY_HOME_EXEMPTION = 300000;
 
+// Mínimo exento del impuesto de solidaridad (Ley 38/2022, art. 3): fijo y
+// estatal. No es el de la comunidad, que solo rige para el impuesto ordinario.
+export const SOLIDARITY_EXEMPTION = 700000;
+
 // Mínimo exento y bonificación por comunidad. Solo están las que se han podido
 // contrastar; el resto usa el régimen estatal y se ajusta a mano.
 export const WEALTH_TAX_REGIONS = {
@@ -92,7 +96,11 @@ export function wealthTaxDue({
   regionKey = 'estatal',
   exemption,
   bonificationPct,
-  taxpayers = 1
+  taxpayers = 1,
+  // Valor, en el patrimonio neto, de bienes exentos distintos de la vivienda:
+  // los derechos consolidados de los planes de pensiones (Ley 19/1991, art. 4,
+  // apartado Cinco). El patrimonio neto los incluye; la base no.
+  exemptAssets = 0
 } = {}) {
   const region = WEALTH_TAX_REGIONS[regionKey] || WEALTH_TAX_REGIONS.estatal;
   // Ojo con `null`: `Number(null)` es 0 y pasa por finito, así que sin
@@ -114,6 +122,7 @@ export function wealthTaxDue({
   // hasta el tope por cabeza.
   const patrimonioPorPersona = (Number(netWorth) || 0) / contribuyentes;
   const viviendaPorPersona = Math.max(0, Number(primaryHomeValue) || 0) / contribuyentes;
+  const exentosPorPersona = Math.max(0, Number(exemptAssets) || 0) / contribuyentes;
 
   const viviendaExenta = Math.min(viviendaPorPersona, PRIMARY_HOME_EXEMPTION);
 
@@ -138,7 +147,7 @@ export function wealthTaxDue({
   const proporcionExenta = viviendaPorPersona > 0 ? viviendaExenta / viviendaPorPersona : 0;
   const deudaNoDeducible = Math.min(deudaViviendaPorPersona, deudaViviendaPorPersona * proporcionExenta);
 
-  const patrimonioComputable = Math.max(0, patrimonioPorPersona - viviendaExenta + deudaNoDeducible);
+  const patrimonioComputable = Math.max(0, patrimonioPorPersona - viviendaExenta - exentosPorPersona + deudaNoDeducible);
   const base = Math.max(0, patrimonioComputable - minimoExento);
 
   const cuotaIntegra = cuotaPorEscala(base, STATE_WEALTH_TAX_BRACKETS);
@@ -147,7 +156,11 @@ export function wealthTaxDue({
   // El impuesto de solidaridad no se bonifica: lo que ahorra la comunidad se
   // lo lleva el Estado a partir de tres millones. También es por contribuyente,
   // así que el umbral de los tres millones es el de cada uno.
-  const cuotaSolidaridad = cuotaPorEscala(base, SOLIDARITY_TAX_BRACKETS);
+  // Su base es el patrimonio computable menos 700.000 € siempre: usar el mínimo
+  // de la comunidad le daba una base distinta en Cataluña (500.000) o Baleares
+  // (3.000.000) de la que fija la ley.
+  const baseSolidaridad = Math.max(0, patrimonioComputable - SOLIDARITY_EXEMPTION);
+  const cuotaSolidaridad = cuotaPorEscala(baseSolidaridad, SOLIDARITY_TAX_BRACKETS);
   const aPagarPorPersona = Math.max(cuotaAutonomica, cuotaSolidaridad);
   const aPagar = aPagarPorPersona * contribuyentes;
 
@@ -157,6 +170,11 @@ export function wealthTaxDue({
     // persona. Los totales del hogar llevan el sufijo del hogar.
     taxableBase: base,
     primaryHomeExempt: viviendaExenta,
+    // Bienes exentos que no son la vivienda (planes de pensiones), por persona
+    // y en total.
+    exemptAssets: exentosPorPersona,
+    exemptAssetsTotal: exentosPorPersona * contribuyentes,
+    solidarityBase: baseSolidaridad,
     // La parte de la hipoteca de la vivienda que no se puede deducir.
     nonDeductibleHomeDebt: deudaNoDeducible,
     exemptionApplied: minimoExento,

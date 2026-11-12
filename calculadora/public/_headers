@@ -1,0 +1,5 @@
+# La dirección *.pages.dev sirve la misma página que pacolucena.com, que es la buena (la
+# portada hace de proxy). Para que el buscador no indexe las dos, la de pages.dev lleva
+# noindex. El proxy de pacolucena.com quita esta cabecera al reenviar la respuesta.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex

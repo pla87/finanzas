@@ -3360,7 +3360,10 @@ let familyExpenses = {
           return a && (a.owner === owner || a.owner === 'joint');
         });
         if (ownerHasTarget) return;
-        const dest = pensions.filter(p => p.category === 'pensionIns' && p.owner === owner);
+        // Primero los seguros del titular; si no tiene ninguno, los conjuntos. Antes un seguro
+        // «Conjunto» no era de nadie y perdía las aportaciones por defecto de las etapas.
+        let dest = pensions.filter(p => p.category === 'pensionIns' && p.owner === owner);
+        if (!dest.length) dest = pensions.filter(p => p.category === 'pensionIns' && p.owner === 'joint');
         if (!dest.length) return;
         const share = amount / dest.length;
         dest.forEach(p => { out[p.id] = (out[p.id] || 0) + share; });
@@ -3736,8 +3739,29 @@ let familyExpenses = {
     // estas tres funciones, y el 50% se aplica a los datos de entrada (valor, precio de compra,
     // alquiler, principal y cuota de la hipoteca), no a cada fórmula, para que no pueda quedarse
     // ninguna fórmula sin él. Con pareja, o con un activo de uno solo, devuelven el mismo objeto.
+    //
+    // «Conjunto» es EXACTAMENTE `owner === 'joint'`. Un activo sin titular no es conjunto: los
+    // ficheros de Balance no traen titular, y tratar «sin titular» como «conjunto» metía a la mitad
+    // el patrimonio de quien vive solo. Para que no quede ningún caso intermedio, al importar y al
+    // cargar se le da titular a todo lo que no lo trae (ver `normalizaTitulares`).
     function soloShare(a) {
-      return (!hasPartner && ((a && a.owner) || 'joint') === 'joint') ? 0.5 : 1.0;
+      return (!hasPartner && a && a.owner === 'joint') ? 0.5 : 1.0;
+    }
+    // Sin pareja, lo que es de P2 no existe para el plan: ni cuenta en el punto de partida ni en
+    // la proyección. Un único predicado para todos los bucles (activos, eventos), porque cuando
+    // cada bucle decidía por su cuenta los inmuebles de P2 entraban en la proyección y no en el
+    // punto de partida, y el patrimonio saltaba al cerrar el primer año.
+    function enPlan(x) {
+      return hasPartner || !x || x.owner !== 'p2';
+    }
+    // Titular por defecto de lo que viene sin él: p1 si no hay pareja, conjunto si la hay.
+    function titularPorDefecto() {
+      return hasPartner ? 'joint' : 'p1';
+    }
+    function normalizaTitulares() {
+      const valido = (o) => o === 'p1' || o === 'p2' || o === 'joint';
+      assetsData.forEach(a => { if (!valido(a.owner)) a.owner = titularPorDefecto(); });
+      realEstateEvents.forEach(e => { if (e.type === 'buy' && !valido(e.owner)) e.owner = titularPorDefecto(); });
     }
     function soloScaleAsset(a) {
       const sh = soloShare(a);
@@ -4288,20 +4312,28 @@ function getParticipantContributedYears(pId, targetRetireAge) {
 
       for (let st of (pObj.stages || [])) {
         const stageYrs = Number(st.years) || 1;
-        for (let y = 0; y < stageYrs; y++) {
-          if (yearCount >= yearsToRetire) break;
+        // Cada vuelta aporta `min(1, lo que queda)`: una etapa de 0,25 años son 0,25 años
+        // cotizados, no uno entero. Con el techo (`y < años`), 8 etapas de 0,25 contaban 8 años
+        // y una de 2,25 contaba 3, y la pensión pública salía de cotizaciones que no existieron.
+        // Con años enteros hace lo mismo que antes. El devengo de paro (0,33 por año trabajado)
+        // y su consumo van con la misma fracción.
+        let resto = stageYrs;
+        while (resto > 1e-9) {
+          if (yearCount >= yearsToRetire - 1e-9) break;
+          const frac = Math.min(1, resto, yearsToRetire - yearCount);
           if (st.type === 'employed' || st.type === 'freelance') {
-            total += 1;
-            accruedParoYears = Math.min(2, accruedParoYears + 0.33);
+            total += frac;
+            accruedParoYears = Math.min(2, accruedParoYears + 0.33 * frac);
           } else if (st.type === 'unemployed') {
             if (accruedParoYears > 0) {
-              total += Math.min(1, accruedParoYears);
-              accruedParoYears = Math.max(0, accruedParoYears - 1);
+              total += Math.min(frac, accruedParoYears);
+              accruedParoYears = Math.max(0, accruedParoYears - frac);
             }
           }
-          yearCount++;
+          yearCount += frac;
+          resto -= frac;
         }
-        if (yearCount >= yearsToRetire) break;
+        if (yearCount >= yearsToRetire - 1e-9) break;
       }
       return total;
     }
@@ -4326,24 +4358,34 @@ function getParticipantContributedYears(pId, targetRetireAge) {
         return null; // en paro se cotiza por la base del último empleo
       };
 
+      // Tramos [base, años]: una etapa de 0,5 años pesa medio año en la media, no uno entero.
       const futureBases = [];
       let elapsed = 0;
       for (const st of pObj.stages) {
-        const yrs = Number(st.years) || 1;
-        for (let y = 0; y < yrs && elapsed < yearsToRetire; y++, elapsed++) {
+        let resto = Number(st.years) || 1;
+        while (resto > 1e-9 && elapsed < yearsToRetire - 1e-9) {
+          const frac = Math.min(1, resto, yearsToRetire - elapsed);
           const b = baseFor(st);
-          if (b !== null) futureBases.push(b);
-          else if (futureBases.length) futureBases.push(futureBases[futureBases.length - 1]);
+          if (b !== null) futureBases.push([b, frac]);
+          else if (futureBases.length) futureBases.push([futureBases[futureBases.length - 1][0], frac]);
+          elapsed += frac;
+          resto -= frac;
         }
-        if (elapsed >= yearsToRetire) break;
+        if (elapsed >= yearsToRetire - 1e-9) break;
       }
 
       const currentBase = baseFor(pObj.stages[0]) ?? 40000;
       const pastYears = Math.max(0, Math.min(25, Math.round(Number(pObj.cotizados) || 0)));
-      const allBases = [...new Array(pastYears).fill(currentBase), ...futureBases];
+      const allBases = [...(pastYears > 0 ? [[currentBase, pastYears]] : []), ...futureBases];
       if (!allBases.length) return 40000;
-      const last25 = allBases.slice(-25);
-      return last25.reduce((a, b) => a + b, 0) / last25.length;
+      // Los últimos 25 años, recorriendo desde el final y recortando el tramo que se pase.
+      let usado = 0, suma = 0;
+      for (let k = allBases.length - 1; k >= 0 && usado < 25 - 1e-9; k--) {
+        const w = Math.min(allBases[k][1], 25 - usado);
+        suma += allBases[k][0] * w;
+        usado += w;
+      }
+      return usado > 0 ? suma / usado : 40000;
     }
 
     // Etapa laboral activa en el año i de la simulación, medida en tiempo transcurrido desde HOY
@@ -4538,7 +4580,7 @@ function getParticipantContributedYears(pId, targetRetireAge) {
 //                         .bufferGlide { years, targetMonths } colchón que crece hacia el retiro
 function evaluateRetirementSafety(testAgeP1, testAgeP2, opts = {}) {
   // Copia local aislada para no corromper assetsData global ni las tablas de la interfaz
-  let evalAssets = assetsData.filter(a => !a.isPurchasedInSim).map(a => ({ ...soloScaleAsset(a) }));
+  let evalAssets = assetsData.filter(a => !a.isPurchasedInSim && enPlan(a)).map(a => ({ ...soloScaleAsset(a) }));
   evalAssets.forEach(a => { a.isSold = false; delete a.soldYear; });
   // Parámetros: los que se pasen, o los de la interfaz. El motor no vuelve a tocar el DOM.
   const P = opts.params || readSimParams();
@@ -4572,16 +4614,17 @@ function evaluateRetirementSafety(testAgeP1, testAgeP2, opts = {}) {
   const elderCareAge = P.elderCareAge;
   const pensionGrowthRate = P.pensionGrowth;
 
-  const activeAssets = evalAssets.filter(a => hasPartner || a.owner !== 'p2');
+  const activeAssets = evalAssets;
   // Se parte de evalLiabilities, que ya excluye las hipotecas creadas dentro de la simulación
   // (mort_re_buy_*) por la ejecución anterior de runSimulation(). Leer aquí liabilitiesData
   // directamente arrastraba esas hipotecas desde el año 0 del optimizador -con fecha de inicio
   // futura, así que el amortizador devolvía el principal íntegro- y el evaluador cargaba con
   // cientos de miles de euros de deuda fantasma sin el inmueble que la respalda.
   const activeLiabs = evalLiabilities.filter(l => {
+    // evalAssets ya no trae los activos de P2 sin pareja: se mira en los originales.
     if (!hasPartner && l.propertyLink) {
-      const prop = evalAssets.find(a => a.id === l.propertyLink);
-      if (prop && prop.owner === 'p2') return false;
+      const prop = assetsData.find(a => a.id === l.propertyLink);
+      if (prop && !enPlan(prop)) return false;
     }
     return true;
   });
@@ -4877,7 +4920,7 @@ let capitalGainsTaxPaid = 0;
     let reExtraInvestableInflow = 0;
     let reExtraPurchaseOutflow = 0;
 
-    const buysThisYear = realEstateEvents.filter(e => e.type === 'buy' && e.year === currentSimYear);
+    const buysThisYear = realEstateEvents.filter(e => e.type === 'buy' && e.year === currentSimYear && enPlan(e));
     buysThisYear.forEach(b => {
       // Una compra conjunta sin pareja es sólo la mitad: precio, alquiler, entrada, gastos e
       // hipoteca. Aquí todo cuelga de nominalPrice, así que basta con escalarlo.
@@ -4893,7 +4936,7 @@ let capitalGainsTaxPaid = 0;
         id: b.assetId,
         name: b.name,
         category: 'real_estate',
-        owner: b.owner || 'joint',
+        owner: b.owner || titularPorDefecto(),
         currency: 'EUR',
         value: nominalPrice,
         purchasePrice: nominalPrice,
@@ -6371,7 +6414,7 @@ const MC_WORKER_FUNCTIONS = () => [
   calculatePublicPensionDetails, getAnnualEducationCost, getParticipantContributedYears,
   getParticipantAvgSalary, wasEmployedAtRetirement, stageAtYear, annuityPayment,
   loanMonthsElapsedAtYearEnd, loanMonthlyPaymentOwnCurrency, prepaymentAtOrigin, settleAfterReturn, surplusDestFor,
-  variableRatePct, loanForEngine, soloShare, soloScaleAsset, soloScaleLoan,
+  variableRatePct, loanForEngine, soloShare, soloScaleAsset, soloScaleLoan, enPlan, titularPorDefecto,
   makeRng, mcStandardShocks, mcMeanRevert, mcPropertyShocks, mcPathOverrides, mcPercentile, wilsonInterval, mcComputeAll
 ];
 
@@ -7228,7 +7271,7 @@ function renderRobustnessTab() {
 
 // Copias escaladas por soloScaleAsset (sin pareja, lo conjunto cuenta el 50%): de aquí salen
       // el punto de partida, los lotes y los tipos efectivos, y nada de esto se escribe después.
-      const activeAssets = assetsData.filter(a => hasPartner || a.owner !== 'p2').map(soloScaleAsset);
+      const activeAssets = assetsData.filter(enPlan).map(soloScaleAsset);
       const activeLiabs = liabilitiesData.filter(l => {
         if (!hasPartner && l.propertyLink) {
           const prop = assetsData.find(a => a.id === l.propertyLink);
@@ -7310,7 +7353,7 @@ const currentMonth = new Date().getMonth() + 1;
       let goldLots = buildInitialLots('gold');
 
 let individualPensions = assetsData
-        .filter(a => a.category === 'pensions' || a.category === 'pensionIns')
+        .filter(a => (a.category === 'pensions' || a.category === 'pensionIns') && enPlan(a))
         .map(soloScaleAsset)
         .map(a => ({
           id: a.id,
@@ -7323,7 +7366,7 @@ let individualPensions = assetsData
         }));
 
       let divByOwner = { p1: 0, p2: 0 };
-      assetsData.filter(a => a.category === 'divStocks').forEach(a => {
+      assetsData.filter(a => a.category === 'divStocks' && enPlan(a)).forEach(a => {
         const val = toEUR(a.value, a.currency);
         if (a.owner === 'p1') divByOwner.p1 += val;
         else if (a.owner === 'p2') divByOwner.p2 += val;
@@ -7488,7 +7531,7 @@ for (let i = 0; i < totalSimulationYears; i++) {
         let reEventReportLines = [];
 
         // 1. Procesar Compras Programadas en este año
-        const buysThisYear = realEstateEvents.filter(e => e.type === 'buy' && e.year === year);
+        const buysThisYear = realEstateEvents.filter(e => e.type === 'buy' && e.year === year && enPlan(e));
         buysThisYear.forEach(b => {
           // El activo se da de alta entero (es lo que enseñan las tablas); lo que pesa en el plan
           // es su parte, y por eso el desembolso, el principal de la hipoteca y el valor del año
@@ -7506,7 +7549,7 @@ for (let i = 0; i < totalSimulationYears; i++) {
             id: b.assetId,
             name: b.name,
             category: 'real_estate',
-            owner: b.owner || 'joint',
+            owner: b.owner || titularPorDefecto(),
             currency: 'EUR',
             value: nominalPrice,
             purchasePrice: nominalPrice,
@@ -7629,7 +7672,7 @@ if (loan.propertyLink) {
         const sellsThisYear = realEstateEvents.filter(e => e.type === 'sell' && e.year === year);
         sellsThisYear.forEach(s => {
           const asset = assetsData.find(a => a.id === s.assetId);
-          if (asset && (!asset.isSold || asset.soldYear >= year)) {
+          if (asset && enPlan(asset) && (!asset.isSold || asset.soldYear >= year)) {
             const reCapGrowth = (asset.capitalReturnPct !== undefined ? Number(asset.capitalReturnPct) : ((isLand(asset) ? inflationRate : propertyInflationRate) * 100)) / 100;
             const yearsSinceStart = (asset.purchaseSimYear !== undefined) ? (year - asset.purchaseSimYear) : i;
             // Sin pareja, de un inmueble conjunto se vende (y se cancela, y tributa) sólo la mitad.
@@ -7890,7 +7933,7 @@ return {
         let totalOpexAnnual = 0;
         let reBreakdownLines = [];
 
-assetsData.filter(a => a.category === 'real_estate' && (!a.isSold || a.soldYear >= year)).map(soloScaleAsset).forEach(re => {
+assetsData.filter(a => a.category === 'real_estate' && enPlan(a) && (!a.isSold || a.soldYear >= year)).map(soloScaleAsset).forEach(re => {
           // Si el inmueble se compró a cierre de este mismo año, no genera rentas ni costes operativos hasta el año siguiente
           if (re.purchaseSimYear && re.purchaseSimYear === year) return;
 
@@ -7918,7 +7961,7 @@ if (reBreakdownLines.length === 0) reBreakdownLines.push('  • Sin inmuebles al
         // filtro de venta la proyección seguía deduciendo para siempre la amortización de un piso
         // ya vendido, pagaba menos IRPF que el optimizador y los dos motores se separaban unos
         // euros al año hasta discrepar en el año de quiebra (fuzzer, semilla 700572).
-        assetsData.filter(a => a.category === 'real_estate' && a.useType === 'rented' && (!a.purchaseSimYear || a.purchaseSimYear < year) && (!a.isSold || a.soldYear >= year)).map(soloScaleAsset).forEach(re => {
+        assetsData.filter(a => a.category === 'real_estate' && enPlan(a) && a.useType === 'rented' && (!a.purchaseSimYear || a.purchaseSimYear < year) && (!a.isSold || a.soldYear >= year)).map(soloScaleAsset).forEach(re => {
           const yearsSinceBuy = re.purchaseSimYear ? (year - re.purchaseSimYear) : i;
           const startVal = re.purchaseSimYear ? re.purchasePrice : toEUR(re.value, re.currency);
           const valEUR = startVal * Math.pow(1 + propertyInflationRate, yearsSinceBuy);
@@ -8127,7 +8170,7 @@ let eduTotal = 0;
         const elderCareAnnual = elderCareMonthly * 12 * elderCareCount;
 
 // Verificar si este año se posee vivienda habitual propia en cartera (no vendida)
-        const hasHabitualHome = assetsData.some(a => a.category === 'real_estate' && a.useType === 'habitual' && (!a.isSold || a.soldYear > year));
+        const hasHabitualHome = assetsData.some(a => a.category === 'real_estate' && enPlan(a) && a.useType === 'habitual' && (!a.isSold || a.soldYear > year));
         const imputedRentMonthly = (!hasHabitualHome) ? (Number(familyExpenses.rent_imputed) || 0) : 0;
         const imputedRentAnnual = imputedRentMonthly * 12;
 
@@ -8578,12 +8621,12 @@ let totalREAtYearEnd = 0;
         const elapsedYearsRE = (i === 0) ? yearFrac0 : (yearFrac0 + i);
 
         // Al cierre del año, solo permanecen los inmuebles no vendidos (o vendidos en años posteriores)
-        assetsData.filter(a => a.category === 'real_estate' && (!a.isSold || a.soldYear > year)).map(soloScaleAsset).forEach(re => {
+        assetsData.filter(a => a.category === 'real_estate' && enPlan(a) && (!a.isSold || a.soldYear > year)).map(soloScaleAsset).forEach(re => {
           totalREAtYearEnd += realEstateValueAtYearEnd(re, elapsedYearsRE, year, isLand(re) ? inflationRate : propertyInflationRate);
         });
 
         // Inmuebles vendidos en este ejercicio para la reconciliación exacta
-        assetsData.filter(a => a.category === 'real_estate' && a.isSold && a.soldYear === year).map(soloScaleAsset).forEach(re => {
+        assetsData.filter(a => a.category === 'real_estate' && enPlan(a) && a.isSold && a.soldYear === year).map(soloScaleAsset).forEach(re => {
           totalSoldValueThisYear += realEstateValueAtYearEnd(re, elapsedYearsRE, year, isLand(re) ? inflationRate : propertyInflationRate);
         });
 
@@ -10952,14 +10995,16 @@ function applyStateObject(parsed) {
   // detalle (trae las edades de verdad); si no cuadra, el usuario cambió el hogar en Balance y
   // manda el número. Antes se ignoraba el número, y un hogar de 2 volvía de aquí como 4.
   let avisoEdadesHijos = false;
+  let avisoHogarRecortado = 0;
   const miembros = (typeof parsed.familyMembers === 'number' && Number.isFinite(parsed.familyMembers))
     ? Math.max(1, Math.floor(parsed.familyMembers)) : null;
   const detalleCuadra = parsed.hasPartner !== undefined && Array.isArray(parsed.childrenAges)
     && (parsed.hasPartner ? 2 : 1) + parsed.childrenAges.length === miembros;
   if (miembros !== null && !detalleCuadra) {
     const hijosPrevios = childrenAges.length;
-    // El selector de hijos llega a 5: más no se puede representar.
+    // El selector de hijos llega a 5: más no se puede representar, y se avisa de que se recorta.
     const hijos = Math.min(5, Math.max(0, miembros - 2));
+    if (miembros - 2 > hijos) avisoHogarRecortado = miembros;
     hasPartner = miembros >= 2;
     // Las edades que el fichero no trae se conservan de las que ya había y los hijos que sobran
     // entran con la edad con la que se añade un hijo a mano (1). Si el número de hijos cambia, no
@@ -11021,6 +11066,12 @@ function applyStateObject(parsed) {
     });
   }
 
+  // Un activo o un evento sin titular (los ficheros de Balance no lo traen) recibe p1 si no hay
+  // pareja y conjunto si la hay. Hay que hacerlo con el hogar ya decidido, y antes de calcular
+  // nada: «sin titular» no es «conjunto», y leerlo así metía a la mitad el patrimonio de quien
+  // vive solo.
+  normalizaTitulares();
+
   // Se FUSIONA con los tipos vigentes en vez de sustituirlos: un fichero que no trae una divisa
   // (el de Balance, uno recortado a mano) dejaba esa divisa sin tipo y `toEUR` la contaba 1:1
   // -1.200 USD valían 1.200 €-. Lo que el fichero sí trae manda; el resto conserva el tipo de hoy.
@@ -11039,6 +11090,11 @@ function applyStateObject(parsed) {
     // Devuelve el valor tal cual venía (cadena o número) para no reescribir «15.0» como «15».
     const numOr = (v, d) => { const n = (v === null || v === '' || typeof v === 'boolean') ? NaN : Number(v); return Number.isFinite(n) ? v : d; };
     setVal('stockGrowthParam', numOr(parsed.macro.stockGrowth, 6.0));
+    // El máximo del deslizador del dividendo es el crecimiento, y todavía es el del plan anterior:
+    // al escribir un dividendo mayor, el navegador lo recortaba a ese máximo viejo (crecimiento 8
+    // y dividendo 5 volvían como 3 si antes había 3). Se actualiza antes de escribir.
+    const divEl = document.getElementById('divYieldParam');
+    if (divEl) divEl.max = String(numParam('stockGrowthParam', 6.0));
     setVal('divYieldParam', numOr(parsed.macro.divYield, 3.0));
     setVal('cashYieldParam', numOr(parsed.macro.cashYield, 1.5));
     setVal('bondYieldParam', parsed.macro.bondYield !== undefined ? parsed.macro.bondYield : 3.0);
@@ -11123,7 +11179,11 @@ function applyStateObject(parsed) {
   syncParamSliders('rentInflationParam', false);
   updateRetireAgeUI();
   updateRetireAgeP2UI();
-  return avisoEdadesHijos;
+  // Devuelve el texto de los avisos para quien importa ('' si no hay ninguno).
+  const avisos = [];
+  if (avisoEdadesHijos) avisos.push('El fichero solo trae el número de personas del hogar, no las edades de los hijos: revisa las edades de los hijos en el apartado de gastos familiares.');
+  if (avisoHogarRecortado) avisos.push(`El fichero indica ${avisoHogarRecortado} personas en el hogar y este simulador admite como máximo pareja y 5 hijos (7 personas): el hogar se ha recortado.`);
+  return avisos.join('\n\n');
 }
 
 function restoreSampleData() {
@@ -11215,7 +11275,7 @@ function importData(e) {
       catch (err) { alert("❌ El archivo no es un JSON válido."); return; }
       const motivo = validateBackupShape(parsed);
       if (motivo) { alert("❌ No se ha cargado nada: " + motivo); return; }
-      let avisoEdades = false;
+      let avisoEdades = '';
       try {
         avisoEdades = applyStateObject(parsed);
       } catch (err) {
@@ -11225,9 +11285,7 @@ function importData(e) {
         alert("❌ Error al procesar el archivo de respaldo." + (restaurado ? " Se ha conservado tu plan anterior." : ""));
         return;
       }
-      alert("✅ Modelo completo cargado correctamente." + (avisoEdades
-        ? "\n\nEl fichero solo trae el número de personas del hogar, no las edades de los hijos: revisa las edades de los hijos en el apartado de gastos familiares."
-        : ""));
+      alert("✅ Modelo completo cargado correctamente." + (avisoEdades ? "\n\n" + avisoEdades : ""));
     } finally {
       libera();
     }
@@ -11245,6 +11303,9 @@ function importData(e) {
       modalIds.forEach(id => {
         const modal = document.getElementById(id);
         if (modal && !modal.classList.contains('hidden')) {
+          // La bienvenida se cierra por su vía, la que recuerda que ya se vio: si no, Escape la
+          // ocultaba y volvía a salir en cada carga.
+          if (id === 'welcomeModal') { closeWelcomeModal(); return; }
           modal.classList.add('hidden');
           modal.classList.remove('flex');
         }
@@ -12158,7 +12219,7 @@ function generatePDFReport() {
               <div style="font-size: 7.5px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 6px;">
                 ${realEstateEvents.map(e => {
                   if (e.type === 'buy') {
-                    return `<div>• <b>${e.year} (Compra):</b> ${escHtml(e.name)} — ${fmt(e.priceTodayEUR)} (de hoy) | Entrada: ${e.downPct}% | Hipoteca: ${e.hasMort ? `${e.mortYears}a al ${e.mortRate}%` : 'Contado'}</div>`;
+                    return `<div>• <b>${e.year} (Compra):</b> ${escHtml(e.name)} — ${fmt(e.priceTodayEUR)}${soloShare(e) !== 1 ? ` (${Math.round(soloShare(e) * 100)} %: ${fmt(e.priceTodayEUR * soloShare(e))})` : ''} (de hoy) | Entrada: ${e.downPct}% | Hipoteca: ${e.hasMort ? `${e.mortYears}a al ${e.mortRate}%` : 'Contado'}</div>`;
                   } else {
                     const target = assetsData.find(a => a.id === e.assetId) || realEstateEvents.find(b => b.assetId === e.assetId);
                     const propName = target ? target.name : (e.name || e.assetId);

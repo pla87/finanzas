@@ -76,6 +76,8 @@ export const DEFAULT_MACRO_PARAMS = {
 // error se propaga hasta el último total. La interfaz recorta al escribir y la
 // importación recorta lo que venga de fuera, así que campo y cálculo ven
 // siempre el mismo número.
+// Contribuyentes entre los que se reparte el patrimonio: el campo ya lo limitaba.
+export const MAX_CONTRIBUYENTES = 20;
 const TASA = [-50, 100];
 const COSTE = [0, 100];
 export const PARAM_LIMITS = {
@@ -921,42 +923,56 @@ export function serializeMacro(macroParams) {
   };
 }
 
-export function deserializeMacro(macroSrc) {
+// `base` son los valores que se conservan para lo que el fichero no trae: los
+// de fábrica al abrir sin más, pero los de en vigor al cargar una copia
+// parcial. Un `macro` con solo la inflación no debe devolver la región, los
+// contribuyentes o el tipo marginal del usuario a sus valores por defecto.
+export function deserializeMacro(macroSrc, base = DEFAULT_MACRO_PARAMS) {
   const src = macroSrc || {};
+  const por = { ...DEFAULT_MACRO_PARAMS, ...base };
+  const trae = (...claves) => claves.some(k => src[k] !== undefined);
   return {
-    ...DEFAULT_MACRO_PARAMS,
-    inflationPct: clampParam('inflationPct', numeroOr(src.inflation ?? src.inflationPct, DEFAULT_MACRO_PARAMS.inflationPct)),
+    ...por,
+    inflationPct: clampParam('inflationPct', numeroOr(src.inflation ?? src.inflationPct, por.inflationPct)),
     // Un fichero anterior a este parámetro no lo trae: se hereda la inflación,
     // que es exactamente lo que la herramienta usaba entonces.
     realEstateAppreciationPct: clampParam('realEstateAppreciationPct', numeroOr(
       src.reAppreciation ?? src.realEstateAppreciationPct ?? src.propertyInflation ?? src.inflation ?? src.inflationPct,
-      DEFAULT_MACRO_PARAMS.realEstateAppreciationPct
+      por.realEstateAppreciationPct
     )),
-    stockGrowthPct: clampParam('stockGrowthPct', numeroOr(src.stockGrowth ?? src.stockGrowthPct, DEFAULT_MACRO_PARAMS.stockGrowthPct)),
-    refDividendYieldPct: clampParam('refDividendYieldPct', numeroOr(src.divYield ?? src.refDividendYieldPct, DEFAULT_MACRO_PARAMS.refDividendYieldPct)),
-    bondYieldPct: clampParam('bondYieldPct', numeroOr(src.bondYield ?? src.bondYieldPct, DEFAULT_MACRO_PARAMS.bondYieldPct)),
-    tipsRealYieldPct: clampParam('tipsRealYieldPct', numeroOr(src.tipsRealYield ?? src.tipsRealYieldPct, DEFAULT_MACRO_PARAMS.tipsRealYieldPct)),
-    goldRealReturnPct: clampParam('goldRealReturnPct', numeroOr(src.goldRealReturn ?? src.goldRealReturnPct, DEFAULT_MACRO_PARAMS.goldRealReturnPct)),
-    realEstateMaintenancePct: clampParam('realEstateMaintenancePct', numeroOr(src.reMaint ?? src.realEstateMaintenancePct, DEFAULT_MACRO_PARAMS.realEstateMaintenancePct)),
-    rentalOperatingCostsPct: clampParam('rentalOperatingCostsPct', numeroOr(src.reOpex ?? src.rentalOperatingCostsPct, DEFAULT_MACRO_PARAMS.rentalOperatingCostsPct)),
-    rentalPrimaryHomeDeductionPct: clampParam('rentalPrimaryHomeDeductionPct', numeroOr(src.reDeduction ?? src.rentalPrimaryHomeDeductionPct, DEFAULT_MACRO_PARAMS.rentalPrimaryHomeDeductionPct)),
-    marginalIncomeTaxPct: clampParam('marginalIncomeTaxPct', numeroOr(src.marginalTax ?? src.marginalIncomeTaxPct, DEFAULT_MACRO_PARAMS.marginalIncomeTaxPct)),
-    savingsTaxRatePct: clampParam('savingsTaxRatePct', numeroOr(src.savingsTax ?? src.savingsTaxRatePct, DEFAULT_MACRO_PARAMS.savingsTaxRatePct)),
-    fireTargetMultiple: clampParam('fireTargetMultiple', numeroOr(src.fireMultiple ?? src.fireTargetMultiple, DEFAULT_MACRO_PARAMS.fireTargetMultiple)),
+    stockGrowthPct: clampParam('stockGrowthPct', numeroOr(src.stockGrowth ?? src.stockGrowthPct, por.stockGrowthPct)),
+    refDividendYieldPct: clampParam('refDividendYieldPct', numeroOr(src.divYield ?? src.refDividendYieldPct, por.refDividendYieldPct)),
+    bondYieldPct: clampParam('bondYieldPct', numeroOr(src.bondYield ?? src.bondYieldPct, por.bondYieldPct)),
+    tipsRealYieldPct: clampParam('tipsRealYieldPct', numeroOr(src.tipsRealYield ?? src.tipsRealYieldPct, por.tipsRealYieldPct)),
+    goldRealReturnPct: clampParam('goldRealReturnPct', numeroOr(src.goldRealReturn ?? src.goldRealReturnPct, por.goldRealReturnPct)),
+    realEstateMaintenancePct: clampParam('realEstateMaintenancePct', numeroOr(src.reMaint ?? src.realEstateMaintenancePct, por.realEstateMaintenancePct)),
+    rentalOperatingCostsPct: clampParam('rentalOperatingCostsPct', numeroOr(src.reOpex ?? src.rentalOperatingCostsPct, por.rentalOperatingCostsPct)),
+    rentalPrimaryHomeDeductionPct: clampParam('rentalPrimaryHomeDeductionPct', numeroOr(src.reDeduction ?? src.rentalPrimaryHomeDeductionPct, por.rentalPrimaryHomeDeductionPct)),
+    marginalIncomeTaxPct: clampParam('marginalIncomeTaxPct', numeroOr(src.marginalTax ?? src.marginalIncomeTaxPct, por.marginalIncomeTaxPct)),
+    savingsTaxRatePct: clampParam('savingsTaxRatePct', numeroOr(src.savingsTax ?? src.savingsTaxRatePct, por.savingsTaxRatePct)),
+    fireTargetMultiple: clampParam('fireTargetMultiple', numeroOr(src.fireMultiple ?? src.fireTargetMultiple, por.fireTargetMultiple)),
 
     // Solo de Balance. Un fichero de Retiro no los trae y se quedan con el
     // valor por defecto, que es justo lo que se quiere.
-    wealthTaxRegion: src.wealthRegion ?? src.wealthTaxRegion ?? DEFAULT_MACRO_PARAMS.wealthTaxRegion,
-    wealthTaxPayers: Math.max(1, Math.round(Number(src.wealthPayers ?? src.wealthTaxPayers ?? DEFAULT_MACRO_PARAMS.wealthTaxPayers) || 1)),
+    wealthTaxRegion: src.wealthRegion ?? src.wealthTaxRegion ?? por.wealthTaxRegion,
+    // Mismo tope que el campo de la interfaz (1–20): sin él, un fichero con
+    // 1e9 contribuyentes dividía el patrimonio hasta dejarlo en nada.
+    wealthTaxPayers: Math.min(MAX_CONTRIBUYENTES, Math.max(1, Math.round(Number(src.wealthPayers ?? src.wealthTaxPayers ?? por.wealthTaxPayers) || 1))),
     // `null` significa «los de la comunidad», así que no puede pasar por
     // Number(): lo convertiría en un cero que anularía el mínimo exento.
-    wealthTaxExemption: clampNull('wealthTaxExemption', nullOrNumber(src.wealthExemption ?? src.wealthTaxExemption)),
-    wealthTaxBonificationPct: clampNull('wealthTaxBonificationPct', nullOrNumber(src.wealthBonification ?? src.wealthTaxBonificationPct)),
-    pensionWithdrawalTaxPct: clampParam('pensionWithdrawalTaxPct', numeroOr(src.pensionWithdrawalTax ?? src.pensionWithdrawalTaxPct, DEFAULT_MACRO_PARAMS.pensionWithdrawalTaxPct)),
-    propertySellingCostsPct: clampParam('propertySellingCostsPct', numeroOr(src.propertySellingCosts ?? src.propertySellingCostsPct, DEFAULT_MACRO_PARAMS.propertySellingCostsPct)),
-    tangiblesHaircutPct: clampParam('tangiblesHaircutPct', numeroOr(src.tangiblesHaircut ?? src.tangiblesHaircutPct, DEFAULT_MACRO_PARAMS.tangiblesHaircutPct)),
-    earlyRepaymentFeePct: clampParam('earlyRepaymentFeePct', numeroOr(src.earlyRepaymentFee ?? src.earlyRepaymentFeePct, DEFAULT_MACRO_PARAMS.earlyRepaymentFeePct)),
-    assumedUnrealizedGainPct: clampParam('assumedUnrealizedGainPct', numeroOr(src.assumedUnrealizedGain ?? src.assumedUnrealizedGainPct, DEFAULT_MACRO_PARAMS.assumedUnrealizedGainPct))
+    // Ausente no es lo mismo que `null`: ausente conserva lo de `base`, `null`
+    // significa «los de la comunidad».
+    wealthTaxExemption: trae('wealthExemption', 'wealthTaxExemption')
+      ? clampNull('wealthTaxExemption', nullOrNumber(src.wealthExemption ?? src.wealthTaxExemption))
+      : por.wealthTaxExemption,
+    wealthTaxBonificationPct: trae('wealthBonification', 'wealthTaxBonificationPct')
+      ? clampNull('wealthTaxBonificationPct', nullOrNumber(src.wealthBonification ?? src.wealthTaxBonificationPct))
+      : por.wealthTaxBonificationPct,
+    pensionWithdrawalTaxPct: clampParam('pensionWithdrawalTaxPct', numeroOr(src.pensionWithdrawalTax ?? src.pensionWithdrawalTaxPct, por.pensionWithdrawalTaxPct)),
+    propertySellingCostsPct: clampParam('propertySellingCostsPct', numeroOr(src.propertySellingCosts ?? src.propertySellingCostsPct, por.propertySellingCostsPct)),
+    tangiblesHaircutPct: clampParam('tangiblesHaircutPct', numeroOr(src.tangiblesHaircut ?? src.tangiblesHaircutPct, por.tangiblesHaircutPct)),
+    earlyRepaymentFeePct: clampParam('earlyRepaymentFeePct', numeroOr(src.earlyRepaymentFee ?? src.earlyRepaymentFeePct, por.earlyRepaymentFeePct)),
+    assumedUnrealizedGainPct: clampParam('assumedUnrealizedGainPct', numeroOr(src.assumedUnrealizedGain ?? src.assumedUnrealizedGainPct, por.assumedUnrealizedGainPct))
   };
 }
 
@@ -1284,16 +1300,27 @@ export function buildExportPayload(state) {
 
 // Devuelve solo los campos presentes en el archivo. El llamante decide
 // cómo aplicarlos al estado.
-// Claves por las que se reconoce una copia de seguridad. Cualquier JSON válido
-// no es una copia: un `{}` o un `[]` se aceptaban y dejaban el balance vacío.
-const CLAVES_DE_COPIA = ['assetsData', 'assets', 'liabilitiesData', 'liabilities', 'familyExpenses',
-  'expenses', 'macro', 'macroParams', 'familyMembers', 'hasPartner', 'baseCurrency', 'selectedCountry'];
+// Claves por las que se reconoce una copia de seguridad, con el tipo que debe
+// tener cada una. Cualquier JSON válido no es una copia: un `{}` o un `[]` se
+// aceptaban y dejaban el balance vacío, y `{"assetsData":{}}` o
+// `{"liabilitiesData":"x"}` pasaban el filtro por tener la clave y luego no
+// hacían nada. Basta con que UNA sección reconocida tenga el tipo esperado.
+const esObjeto = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+const CLAVES_DE_COPIA = {
+  assetsData: Array.isArray, assets: Array.isArray,
+  liabilitiesData: Array.isArray, liabilities: Array.isArray,
+  familyExpenses: esObjeto, expenses: esObjeto,
+  macro: esObjeto, macroParams: esObjeto,
+  familyMembers: (v) => typeof v === 'number', hasPartner: (v) => typeof v === 'boolean',
+  baseCurrency: (v) => typeof v === 'string', selectedCountry: (v) => typeof v === 'string'
+};
 
 // `macroFallback` son los parámetros en vigor: si el fichero no trae los suyos,
-// con ellos se calculan los inmuebles que sí traiga.
+// con ellos se calculan los inmuebles que sí traiga, y los parámetros sueltos
+// que falten en su `macro` se quedan como están en vez de volver a fábrica.
 export function parseImportPayload(parsed, { expenseFallback, macroFallback } = {}) {
-  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)
-      || !CLAVES_DE_COPIA.some(k => parsed[k] !== undefined)) {
+  if (!esObjeto(parsed)
+      || !Object.entries(CLAVES_DE_COPIA).some(([k, esDelTipo]) => esDelTipo(parsed[k]))) {
     throw new Error('archivo no válido');
   }
   const out = {};
@@ -1318,11 +1345,11 @@ export function parseImportPayload(parsed, { expenseFallback, macroFallback } = 
 
   // Una sección ausente no es una sección vacía: sin ella el llamante conserva
   // lo que ya tiene en vez de vaciarlo.
-  const macroDelFichero = parsed.macro || parsed.macroParams;
-  if (macroDelFichero && typeof macroDelFichero === 'object') out.macroParams = deserializeMacro(macroDelFichero);
-  const activos = deserializeAssets(parsed.assetsData || parsed.assets, out.macroParams || macroFallback || DEFAULT_MACRO_PARAMS);
+  const macroDelFichero = esObjeto(parsed.macro) ? parsed.macro : parsed.macroParams;
+  if (esObjeto(macroDelFichero)) out.macroParams = deserializeMacro(macroDelFichero, macroFallback);
+  const activos = deserializeAssets(Array.isArray(parsed.assetsData) ? parsed.assetsData : parsed.assets, out.macroParams || macroFallback || DEFAULT_MACRO_PARAMS);
   if (activos) out.assets = activos;
-  const pasivos = deserializeLiabilities(parsed.liabilitiesData || parsed.liabilities);
+  const pasivos = deserializeLiabilities(Array.isArray(parsed.liabilitiesData) ? parsed.liabilitiesData : parsed.liabilities);
   if (pasivos) out.liabilities = pasivos;
 
   // Ver retireUnsupportedCurrencies. Lo convertido se devuelve para avisar.
@@ -1363,6 +1390,20 @@ export function localeSeparators(locale) {
   return (locale || 'es-ES').startsWith('en')
     ? { decimal: '.', group: ',' }
     : { decimal: ',', group: '.' };
+}
+
+// Qué hacer con lo que se escribe en un campo con rango, sin tocar el modelo
+// hasta que el valor sea bueno. Decisión: mientras se escribe, un texto vacío o
+// fuera de rango NO se aplica (el modelo conserva el último valor válido) y el
+// campo se marca en rojo para que no parezca aceptado; al salir del campo, un
+// valor fuera de rango se recorta al límite. Así campo y modelo no se
+// contradicen ni a medias de teclear (antes: escribir 250 de mantenimiento
+// dejaba 250 en pantalla y 100 en el cálculo).
+export function evaluarEntrada(text, locale, decimals, [lo, hi]) {
+  const num = parseLocaleNumber(text, locale, decimals);
+  if (num === null) return { estado: 'vacio', num: null, recortado: null };
+  const recortado = Math.min(hi, Math.max(lo, num));
+  return { estado: recortado === num ? 'ok' : 'fuera', num, recortado };
 }
 
 // Convierte lo que el usuario escribe en un número.
@@ -1408,6 +1449,8 @@ export function parseLocaleNumber(text, locale = 'es-ES', decimals = 0) {
 
 // Cargar una copia reemplaza todo el balance. Este resumen es lo que se
 // enseña antes de hacerlo, para que la sustitución no sea a ciegas.
+const igualesParam = (a, b) => (a ?? null) === (b ?? null);
+
 export function summarizeImport(next, current, baseCurrency, exchangeRates) {
   const sum = (items) => (items || []).reduce(
     (acc, i) => acc + convertToBase(i.value, i.currency, baseCurrency, exchangeRates), 0
@@ -1433,6 +1476,12 @@ export function summarizeImport(next, current, baseCurrency, exchangeRates) {
       : null,
     familyMembers: next.familyMembers !== undefined && next.familyMembers !== current.familyMembers
       ? { from: current.familyMembers, to: next.familyMembers }
+      : null,
+    // Los parámetros se reemplazan enteros cuando el fichero los trae. Cuántos
+    // cambian respecto a los de ahora, para no dar la fila por vacía con un
+    // fichero que solo trae `macro`.
+    params: next.macroParams
+      ? { changed: Object.keys(next.macroParams).filter(k => !igualesParam(next.macroParams[k], (current.macroParams || {})[k])).length }
       : null
   };
 }

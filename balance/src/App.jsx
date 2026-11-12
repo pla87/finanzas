@@ -25,6 +25,8 @@ import {
   syncAssetRatesToMacro,
   retireUnsupportedCurrencies,
   clampParam,
+  PARAM_LIMITS,
+  MAX_CONTRIBUYENTES,
   restoreDeleted,
   listaDeObjetos
 } from './lib/finance.js';
@@ -753,7 +755,7 @@ const handleExportPDF = () => {
           next,
           summary: summarizeImport(
             next,
-            { assets, liabilities, expenses, familyMembers: validFamilyMembers },
+            { assets, liabilities, expenses, macroParams, familyMembers: validFamilyMembers },
             baseCurrency,
             exchangeRates
           )
@@ -2725,6 +2727,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.inflationPct}
                             decimals={2}
+                            range={PARAM_LIMITS.inflationPct}
                             onChange={v => setMacroParams({ ...macroParams, inflationPct: clampParam('inflationPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2741,6 +2744,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.realEstateAppreciationPct}
                             decimals={2}
+                            range={PARAM_LIMITS.realEstateAppreciationPct}
                             onChange={v => setMacroParams({ ...macroParams, realEstateAppreciationPct: clampParam('realEstateAppreciationPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2757,6 +2761,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.stockGrowthPct}
                             decimals={2}
+                            range={PARAM_LIMITS.stockGrowthPct}
                             onChange={v => setMacroParams({ ...macroParams, stockGrowthPct: clampParam('stockGrowthPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2773,6 +2778,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.refDividendYieldPct}
                             decimals={2}
+                            range={PARAM_LIMITS.refDividendYieldPct}
                             onChange={v => setMacroParams({ ...macroParams, refDividendYieldPct: clampParam('refDividendYieldPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2789,6 +2795,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.bondYieldPct}
                             decimals={2}
+                            range={PARAM_LIMITS.bondYieldPct}
                             onChange={v => setMacroParams({ ...macroParams, bondYieldPct: clampParam('bondYieldPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2805,6 +2812,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.tipsRealYieldPct}
                             decimals={2}
+                            range={PARAM_LIMITS.tipsRealYieldPct}
                             onChange={v => setMacroParams({ ...macroParams, tipsRealYieldPct: clampParam('tipsRealYieldPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2821,6 +2829,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.goldRealReturnPct}
                             decimals={2}
+                            range={PARAM_LIMITS.goldRealReturnPct}
                             onChange={v => setMacroParams({ ...macroParams, goldRealReturnPct: clampParam('goldRealReturnPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2837,6 +2846,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.realEstateMaintenancePct}
                             decimals={2}
+                                range={PARAM_LIMITS.realEstateMaintenancePct}
                                 onChange={v => setMacroParams({ ...macroParams, realEstateMaintenancePct: clampParam('realEstateMaintenancePct', v) })}
                                 className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2854,6 +2864,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                             value={macroParams.fireTargetMultiple}
                             decimals={0}
                             min={1}
+                            range={[1, 200]}
                             onChange={v => setMacroParams({ ...macroParams, fireTargetMultiple: Math.min(200, Math.max(1, Math.abs(v))) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2876,6 +2887,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.rentalOperatingCostsPct}
                             decimals={2}
+                            range={PARAM_LIMITS.rentalOperatingCostsPct}
                             onChange={v => setMacroParams({ ...macroParams, rentalOperatingCostsPct: clampParam('rentalOperatingCostsPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2892,6 +2904,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.marginalIncomeTaxPct}
                             decimals={2}
+                            range={PARAM_LIMITS.marginalIncomeTaxPct}
                             onChange={v => setMacroParams({ ...macroParams, marginalIncomeTaxPct: clampParam('marginalIncomeTaxPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2908,6 +2921,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.rentalPrimaryHomeDeductionPct}
                             decimals={2}
+                            range={PARAM_LIMITS.rentalPrimaryHomeDeductionPct}
                             onChange={v => setMacroParams({ ...macroParams, rentalPrimaryHomeDeductionPct: clampParam('rentalPrimaryHomeDeductionPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2961,6 +2975,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.pensionWithdrawalTaxPct}
                             decimals={2}
+                            range={PARAM_LIMITS.pensionWithdrawalTaxPct}
                             onChange={v => setMacroParams({ ...macroParams, pensionWithdrawalTaxPct: clampParam('pensionWithdrawalTaxPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2976,6 +2991,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.propertySellingCostsPct}
                             decimals={2}
+                            range={PARAM_LIMITS.propertySellingCostsPct}
                             onChange={v => setMacroParams({ ...macroParams, propertySellingCostsPct: clampParam('propertySellingCostsPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -2991,6 +3007,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.tangiblesHaircutPct}
                             decimals={2}
+                            range={PARAM_LIMITS.tangiblesHaircutPct}
                             onChange={v => setMacroParams({ ...macroParams, tangiblesHaircutPct: clampParam('tangiblesHaircutPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -3006,6 +3023,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.earlyRepaymentFeePct}
                             decimals={2}
+                            range={PARAM_LIMITS.earlyRepaymentFeePct}
                             onChange={v => setMacroParams({ ...macroParams, earlyRepaymentFeePct: clampParam('earlyRepaymentFeePct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -3021,6 +3039,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.assumedUnrealizedGainPct}
                             decimals={2}
+                            range={PARAM_LIMITS.assumedUnrealizedGainPct}
                             onChange={v => setMacroParams({ ...macroParams, assumedUnrealizedGainPct: clampParam('assumedUnrealizedGainPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -3062,7 +3081,8 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.wealthTaxPayers ?? 1}
                             decimals={0}
-                            onChange={v => setMacroParams({ ...macroParams, wealthTaxPayers: Math.min(20, Math.max(1, Math.round(Math.abs(v) || 1))) })}
+                            range={[1, MAX_CONTRIBUYENTES]}
+                            onChange={v => setMacroParams({ ...macroParams, wealthTaxPayers: Math.min(MAX_CONTRIBUYENTES, Math.max(1, Math.round(Math.abs(v) || 1))) })}
                             className={`w-full border rounded-lg p-2 font-mono text-xs ${themeClasses.input}`}
                           />
                         </div>
@@ -3076,6 +3096,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.wealthTaxExemption ?? regimenPatrimonio.exemption}
                             decimals={0}
+                            range={PARAM_LIMITS.wealthTaxExemption}
                             onChange={v => setMacroParams({ ...macroParams, wealthTaxExemption: clampParam('wealthTaxExemption', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -3091,6 +3112,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.wealthTaxBonificationPct ?? regimenPatrimonio.bonificationPct}
                             decimals={2}
+                            range={PARAM_LIMITS.wealthTaxBonificationPct}
                             onChange={v => setMacroParams({ ...macroParams, wealthTaxBonificationPct: clampParam('wealthTaxBonificationPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
@@ -4991,6 +5013,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                   { k: 'liabs', label: t.tab_liabilities, from: `${formatNumber(sm.liabilities.from, 0)} · ${formatCurrency(sm.liabilityValue.from)}`, to: `${formatNumber(sm.liabilities.to, 0)} · ${formatCurrency(sm.liabilityValue.to)}` }
                 ];
                 if (sm.expenses) rows.push({ k: 'exp', label: t.exp_total_monthly, from: `${formatCurrency(sm.expenses.from)}${t.per_month_short}`, to: `${formatCurrency(sm.expenses.to)}${t.per_month_short}` });
+                if (sm.params) rows.push({ k: 'par', label: t.tab_params, from: t.import_params_now, to: sm.params.changed ? t.import_params_diff.replace('{n}', sm.params.changed) : t.import_params_same });
                 if (sm.familyMembers) rows.push({ k: 'fam', label: t.family_members, from: String(sm.familyMembers.from), to: String(sm.familyMembers.to) });
                 // La base ya no cambia: si el fichero venía en otra divisa,
                 // lo que se anuncia es la conversión de sus gastos a euros.
@@ -5010,7 +5033,16 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
             </div>
 
             <p className="text-[11px] p-2.5 rounded-lg bg-amber-100 text-amber-950 border border-amber-400 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30 font-semibold">
-              {t.import_preview_warning}
+              {(() => {
+                // Con un fichero completo se reemplaza todo; con uno parcial,
+                // el aviso dice qué, para no asustar ni engañar.
+                const nx = importPreview.next;
+                if (nx.assets && nx.liabilities && nx.expenses) return t.import_preview_warning;
+                const lista = [nx.assets && t.tab_assets, nx.liabilities && t.tab_liabilities, nx.expenses && t.tab_expenses, nx.macroParams && t.tab_params]
+                  .filter(Boolean).map(x => x.toLowerCase());
+                const texto = lista.length > 1 ? lista.slice(0, -1).join(', ') + t.import_sep_and + lista[lista.length - 1] : (lista[0] || '—');
+                return t.import_preview_warning_partial.replace('{list}', texto);
+              })()}
             </p>
 
             {importPreview.next.currencyConversions?.length > 0 && (

@@ -13,7 +13,7 @@ import {
   DEFAULT_MACRO_PARAMS, savingsTaxOnIncome, resolveLiability, syncAssetRatesToMacro, calculateRealEstateReturns,
   assetGrossLiquidation, deserializeMacro, serializeMacro, clampParam,
   parseImportPayload, serializeLiabilities, deserializeLiabilities,
-  deserializeAssets, restoreDeleted, listaDeObjetos, summarizeImport
+  deserializeAssets, restoreDeleted, listaDeObjetos, summarizeImport, evaluarEntrada, MAX_CONTRIBUYENTES
 } from './finance.js';
 
 const RATES = { EUR: 1.0, USD: 1.1621, GBP: 0.8587 };
@@ -213,6 +213,69 @@ test('una sección ausente en una copia válida no vacía lo que hay', () => {
   const resumen = summarizeImport(solo, { assets: [{ value: 5, currency: 'EUR' }], liabilities: [{ value: 7, currency: 'EUR' }] }, 'EUR', RATES);
   assert.equal(resumen.liabilities.to, 1, 'las deudas siguen como estaban');
   assert.equal(resumen.liabilityValue.to, 7);
+});
+
+test('una sección reconocida con el tipo equivocado no vale como copia', () => {
+  for (const malo of [
+    { liabilitiesData: 'x' }, { assetsData: {} }, { assets: 3 }, { macro: [] }, { familyExpenses: 'x' },
+    { baseCurrency: 5 }, { familyMembers: '2' }, { hasPartner: 'si' }, { selectedCountry: null }
+  ]) {
+    assert.throws(() => parseImportPayload(malo), /archivo no válido/, JSON.stringify(malo));
+  }
+  // Con una sección buena al lado, la mala se ignora sin más.
+  const r = parseImportPayload({ assetsData: {}, liabilitiesData: [] });
+  assert.deepEqual(r.liabilities, []);
+  assert.equal(r.assets, undefined);
+});
+
+test('wealthTaxPayers de un fichero lleva el mismo tope que el campo', () => {
+  assert.equal(deserializeMacro({ wealthPayers: 1e9 }).wealthTaxPayers, MAX_CONTRIBUYENTES);
+  assert.equal(deserializeMacro({ wealthTaxPayers: 50 }).wealthTaxPayers, 20);
+  assert.equal(deserializeMacro({ wealthPayers: 3 }).wealthTaxPayers, 3);
+});
+
+test('un macro parcial conserva los parámetros en vigor, no los de fábrica', () => {
+  const vigente = { ...DEFAULT_MACRO_PARAMS, wealthTaxRegion: 'madrid', wealthTaxPayers: 3,
+    wealthTaxExemption: 500000, wealthTaxBonificationPct: 50, marginalIncomeTaxPct: 45, fireTargetMultiple: 33 };
+  const r = parseImportPayload({ macro: { inflation: 4 } }, { macroFallback: vigente });
+  assert.equal(r.macroParams.inflationPct, 4);
+  for (const k of ['wealthTaxRegion', 'wealthTaxPayers', 'wealthTaxExemption', 'wealthTaxBonificationPct', 'marginalIncomeTaxPct', 'fireTargetMultiple']) {
+    assert.equal(r.macroParams[k], vigente[k], k);
+  }
+  // Un null explícito sigue significando «los de la comunidad».
+  const n = parseImportPayload({ macro: { wealthExemption: null } }, { macroFallback: vigente });
+  assert.equal(n.macroParams.wealthTaxExemption, null);
+  // Sin macroFallback, lo ausente vuelve a fábrica como siempre.
+  assert.equal(parseImportPayload({ macro: { inflation: 4 } }).macroParams.wealthTaxPayers, DEFAULT_MACRO_PARAMS.wealthTaxPayers);
+});
+
+test('el resumen de importación cuenta los parámetros cuando el fichero los trae', () => {
+  const next = parseImportPayload({ macro: { inflation: 4 } }, { macroFallback: DEFAULT_MACRO_PARAMS });
+  const res = summarizeImport(next, { assets: [], liabilities: [], macroParams: DEFAULT_MACRO_PARAMS }, 'EUR', RATES);
+  assert.equal(res.params.changed, 2, "la inflación y la revalorización del ladrillo, que la hereda");
+  const igual = summarizeImport(parseImportPayload({ macro: {} }, { macroFallback: DEFAULT_MACRO_PARAMS }), { assets: [], liabilities: [], macroParams: DEFAULT_MACRO_PARAMS }, 'EUR', RATES);
+  assert.equal(igual.params.changed, 0);
+  assert.equal(summarizeImport(parseImportPayload({ assetsData: [] }), { assets: [], liabilities: [] }, 'EUR', RATES).params, null);
+});
+
+test('un campo con rango no aplica lo vacío ni lo fuera de rango; al salir lo recorta', () => {
+  const r = (t) => evaluarEntrada(t, 'es-ES', 2, [0, 100]);
+  assert.equal(r('').estado, 'vacio');
+  assert.equal(r('-').estado, 'vacio');
+  assert.equal(r('250').estado, 'fuera');
+  assert.equal(r('250').recortado, 100);
+  assert.equal(r('-5').recortado, 0);
+  assert.equal(r('12,5').estado, 'ok');
+  assert.equal(evaluarEntrada('50', 'es-ES', 0, [1, MAX_CONTRIBUYENTES]).recortado, 20);
+});
+
+test('todo campo de parámetros de la interfaz declara su rango', () => {
+  const app = readFileSync(new URL('../App.jsx', import.meta.url), 'utf8');
+  const campos = [...app.matchAll(/onChange=\{v => setMacroParams\(\{ \.\.\.macroParams, (\w+): /g)].map(m => m[1]);
+  assert.ok(campos.length >= 20);
+  for (const k of campos) {
+    assert.match(app, new RegExp(`range=\\{[^\\n]*${k === 'wealthTaxPayers' ? 'MAX_CONTRIBUYENTES' : k === 'fireTargetMultiple' ? '200' : k}[^\\n]*\\}\\s*\\n[^\\n]*onChange=\\{v => setMacroParams\\(\\{ \\.\\.\\.macroParams, ${k}:`), k);
+  }
 });
 
 // --- 6. Elementos raros ---

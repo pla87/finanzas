@@ -23,10 +23,13 @@ import {
   stockClassOf,
   pensionTypeOf,
   syncAssetRatesToMacro,
-  retireUnsupportedCurrencies
+  retireUnsupportedCurrencies,
+  clampParam,
+  restoreDeleted,
+  listaDeObjetos
 } from './lib/finance.js';
 import { buildAudit } from './lib/audit.js';
-import { computeBalance } from './lib/engine.js';
+import { computeBalance, entradaAuditoria } from './lib/engine.js';
 import { buildAssumptions } from './lib/assumptions.js';
 import { WEALTH_TAX_REGIONS, WEALTH_TAX_AS_OF } from './lib/wealthTax.js';
 import { TRANSLATIONS } from './lib/i18n.js';
@@ -274,9 +277,17 @@ function App() {
       const item = localStorage.getItem(key);
       if (!item) return fallback;
       const parsed = JSON.parse(item);
-      return (typeof fallback === 'object' && !Array.isArray(fallback) && fallback !== null)
-        ? { ...fallback, ...parsed }
-        : parsed;
+      // Lo guardado puede estar roto o ser de otra versión: una lista que es un
+      // objeto, una cadena o trae un `null` dentro dejaba la aplicación en
+      // blanco en cada carga, para siempre. Se valida la forma y, si no es la
+      // esperada, se arranca con el valor por defecto.
+      if (Array.isArray(fallback)) return listaDeObjetos(parsed) ?? fallback;
+      if (typeof fallback === 'object' && fallback !== null) {
+        return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)
+          ? { ...fallback, ...parsed }
+          : fallback;
+      }
+      return parsed;
     } catch {
       return fallback;
     }
@@ -284,20 +295,37 @@ function App() {
 
   const [macroParams, setMacroParams] = useState(() => {
     const parsed = safeParse('v14_macro_params', DEFAULT_MACRO_PARAMS);
-    if (parsed.realEstateMaintenancePct !== undefined) {
-      parsed.realEstateMaintenancePct = Math.abs(parsed.realEstateMaintenancePct);
-    }
+    // Los mismos rangos que en el fichero y en los campos: lo guardado de
+    // antes de que existieran no puede traer un coste negativo o un 1e21.
+    Object.keys(parsed).forEach(k => {
+      if (typeof parsed[k] === 'number') parsed[k] = clampParam(k, parsed[k]);
+    });
     return parsed;
   });
 
   // Sincroniza automáticamente los porcentajes de activos inmobiliarios y fondos cuando cambian las variables macro
+    //
+    // Dos precauciones, las dos por la misma razón —pisar la rentabilidad que
+    // el usuario ha puesto a una posición—: se pasan los parámetros de ANTES,
+    // para que solo se muevan los fondos que seguían al parámetro; y al
+    // importar o restaurar no se sincroniza nada, porque lo que entra del
+    // fichero ya trae sus rentabilidades y la ida y vuelta tiene que dar las
+    // mismas cifras.
     const isFirstMacroRun = useRef(true);
+    const macroAnterior = useRef(null);
+    // El objeto de parámetros que no hay que sincronizar: se compara por
+    // identidad, así que una marca que no llegue a usarse no puede tragarse un
+    // cambio posterior.
+    const omitirSincroniaMacro = useRef(null);
     useEffect(() => {
+      const antes = macroAnterior.current;
+      macroAnterior.current = macroParams;
       if (isFirstMacroRun.current) {
         isFirstMacroRun.current = false;
         return;
       }
-      setAssets(prev => syncAssetRatesToMacro(prev, macroParams));
+      if (omitirSincroniaMacro.current === macroParams) return;
+      setAssets(prev => syncAssetRatesToMacro(prev, macroParams, antes));
     }, [macroParams]);
 
   // Lo guardado en este navegador puede venir de cuando se admitían diez
@@ -469,8 +497,10 @@ function App() {
 
   const undoDelete = () => {
     if (!pendingUndo) return;
-    if (pendingUndo.kind === 'assets') setAssets(pendingUndo.items);
-    else setLiabilities(pendingUndo.items);
+    // Se fusiona con lo que haya ahora en vez de reemplazarlo: borrar todo,
+    // añadir algo y deshacer se llevaba lo añadido.
+    if (pendingUndo.kind === 'assets') setAssets(actual => restoreDeleted(pendingUndo.items, actual));
+    else setLiabilities(actual => restoreDeleted(pendingUndo.items, actual));
     setPendingUndo(null);
   };
 
@@ -494,6 +524,7 @@ function App() {
       household_monthly: COUNTRY_PRESETS.es_urban.household_monthly,
       family_annual: COUNTRY_PRESETS.es_urban.family_annual
     });
+    omitirSincroniaMacro.current = DEFAULT_MACRO_PARAMS;
     setMacroParams(DEFAULT_MACRO_PARAMS);
     setSelectedCountry('es_urban');
     setFamilyMembers(2);
@@ -562,6 +593,7 @@ function App() {
   
   const [showShareModal, setShowShareModal] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [feedbackData, setFeedbackData] = useState({ name: '', email: '', type: 'idea', message: '', gotcha: '' });
   const [feedbackSent, setFeedbackSent] = useState(false);
@@ -707,6 +739,7 @@ const handleExportPDF = () => {
         const parsed = JSON.parse(event.target.result);
 
         const next = parseImportPayload(parsed, {
+          macroFallback: macroParams,
           expenseFallback: {
             person_monthly: COUNTRY_PRESETS.es_urban.person_monthly,
             household_monthly: COUNTRY_PRESETS.es_urban.household_monthly,
@@ -743,9 +776,14 @@ const applyImportPreview = () => {
 
     if (next.selectedCountry) setSelectedCountry(next.selectedCountry);
     if (next.familyMembers !== undefined) setFamilyMembers(next.familyMembers);
-    setMacroParams(next.macroParams);
-    setAssets(next.assets || []);
-    setLiabilities(next.liabilities || []);
+    // Lo que el fichero no trae se queda como está: una copia sin deudas no
+    // las borra. Y los parámetros que entran no sincronizan las rentabilidades.
+    if (next.macroParams) {
+      omitirSincroniaMacro.current = next.macroParams;
+      setMacroParams(next.macroParams);
+    }
+    if (next.assets) setAssets(next.assets);
+    if (next.liabilities) setLiabilities(next.liabilities);
     // Un fichero guardado con otra divisa base trae los gastos en esa
     // divisa. Los activos llevan la suya y se convierten solos, pero los
     // gastos no, así que hay que pasarlos aquí: leerlos como si fueran
@@ -805,8 +843,12 @@ const applyCountryPreset = () => {
     .join(', ');
 
     const formatCurrency = (val, curr = baseCurrency) => {
-    const num = Math.round(Number(val || 0));
-    const absNum = Math.abs(num);
+    // Se redondea la magnitud y el signo se pone después. Math.round(-2547,5)
+    // es -2547 y Math.round(2547,5) es 2548: la misma cifra salía distinta en
+    // una tarjeta y en el gráfico, que formatea el valor absoluto. Y un
+    // -0,3 redondeado a cero no lleva signo.
+    const absNum = Math.round(Math.abs(Number(val || 0)));
+    const num = Number(val || 0) < 0 && absNum > 0 ? -absNum : absNum;
     const formattedNum = new Intl.NumberFormat(numberLocale, {
       useGrouping: true,
       maximumFractionDigits: 0
@@ -815,6 +857,10 @@ const applyCountryPreset = () => {
   const sign = num < 0 ? '-' : '';
     return lang === 'es' ? `${sign}${formattedNum}\u00A0${sym}` : `${sign}${sym}${formattedNum}`;
   };
+
+  // Un coste siempre con su signo, salvo que sea cero: «-0 €» en una cuota de
+  // quien no tiene deuda se leía como un fallo.
+  const formatCost = (val, curr = baseCurrency) => formatCurrency(-Math.abs(Number(val) || 0), curr);
 
   const formatCurrencyCompact = (val, curr = baseCurrency) => {
     const num = Number(val) || 0;
@@ -844,7 +890,7 @@ const applyCountryPreset = () => {
    const handleResetMacroParams = () => {
     if (!window.confirm(t.confirm_reset_params)) return;
     setMacroParams(DEFAULT_MACRO_PARAMS);
-    setAssets(prev => syncAssetRatesToMacro(prev, DEFAULT_MACRO_PARAMS));
+    setAssets(prev => syncAssetRatesToMacro(prev, DEFAULT_MACRO_PARAMS, macroParams));
   };
 
       
@@ -870,6 +916,13 @@ const applyCountryPreset = () => {
     if (!editingAsset.name.trim()) return;
 
     let assetToSave = { ...editingAsset };
+
+    // Los datos de acciones solo significan algo en el bloque de bolsa. La
+    // ficha nueva los trae de partida (10 títulos, «acciones»), y una cuenta
+    // corriente se guardaba con esos restos, que luego viajaban al fichero.
+    if (assetToSave.subcategory !== 'stocks') {
+      Object.assign(assetToSave, { stockType: 'fund', sharesCount: 0, sharePrice: 0, market: '', ticker: '' });
+    }
 
     if (assetToSave.subcategory === 'cash') {
       assetToSave.useReturnPct = 0;
@@ -1020,29 +1073,12 @@ if (liabilityToSave.subcategory === 'personal_loans') {
     [macroParams, calculations, euribor, lang]
   );
 
-  const audit = useMemo(() => buildAudit({
-    totalAssets: calculations.totalAssets,
-    totalLiabilities: calculations.totalLiabilities,
-    netWorth: calculations.netWorth,
-    ltv: calculations.ltv,
-    liquidCash: calculations.liquidCash,
-    runwayMonths: calculations.runwayTotalMonths,
-    totalAnnualExpenses: calculations.totalAnnualExpenses,
-    totalMonthlyExpenses: calculations.totalMonthlyExpenses,
-    monthlyDebtPayments: calculations.monthlyDebtPayments,
-    monthlyWealthTax: calculations.monthlyWealthTax,
-    monthlyPassiveCashflow: calculations.monthlyPassiveCashflow,
-    coveragePct: calculations.coverage.pct,
-    assetCategoryTotals: calculations.assetCategoryTotals,
-    holdings: assets.map(a => ({ name: a.name, valueBase: toBase(a.value, a.currency) })),
-    foreignCurrencyPct: calculations.foreignCurrencyPct,
-    expensiveDebt: calculations.expensiveDebt,
-    lowYieldPensions: calculations.lowYieldPensions,
-    unremuneratedCash: calculations.unremuneratedCash,
-    excessExpenses: calculations.excessExpensesList,
-    macroParams,
-    effectiveSavingsRatePct: calculations.effectiveSavingsRatePct
-  }), [calculations, assets, macroParams, baseCurrency, exchangeRates]);
+  // La misma función que usa el barrido: la interfaz armaba la entrada a mano
+  // y se dejaba el desglose por clases, con lo que los bonos y el oro contaban
+  // como renta variable en la diversificación.
+  const audit = useMemo(() => buildAudit(
+    entradaAuditoria(calculations, { assets, baseCurrency, exchangeRates, macroParams })
+  ), [calculations, assets, macroParams, baseCurrency, exchangeRates]);
 
   // Cada mérito trae su unidad desde el motor, así que la frase se rellena
   // sin tener que adivinar si un 40 son euros, meses o por ciento.
@@ -1225,10 +1261,17 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
         if (err.name === 'AbortError') return;
       }
       }
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(shareUrl);
+      // Solo se dice «copiado» cuando el portapapeles lo ha confirmado: la
+      // escritura es asíncrona y falla sin permiso o fuera de un contexto seguro.
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopyFailed(false);
         setCopiedNotification(true);
         setTimeout(() => setCopiedNotification(false), 2500);
+      } catch {
+        setCopiedNotification(false);
+        setCopyFailed(true);
+        setTimeout(() => setCopyFailed(false), 4000);
       }
     };
 
@@ -2010,7 +2053,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                                       >
                                         {l.noMonthlyPayment
                                           ? <span className="font-sans text-[11px]">{t.no_monthly_payment_short}</span>
-                                          : <>-{formatCurrency(currentMonthly, l.currency)}{t.per_month_short}</>}
+                                          : <>{formatCost(currentMonthly, l.currency)}{t.per_month_short}</>}
                                       </td>
                                     </tr>
                                   );
@@ -2041,13 +2084,13 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                     <div className={`p-3 rounded-xl border ${themeClasses.cardInner}`}>
                       <span className={`${themeClasses.textMuted} block mb-1 font-bold font-sans`}>{t.monthly_debt_title}</span>
-                      <div className="text-base font-bold text-rose-700 dark:text-rose-400 font-mono">-{formatCurrency(Math.abs(calculations.monthlyDebtPayments))}{t.per_month_short}</div>
-                          <span className={`text-[11px] ${themeClasses.textMuted} font-sans`}>-<span className="font-mono text-slate-900 dark:text-slate-200">{formatCurrency(Math.abs(calculations.annualDebtPayments))}</span> {t.per_year}</span>
+                      <div className="text-base font-bold text-rose-700 dark:text-rose-400 font-mono">{formatCost(Math.abs(calculations.monthlyDebtPayments))}{t.per_month_short}</div>
+                          <span className={`text-[11px] ${themeClasses.textMuted} font-sans`}><span className="font-mono text-slate-900 dark:text-slate-200">{formatCost(calculations.annualDebtPayments)}</span> {t.per_year}</span>
                     </div>
 
                     <div className={`p-3 rounded-xl border ${themeClasses.cardInner}`}>
                       <span className={`${themeClasses.textMuted} block mb-1 font-bold font-sans`}>{t.annual_interest_cost}</span>
-                      <div className="text-base font-bold text-rose-700 dark:text-rose-400 font-mono">-{formatCurrency(calculations.debtInterestBase)} {t.per_year}</div>
+                      <div className="text-base font-bold text-rose-700 dark:text-rose-400 font-mono">{formatCost(calculations.debtInterestBase)} {t.per_year}</div>
                     </div>
 
                     <div className={`p-3 rounded-xl border ${themeClasses.cardInner}`}>
@@ -2103,11 +2146,11 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                     <div className={`p-2 rounded border ${themeClasses.cardInner}`}>
                       <span className={`${themeClasses.textMuted} text-[10px] block font-bold font-sans`}>{t.monthly_debt_title}</span>
-                      <span className="font-mono text-rose-700 dark:text-rose-400 font-bold">-{formatCurrency(calculations.monthlyDebtPayments)}{t.per_month_short}</span>
+                      <span className="font-mono text-rose-700 dark:text-rose-400 font-bold">{formatCost(calculations.monthlyDebtPayments)}{t.per_month_short}</span>
                     </div>
                     <div className={`p-2 rounded border ${themeClasses.cardInner}`}>
                       <span className={`${themeClasses.textMuted} text-[10px] block font-bold font-sans`}>{t.annual_interest_cost}</span>
-                      <span className="font-mono text-rose-700 dark:text-rose-400 font-bold">-{formatCurrency(calculations.debtInterestBase)} {t.per_year}</span>
+                      <span className="font-mono text-rose-700 dark:text-rose-400 font-bold">{formatCost(calculations.debtInterestBase)} {t.per_year}</span>
                     </div>
                     <div className={`p-2 rounded border ${themeClasses.cardInner}`}>
                       <span className={`${themeClasses.textMuted} text-[10px] block font-bold font-sans`}>{t.weighted_interest_label}</span>
@@ -2620,7 +2663,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                             <div className="flex justify-between items-center text-[11px] font-sans">
                               <span className="truncate font-medium">{b.label}</span>
                               <span className={`font-mono font-bold ${b.isPositive ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
-                                {b.isPositive ? '+' : '-'}{formatCurrency(Math.abs(b.value))}{t.per_month_short}
+                                {b.isPositive ? '+' : (Math.round(Math.abs(b.value)) === 0 ? '' : '-')}{formatCurrency(Math.abs(b.value))}{t.per_month_short}
                               </span>
                             </div>
                             <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
@@ -2682,7 +2725,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.inflationPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, inflationPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, inflationPct: clampParam('inflationPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2698,7 +2741,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.realEstateAppreciationPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, realEstateAppreciationPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, realEstateAppreciationPct: clampParam('realEstateAppreciationPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2714,7 +2757,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.stockGrowthPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, stockGrowthPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, stockGrowthPct: clampParam('stockGrowthPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2730,7 +2773,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.refDividendYieldPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, refDividendYieldPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, refDividendYieldPct: clampParam('refDividendYieldPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2746,7 +2789,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.bondYieldPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, bondYieldPct: v })}
+                            onChange={v => setMacroParams({ ...macroParams, bondYieldPct: clampParam('bondYieldPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2762,7 +2805,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.tipsRealYieldPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, tipsRealYieldPct: v })}
+                            onChange={v => setMacroParams({ ...macroParams, tipsRealYieldPct: clampParam('tipsRealYieldPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2778,7 +2821,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.goldRealReturnPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, goldRealReturnPct: v })}
+                            onChange={v => setMacroParams({ ...macroParams, goldRealReturnPct: clampParam('goldRealReturnPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2794,7 +2837,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.realEstateMaintenancePct}
                             decimals={2}
-                                onChange={v => setMacroParams({ ...macroParams, realEstateMaintenancePct: v })}
+                                onChange={v => setMacroParams({ ...macroParams, realEstateMaintenancePct: clampParam('realEstateMaintenancePct', v) })}
                                 className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2811,7 +2854,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                             value={macroParams.fireTargetMultiple}
                             decimals={0}
                             min={1}
-                            onChange={v => setMacroParams({ ...macroParams, fireTargetMultiple: Math.max(1, Math.abs(v)) })}
+                            onChange={v => setMacroParams({ ...macroParams, fireTargetMultiple: Math.min(200, Math.max(1, Math.abs(v))) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">x</span>
@@ -2833,7 +2876,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.rentalOperatingCostsPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, rentalOperatingCostsPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, rentalOperatingCostsPct: clampParam('rentalOperatingCostsPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2849,7 +2892,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.marginalIncomeTaxPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, marginalIncomeTaxPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, marginalIncomeTaxPct: clampParam('marginalIncomeTaxPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2865,7 +2908,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.rentalPrimaryHomeDeductionPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, rentalPrimaryHomeDeductionPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, rentalPrimaryHomeDeductionPct: clampParam('rentalPrimaryHomeDeductionPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2918,7 +2961,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.pensionWithdrawalTaxPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, pensionWithdrawalTaxPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, pensionWithdrawalTaxPct: clampParam('pensionWithdrawalTaxPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2933,7 +2976,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.propertySellingCostsPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, propertySellingCostsPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, propertySellingCostsPct: clampParam('propertySellingCostsPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2948,7 +2991,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.tangiblesHaircutPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, tangiblesHaircutPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, tangiblesHaircutPct: clampParam('tangiblesHaircutPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2963,7 +3006,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.earlyRepaymentFeePct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, earlyRepaymentFeePct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, earlyRepaymentFeePct: clampParam('earlyRepaymentFeePct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -2978,7 +3021,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.assumedUnrealizedGainPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, assumedUnrealizedGainPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, assumedUnrealizedGainPct: clampParam('assumedUnrealizedGainPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -3019,7 +3062,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.wealthTaxPayers ?? 1}
                             decimals={0}
-                            onChange={v => setMacroParams({ ...macroParams, wealthTaxPayers: Math.max(1, Math.round(Math.abs(v) || 1)) })}
+                            onChange={v => setMacroParams({ ...macroParams, wealthTaxPayers: Math.min(20, Math.max(1, Math.round(Math.abs(v) || 1))) })}
                             className={`w-full border rounded-lg p-2 font-mono text-xs ${themeClasses.input}`}
                           />
                         </div>
@@ -3033,7 +3076,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.wealthTaxExemption ?? regimenPatrimonio.exemption}
                             decimals={0}
-                            onChange={v => setMacroParams({ ...macroParams, wealthTaxExemption: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, wealthTaxExemption: clampParam('wealthTaxExemption', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">€</span>
@@ -3048,7 +3091,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={macroParams.wealthTaxBonificationPct ?? regimenPatrimonio.bonificationPct}
                             decimals={2}
-                            onChange={v => setMacroParams({ ...macroParams, wealthTaxBonificationPct: Math.abs(v) })}
+                            onChange={v => setMacroParams({ ...macroParams, wealthTaxBonificationPct: clampParam('wealthTaxBonificationPct', v) })}
                             className={`w-full border rounded-lg p-2 pr-7 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -3311,7 +3354,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
           <div className={`flex justify-between items-center ${themeClasses.textTitle}`}>
                   <span className="font-sans">{t.wf_debt_service}</span>
                   <span className={`font-mono font-bold ${calculations.monthlyDebtPayments > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                    -{formatCurrency(calculations.monthlyDebtPayments)}
+                    {formatCost(calculations.monthlyDebtPayments)}
                   </span>
                 </div>
 
@@ -3321,7 +3364,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                       <span className="font-sans">{t.wf_wealth_tax} ⓘ</span>
                     </Tooltip>
                     <span className="font-mono font-bold text-rose-700 dark:text-rose-400">
-                      -{formatCurrency(calculations.monthlyWealthTax)}
+                      {formatCost(calculations.monthlyWealthTax)}
                     </span>
                   </div>
                 )}
@@ -3338,7 +3381,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                 <div className={`flex justify-between items-center ${themeClasses.textTitle}`}>
                   <span className="font-sans">{t.wf_living_costs}</span>
                   <span className={`font-mono font-semibold ${-calculations.totalMonthlyExpenses < 0 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                    -{formatCurrency(calculations.totalMonthlyExpenses)}
+                    {formatCost(calculations.totalMonthlyExpenses)}
                   </span>
                 </div>
 
@@ -3742,7 +3785,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                               <td className="text-center font-mono">{l.currency}</td>
                               <td className="text-right font-mono font-bold pdf-rose">{formatCurrency(currentVal, l.currency)}</td>
                               <td className="text-right font-mono">{formatNumber(l.interestRatePct)}%</td>
-                              <td className="text-right font-mono pdf-rose">-{formatCurrency(currentMonthly, l.currency)}/m</td>
+                              <td className="text-right font-mono pdf-rose">{formatCost(currentMonthly, l.currency)}/m</td>
                             </tr>
                           );
                         })
@@ -3757,11 +3800,11 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                     <h3 className="font-bold text-[10.5px] uppercase pdf-sky border-b border-slate-200 pb-0.5 mb-1.5">{t.waterfall_title}</h3>
                     <div className="space-y-1.5 text-[9.5px]">
                       <div className="flex justify-between"><span>{t.wf_gross_cash}</span><span className={`font-mono font-bold ${calculations.monthlyPassiveCashflow >= 0 ? 'pdf-green' : 'pdf-rose'}`}>{calculations.monthlyPassiveCashflow >= 0 ? '+' : ''}{formatCurrency(calculations.monthlyPassiveCashflow)}/m</span></div>
-                      <div className="flex justify-between"><span>{t.wf_debt_service}</span><span className="font-mono pdf-rose font-bold">-{formatCurrency(calculations.monthlyDebtPayments)}/m</span></div>
+                      <div className="flex justify-between"><span>{t.wf_debt_service}</span><span className="font-mono pdf-rose font-bold">{formatCost(calculations.monthlyDebtPayments)}/m</span></div>
                       {calculations.monthlyWealthTax > 0 && (
-                        <div className="flex justify-between"><span>{t.wf_wealth_tax}</span><span className="font-mono pdf-rose font-bold">-{formatCurrency(calculations.monthlyWealthTax)}/m</span></div>
+                        <div className="flex justify-between"><span>{t.wf_wealth_tax}</span><span className="font-mono pdf-rose font-bold">{formatCost(calculations.monthlyWealthTax)}/m</span></div>
                       )}
-                      <div className="flex justify-between"><span>{t.wf_living_costs}</span><span className="font-mono pdf-amber font-bold">-{formatCurrency(calculations.totalMonthlyExpenses)}/m</span></div>
+                      <div className="flex justify-between"><span>{t.wf_living_costs}</span><span className="font-mono pdf-amber font-bold">{formatCost(calculations.totalMonthlyExpenses)}/m</span></div>
                       <div className="flex justify-between border-t border-slate-300 pt-1 font-bold">
                         <span>{t.wf_final_net_cash}</span>
                         <span className={`font-mono ${calculations.netMonthlyCashflow >= 0 ? 'pdf-green' : 'pdf-rose'}`}>
@@ -4185,7 +4228,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                             <FormattedNumberInput
                               value={editingAsset.cashReturnPct}
                               decimals={2}
-                              onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: v })}
+                              onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: Math.min(1000, Math.max(-100, v)) })}
                               className={`w-full border rounded-lg p-2.5 pr-7 font-mono outline-none ${themeClasses.input}`}
                             />
                             <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4197,7 +4240,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                             <FormattedNumberInput
                               value={editingAsset.capitalReturnPct !== undefined ? editingAsset.capitalReturnPct : macroParams.stockGrowthPct}
                               decimals={2}
-                              onChange={v => setEditingAsset({ ...editingAsset, capitalReturnPct: v })}
+                              onChange={v => setEditingAsset({ ...editingAsset, capitalReturnPct: Math.min(1000, Math.max(-100, v)) })}
                               className={`w-full border rounded-lg p-2.5 pr-7 font-mono outline-none ${themeClasses.input}`}
                             />
                             <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4238,7 +4281,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                             <FormattedNumberInput
                               value={editingAsset.cashReturnPct}
                               decimals={2}
-                              onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: v })}
+                              onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: Math.min(1000, Math.max(-100, v)) })}
                               className={`w-full border rounded-lg p-2.5 pr-7 font-mono outline-none ${themeClasses.input}`}
                             />
                             <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4250,7 +4293,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                             <FormattedNumberInput
                               value={editingAsset.capitalReturnPct !== undefined ? editingAsset.capitalReturnPct : macroParams.stockGrowthPct}
                               decimals={2}
-                              onChange={v => setEditingAsset({ ...editingAsset, capitalReturnPct: v })}
+                              onChange={v => setEditingAsset({ ...editingAsset, capitalReturnPct: Math.min(1000, Math.max(-100, v)) })}
                               className={`w-full border rounded-lg p-2.5 pr-7 font-mono outline-none ${themeClasses.input}`}
                             />
                             <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4265,7 +4308,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                             <FormattedNumberInput
                               value={editingAsset.cashReturnPct}
                               decimals={2}
-                              onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: v })}
+                              onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: Math.min(1000, Math.max(-100, v)) })}
                               className={`w-full border rounded-lg p-2.5 pr-7 font-mono outline-none ${themeClasses.input}`}
                             />
                             <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4406,7 +4449,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                         <FormattedNumberInput
                           value={editingAsset.cashReturnPct}
                           decimals={2}
-                          onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: v })}
+                          onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: Math.min(1000, Math.max(-100, v)) })}
                           className={`w-full border rounded-lg p-2.5 pr-7 font-mono outline-none ${themeClasses.input}`}
                         />
                         <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4437,7 +4480,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                         <FormattedNumberInput
                           value={editingAsset.capitalReturnPct}
                           decimals={2}
-                          onChange={v => setEditingAsset({ ...editingAsset, capitalReturnPct: v })}
+                          onChange={v => setEditingAsset({ ...editingAsset, capitalReturnPct: Math.min(1000, Math.max(-100, v)) })}
                           className={`w-full border rounded-lg p-2.5 pr-7 font-mono outline-none ${themeClasses.input}`}
                         />
                         <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4453,7 +4496,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={editingAsset.capitalReturnPct}
                             decimals={2}
-                            onChange={v => setEditingAsset({ ...editingAsset, capitalReturnPct: v })}
+                            onChange={v => setEditingAsset({ ...editingAsset, capitalReturnPct: Math.min(1000, Math.max(-100, v)) })}
                             className={`w-full border rounded p-2 pr-6 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2 text-[10px] text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4465,7 +4508,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={editingAsset.useReturnPct}
                             decimals={2}
-                            onChange={v => setEditingAsset({ ...editingAsset, useReturnPct: v })}
+                            onChange={v => setEditingAsset({ ...editingAsset, useReturnPct: Math.min(1000, Math.max(-100, v)) })}
                             className={`w-full border rounded p-2 pr-6 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2 text-[10px] text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4479,7 +4522,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           <FormattedNumberInput
                             value={editingAsset.cashReturnPct}
                             decimals={2}
-                            onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: v })}
+                            onChange={v => setEditingAsset({ ...editingAsset, cashReturnPct: Math.min(1000, Math.max(-100, v)) })}
                             className={`w-full border rounded p-2 pr-6 font-mono text-xs ${themeClasses.input}`}
                           />
                           <span className="absolute right-2 text-[10px] text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4639,8 +4682,8 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           decimals={2}
                           min={editingLiability.rateType === 'variable' ? undefined : 0}
                           onChange={v => setEditingLiability(editingLiability.rateType === 'variable'
-                            ? { ...editingLiability, spreadPct: v }
-                            : { ...editingLiability, interestRatePct: v })}
+                            ? { ...editingLiability, spreadPct: Math.min(100, v) }
+                            : { ...editingLiability, interestRatePct: Math.min(100, v) })}
                           className={`w-full border rounded-lg p-2.5 pr-7 font-mono outline-none ${themeClasses.input}`}
                         />
                         <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -4707,7 +4750,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                       <div className={`p-2.5 rounded-lg border space-y-1 text-[11px] ${themeClasses.cardInner}`}>
                         <div className="flex justify-between font-sans">
                           <span className={themeClasses.textMuted}>{t.field_calculated_monthly}:</span>
-                          <strong className="text-rose-700 dark:text-rose-400 font-bold font-mono">-{formatCurrency(c.monthlyPayment, editingLiability.currency)}{t.per_month_short}</strong>
+                          <strong className="text-rose-700 dark:text-rose-400 font-bold font-mono">{formatCost(c.monthlyPayment, editingLiability.currency)}{t.per_month_short}</strong>
                         </div>
                         {/* En el préstamo personal esta línea repetiría el
                             saldo que se acaba de escribir: no hay cuadro
@@ -4874,7 +4917,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           value={editingLiability.interestRatePct}
                           decimals={2}
                           min={0}
-                          onChange={v => setEditingLiability({ ...editingLiability, interestRatePct: v })}
+                          onChange={v => setEditingLiability({ ...editingLiability, interestRatePct: Math.min(100, v) })}
                           className={`w-full border rounded-lg p-2.5 pr-7 text-xs font-mono ${themeClasses.input}`}
                         />
                         <span className="absolute right-2.5 text-xs text-slate-600 dark:text-slate-400 font-bold pointer-events-none font-sans">%</span>
@@ -5225,6 +5268,11 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
               {copiedNotification && (
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold text-center">
                   ✅ {t.copied_text}
+                </p>
+              )}
+              {copyFailed && (
+                <p role="alert" className="text-xs text-rose-600 dark:text-rose-400 font-bold text-center">
+                  ❌ {t.copy_failed_text}
                 </p>
               )}
             </div>

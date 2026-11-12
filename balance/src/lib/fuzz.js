@@ -12,9 +12,9 @@
 // Cada escenario sale de una semilla, así que un fallo se reproduce entero
 // con el número que imprime el error. Por defecto van 2.000 —medio segundo—;
 // con FUZZ_N=50000 npm test se aprieta más antes de tocar el motor.
-import { computeBalance } from './engine.js';
+import { computeBalance, entradaAuditoria } from './engine.js';
 import { buildAudit } from './audit.js';
-import { convertToBase, buildExportPayload, parseImportPayload, resolveLiability, stockClassOf, pensionTypeOf } from './finance.js';
+import { buildExportPayload, parseImportPayload, resolveLiability, stockClassOf, pensionTypeOf } from './finance.js';
 import { wealthTaxDue } from './wealthTax.js';
 
 // --- GENERADOR ---
@@ -153,22 +153,6 @@ const cerca = (a, b, tol = 1e-6) =>
   a === b || (Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tol * Math.max(1, Math.abs(a), Math.abs(b)));
 const fin = v => typeof v === 'number' && Number.isFinite(v);
 
-function entradaAuditoria(esc, c) {
-  return {
-    totalAssets: c.totalAssets, totalLiabilities: c.totalLiabilities, netWorth: c.netWorth, ltv: c.ltv,
-    liquidCash: c.liquidCash, runwayMonths: c.runwayTotalMonths,
-    totalAnnualExpenses: c.totalAnnualExpenses, totalMonthlyExpenses: c.totalMonthlyExpenses,
-    monthlyDebtPayments: c.monthlyDebtPayments, monthlyWealthTax: c.monthlyWealthTax,
-    monthlyPassiveCashflow: c.monthlyPassiveCashflow, coveragePct: c.coverage.pct,
-    assetCategoryTotals: c.assetCategoryTotals,
-    assetClassTotals: c.assetClassTotals,
-    holdings: esc.assets.map(a => ({ name: a.name, valueBase: convertToBase(a.value, a.currency, esc.baseCurrency, esc.exchangeRates) })),
-    foreignCurrencyPct: c.foreignCurrencyPct, expensiveDebt: c.expensiveDebt,
-    lowYieldPensions: c.lowYieldPensions, excessExpenses: c.excessExpensesList,
-    macroParams: esc.macroParams, effectiveSavingsRatePct: c.effectiveSavingsRatePct
-  };
-}
-
 // Devuelve la lista de propiedades rotas. Vacía es lo que se espera siempre.
 export function comprobarEscenario(esc) {
   const fallos = [];
@@ -224,7 +208,7 @@ export function comprobarEscenario(esc) {
   }
 
   // Auditoría: notas dentro de su rango y consejos que llevan a su meta.
-  const a = buildAudit(entradaAuditoria(esc, c));
+  const a = buildAudit(entradaAuditoria(c, esc));
   for (const d of a.dimensions) {
     if (d.points === null) continue;
     if (!fin(d.points) || d.points < -1e-9 || d.points > d.max + 1e-9) mal(`${d.id} puntúa ${d.points} sobre ${d.max}`);

@@ -1483,7 +1483,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
 
         {/* BARRA DE PESTAÑAS */}
         <div
-          className="max-w-7xl mx-auto flex items-start border-b border-brand-border pb-4 gap-4 sm:gap-8 text-sm font-semibold mb-6 overflow-x-auto no-scrollbar font-sans tab-scroll-hint"
+          className="no-print max-w-7xl mx-auto flex items-start border-b border-brand-border pb-4 gap-4 sm:gap-8 text-sm font-semibold mb-6 overflow-x-auto no-scrollbar font-sans tab-scroll-hint"
           role="tablist"
           aria-label={t.app_title}
         >

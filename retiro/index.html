@@ -347,7 +347,7 @@
 		<button onclick="generatePDFReport()" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-slate-800" title="Exportar informe completo en PDF">
 		  <span>📄</span>
 		</button>
-      <button onclick="exportData()" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-emerald/20 border-brand-emerald/40 text-brand-emerald hover:bg-brand-emerald/30" title="Guardar todo el modelo en archivo .txt">
+      <button onclick="exportData()" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-slate-800" title="Guardar todo el modelo en archivo .txt">
         <span>💾</span>
       </button>
       <button onclick="document.getElementById('fullBackupInput').click()" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-slate-800" title="Cargar modelo completo (también abre ficheros de pacolucena.com/balance)">
@@ -356,11 +356,10 @@
       <input type="file" id="fullBackupInput" accept=".txt,.json" class="hidden" onchange="importData(event)" />
       <!-- Volver a los datos de ejemplo. Estaba solo abajo, en Parámetros, donde no lo encontraba
            nadie: es lo que quieres a mano cuando has enredado los números y quieres empezar de
-           cero. Va junto a guardar y cargar porque es la misma familia de acciones, pero en rosa
-           y no en verde: descarta el trabajo del usuario, justo lo contrario que 💾, y el verde lo
-           hacía parecer la opción segura. Es el mismo rosa que su gemelo de Parámetros y que el ♻️ de
-           pacolucena.com/balance, con el mismo tinte que 💾 para que se lea igual de claro. -->
-      <button onclick="restoreSampleData()" id="restoreSampleBtn" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/30" title="Volver a los datos de ejemplo (se pierden los cambios no guardados)">
+           cero. Va junto a guardar y cargar porque es la misma familia de acciones, y neutro como
+           ellos (antes 💾 iba en verde y ♻️ en rosa, y destacaban sin motivo), igual que su gemelo
+           de Parámetros y que la cabecera de pacolucena.com/balance. -->
+      <button onclick="restoreSampleData()" id="restoreSampleBtn" class="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-slate-800" title="Volver a los datos de ejemplo (se pierden los cambios no guardados)">
         <span>♻️</span>
       </button>
       <!-- 💬 antes que ❓: es el orden de pacolucena.com/balance, para que las dos herramientas
@@ -587,7 +586,9 @@
     <!-- Dos grupos, en el orden en que se usan: primero se meten los datos, luego se leen los
          resultados. Cada grupo lleva su rótulo encima y no al lado, que en una sola línea no
          cabían en escritorio. Los rótulos y el separador no llevan .tab-btn para que switchTab
-         no los trate como pestañas al quitar y poner el resaltado. -->
+         no los trate como pestañas al quitar y poner el resaltado.
+         Con nueve pestañas, 12 px de separación es lo máximo que cabe en una línea a 1280 px;
+         pacolucena.com/balance, con siete, se puede permitir más aire. -->
     <div id="tabBar" class="flex items-start border-b border-brand-border pb-4 gap-3 text-sm font-semibold mb-6 overflow-x-auto scrollbar-thin">
       <div class="shrink-0">
         <div class="text-[10px] uppercase tracking-wider text-brand-textMuted/70 font-bold whitespace-nowrap select-none mb-1.5">Tus datos</div>
@@ -1424,7 +1425,7 @@
 
         <div class="p-3 bg-brand-bg border border-brand-border rounded-lg text-xs flex items-center justify-between gap-3 flex-wrap">
           <span class="text-slate-300 font-medium">¿Quieres empezar de nuevo con los datos de ejemplo?</span>
-          <button onclick="restoreSampleData()" class="h-8 px-3 bg-rose-500/10 border border-rose-500/40 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold rounded-lg transition flex items-center gap-1.5" title="Descarta todos tus datos actuales y restaura los valores de ejemplo originales">
+          <button onclick="restoreSampleData()" class="h-8 px-3 bg-brand-card border border-brand-border hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg transition flex items-center gap-1.5" title="Descarta todos tus datos actuales y restaura los valores de ejemplo originales">
             <span>♻️</span>
             <span>Restaurar Datos de Ejemplo</span>
           </button>

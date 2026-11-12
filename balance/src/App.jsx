@@ -1264,8 +1264,8 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
           </div>
 
           {/* CONTROLES SUPERIORES. Mismas clases, tamaños y orden que la
-              cabecera de /retiro: neutros salvo 💾 (verde, guarda) y ♻️ (rojo,
-              descarta lo tuyo). El fondo al pasar el ratón es el de retiro,
+              cabecera de /retiro, todos neutros: 💾 y ♻️ iban en verde y rojo y
+              llamaban más la atención que el resto sin motivo. El fondo al pasar el ratón es el de retiro,
               que allí sale de slate-800 y de su retoque para el modo claro. */}
           <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-1.5 sm:gap-2 flex-nowrap">
             <span className={`h-12 sm:h-9 items-center text-xs ${themeClasses.badgePill} border px-3 rounded-lg hidden 2xl:inline-flex font-sans whitespace-nowrap flex-shrink-0`}>
@@ -1292,7 +1292,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
               onClick={handleExportData}
               aria-label={t.tt_header_save}
               title={t.tt_header_save}
-              className="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-emerald/20 border-brand-emerald/40 text-brand-emerald hover:bg-brand-emerald/30"
+              className="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-slate-300 dark:hover:bg-slate-800"
             >
               💾
             </button>
@@ -1305,13 +1305,12 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
               📂
             </button>
             {/* El mismo «Restaurar datos de ejemplo» de Parámetros, que ya pide
-                confirmación: aquí solo cambia dónde está el botón. En rojo, como
-                en /retiro: descarta tu trabajo, lo contrario de 💾. */}
+                confirmación: aquí solo cambia dónde está el botón. */}
             <button
               onClick={handleRestoreSampleData}
               aria-label={t.tt_header_restore}
               title={t.tt_header_restore}
-              className="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-rose-500/20 border-rose-500/50 text-rose-700 dark:text-rose-400 hover:bg-rose-500/30"
+              className="flex-1 basis-0 min-w-0 h-11 sm:flex-none sm:h-9 sm:w-9 text-base sm:text-sm flex items-center justify-center rounded-lg border transition bg-brand-card border-brand-border hover:bg-slate-300 dark:hover:bg-slate-800"
             >
               ♻️
             </button>
@@ -1422,7 +1421,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
 
         {/* BARRA DE PESTAÑAS */}
         <div
-          className="max-w-7xl mx-auto flex items-start border-b border-brand-border pb-4 gap-3 text-sm font-semibold mb-6 overflow-x-auto no-scrollbar font-sans tab-scroll-hint"
+          className="max-w-7xl mx-auto flex items-start border-b border-brand-border pb-4 gap-4 sm:gap-8 text-sm font-semibold mb-6 overflow-x-auto no-scrollbar font-sans tab-scroll-hint"
           role="tablist"
           aria-label={t.app_title}
         >
@@ -1434,7 +1433,9 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
               abre una pestaña sino el modal: se lee como enlace. El rótulo
               lleva leading-5 y retiro no: allí Tailwind 3 hereda los 20 px de
               text-sm y aquí Tailwind 4 hereda un factor, que con 10 px dejaba
-              el rótulo más bajo y las pestañas seis píxeles más arriba. */}
+              el rótulo más bajo y las pestañas seis píxeles más arriba. Entre
+              pestañas 24 px y entre grupos 32 px en escritorio: con 12 px la
+              barra se leía como una sola ristra de palabras. */}
           {[
             { group: t.tab_group_data, tabs: [
               { id: 'assets', label: `🏦 ${t.tab_assets} (${formatNumber(assets.length, 0)})` },
@@ -1452,7 +1453,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
               {i > 0 && <span aria-hidden="true" className="self-stretch w-px bg-brand-border shrink-0 mb-2" />}
               <div className="shrink-0">
                 <div aria-hidden="true" className="text-[10px] leading-5 uppercase tracking-wider text-brand-textMuted/70 font-bold whitespace-nowrap select-none mb-1.5">{group}</div>
-                <div className="flex gap-3">
+                <div className="flex gap-4 sm:gap-6">
                   {tabs.map(tab => (
                     <button
                       key={tab.id}
@@ -3170,7 +3171,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                     {/* Botón Guardar Datos */}
                     <button
                       onClick={handleExportData}
-                      className="flex-1 bg-brand-emerald hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm py-3 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2 font-sans"
+                      className={`flex-1 font-bold border ${themeClasses.btnSecondary} text-xs sm:text-sm py-3 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2 font-sans`}
                     >
                       <span>{t.btn_export_data}</span>
                     </button>
@@ -3185,14 +3186,14 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
 
                   </div>
 
-                  {/* Volver al balance de ejemplo. Debajo y en rojo, como su
-                      gemelo ♻️ de la cabecera y el de Parámetros en /retiro:
-                      borra todo lo del usuario y no tiene vuelta atrás. */}
+                  {/* Volver al balance de ejemplo. Debajo y neutro, como su gemelo ♻️
+                      de la cabecera y el de Parámetros en /retiro; ya pide
+                      confirmación antes de borrar. */}
                   <div className="pt-1">
                     <button
                       type="button"
                       onClick={handleRestoreSampleData}
-                      className="h-8 px-3 bg-rose-500/10 border border-rose-500/40 text-rose-700 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 font-sans"
+                      className="h-8 px-3 bg-brand-card border border-brand-border hover:bg-slate-300 dark:hover:bg-slate-800 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 font-sans"
                     >
                       <span>♻️</span>
                       <span>{t.btn_restore_sample}</span>

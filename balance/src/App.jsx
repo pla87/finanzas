@@ -6,6 +6,7 @@ import {
   calculateFamilyLoanPayment,
   calculateFamilyLoanMonths,
   calculateRealEstateReturns,
+  USO_VIVIENDA_HABITUAL_PCT,
   assetAnnualCashflow,
   resolveLiability,
   effectiveInterestRatePct,
@@ -355,6 +356,18 @@ function App() {
   
   useEffect(() => { localStorage.setItem('fire_country_v14', selectedCountry); }, [selectedCountry]);
   useEffect(() => { localStorage.setItem('fire_members_v14', String(familyMembers)); }, [familyMembers]);
+  // Pareja y edades de los hijos tal como llegaron de un fichero de Retiro: Balance no los usa,
+  // pero hay que devolverlos al exportar para que Retiro no pierda las edades.
+  const [householdDetail, setHouseholdDetail] = useState(() => {
+    const d = safeParse('fire_household_detail_v1', null);
+    return d && typeof d.hasPartner === 'boolean' && Array.isArray(d.childrenAges) ? d : null;
+  });
+  useEffect(() => {
+    try {
+      if (householdDetail) localStorage.setItem('fire_household_detail_v1', JSON.stringify(householdDetail));
+      else localStorage.removeItem('fire_household_detail_v1');
+    } catch (e) { /* almacenamiento no disponible: solo se pierde la comodidad */ }
+  }, [householdDetail]);
 
   const [expenses, setExpenses] = useState(() => {
     const parsed = safeParse('v14_expenses', {
@@ -710,7 +723,7 @@ const handleExportPDF = () => {
   const handleExportData = () => {
     const exportObject = buildExportPayload({
       assets, liabilities, expenses, macroParams,
-      baseCurrency, selectedCountry, familyMembers, exchangeRates
+      baseCurrency, selectedCountry, familyMembers, householdDetail, exchangeRates
     });
 
     const jsonString = JSON.stringify(exportObject, null, 2);
@@ -777,7 +790,11 @@ const applyImportPreview = () => {
     const next = importPreview.next;
 
     if (next.selectedCountry) setSelectedCountry(next.selectedCountry);
-    if (next.familyMembers !== undefined) setFamilyMembers(next.familyMembers);
+    if (next.familyMembers !== undefined) {
+      setFamilyMembers(next.familyMembers);
+      // Un fichero con número y sin detalle (de Balance) borra el detalle viejo: ya no es de este hogar.
+      setHouseholdDetail(next.householdDetail || null);
+    }
     // Lo que el fichero no trae se queda como está: una copia sin deudas no
     // las borra. Y los parámetros que entran no sincronizan las rentabilidades.
     if (next.macroParams) {
@@ -4429,6 +4446,9 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                       </div>
                       {editingAsset.useType === 'land' && (
                         <p className={`text-[11px] ${themeClasses.textMuted} font-sans leading-snug`}>{t.use_land_hint}</p>
+                      )}
+                      {(editingAsset.useType || 'habitual') === 'habitual' && (
+                        <p className={`text-[11px] ${themeClasses.textMuted} font-sans leading-snug`}>{t.use_habitual_hint.replace('{pct}', formatNumber(USO_VIVIENDA_HABITUAL_PCT, 1))}</p>
                       )}
 
                       {(() => {

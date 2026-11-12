@@ -303,6 +303,12 @@ export function calculateFamilyLoanMonths(principal, annualRatePct, payment) {
   return isNaN(n) || !isFinite(n) ? 360 : Math.min(360, Math.max(1, Math.ceil(n)));
 }
 
+// Rendimiento de uso de la vivienda habitual cuando no se ha escrito un alquiler imputado: un 3,5 %
+// del valor al año, la misma cifra que fija Retiro para su vivienda habitual (`useReturnPct` 3,5).
+// Sin ella, quien no sabe cuánto costaría alquilar su casa tenía un 0 %, y un fichero de Retiro
+// perdía el 3,5 al pasar por aquí. Es uso, no dinero: nunca entra en la caja.
+export const USO_VIVIENDA_HABITUAL_PCT = 3.5;
+
 export function calculateRealEstateReturns(value, monthlyRent, useType, macroParams) {
   const val = Math.max(0, Number(value) || 0);
   const rent = Math.max(0, Number(monthlyRent) || 0);
@@ -322,7 +328,8 @@ export function calculateRealEstateReturns(value, monthlyRent, useType, macroPar
   const annualGrossRent = rent * 12;
 
   if (useType === 'habitual') {
-    const useReturnPct = (annualGrossRent / val) * 100;
+    // Un alquiler imputado escrito se respeta; 0 o vacío, no: el valor por defecto.
+    const useReturnPct = rent > 0 ? (annualGrossRent / val) * 100 : USO_VIVIENDA_HABITUAL_PCT;
     const netAnnualCashflow = val * (maintRate / 100);
     return { cashReturnPct: maintRate, useReturnPct: Math.round(useReturnPct * 100) / 100, capitalReturnPct: capRate, netAnnualCashflow };
   } else if (useType === 'rented') {
@@ -1283,13 +1290,17 @@ export function deserializeLiabilities(rawLiabs) {
 }
 
 export function buildExportPayload(state) {
-  const { assets, liabilities, expenses, macroParams, baseCurrency, selectedCountry, familyMembers, exchangeRates } = state;
+  const { assets, liabilities, expenses, macroParams, baseCurrency, selectedCountry, familyMembers, householdDetail, exchangeRates } = state;
   return {
     version: '9.7',
     exportDate: new Date().toISOString(),
     baseCurrency,
     selectedCountry,
     familyMembers,
+    // Pareja y edades de los hijos solo los usa Retiro: se devuelven tal como llegaron, sin
+    // inventarlos si el balance es propio. Si el usuario cambia el hogar aquí, el detalle deja de
+    // cuadrar con `familyMembers`, y entonces Retiro hace caso al número.
+    ...(householdDetail ? { hasPartner: householdDetail.hasPartner, childrenAges: householdDetail.childrenAges } : {}),
     assetsData: serializeAssets(assets, { baseCurrency, macroParams }),
     liabilitiesData: serializeLiabilities(liabilities, { baseCurrency }),
     familyExpenses: serializeExpenses(expenses),
@@ -1341,6 +1352,13 @@ export function parseImportPayload(parsed, { expenseFallback, macroFallback } = 
   } else if (parsed.hasPartner !== undefined) {
     const numChildren = Array.isArray(parsed.childrenAges) ? parsed.childrenAges.length : 0;
     out.familyMembers = (parsed.hasPartner ? 2 : 1) + numChildren;
+  }
+  // El detalle del hogar de Retiro, para devolvérselo al exportar (ver buildExportPayload).
+  if (typeof parsed.hasPartner === 'boolean' && Array.isArray(parsed.childrenAges)) {
+    out.householdDetail = {
+      hasPartner: parsed.hasPartner,
+      childrenAges: parsed.childrenAges.map(a => Math.max(0, numeroOr(a, 0)))
+    };
   }
 
   // Una sección ausente no es una sección vacía: sin ella el llamante conserva

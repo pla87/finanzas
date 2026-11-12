@@ -512,3 +512,26 @@ test('liquidación: cancelar la deuda cuesta más que su saldo', () => {
   const comision = r.debtCancellationCost - r.totalLiabilities;
   assert.ok(comision > 0 && comision < r.totalLiabilities * 0.01);
 });
+
+// --- EL 3,5 % DE USO DE LA VIVIENDA HABITUAL NO ES DINERO ---
+// Sin alquiler imputado la casa rinde de uso un 3,5 % (como en Retiro). Eso sube la rentabilidad
+// total, el ROA, el ROE y la cobertura «por uso», pero la caja, el flujo pasivo, la cobertura de
+// dinero, los niveles FIRE y todo lo que lee la auditoría tienen que quedarse exactamente igual
+// que con un alquiler imputado cualquiera: el uso nunca entra en la cuenta.
+test('motor: el uso por defecto de la vivienda habitual no toca caja, cobertura de dinero ni niveles', () => {
+  const conAlquiler = (rent) => computeBalance(balanceTipico({
+    assets: balanceTipico().assets.map(a => a.id === 'a3' ? { ...a, monthlyRent: rent } : a)
+  }));
+  const sin = conAlquiler(0);
+  const con = conAlquiler(900);
+  for (const k of ['netMonthlyCashflow', 'monthlyPassiveCashflow', 'rentalCashflowMonthly', 'assetCashflowSurplus',
+    'totalMonthlyExpenses', 'wealthTax', 'netWorth', 'roaFinancial', 'roeFinancial', 'runwayTotalMonths']) {
+    assert.deepEqual(sin[k], con[k], k);
+  }
+  assert.equal(sin.coverage.pct, con.coverage.pct);
+  assert.deepEqual(sin.statusLevels, con.statusLevels);
+  // Lo que sí cambia es el uso: 3,5 % de 200.000 = 7.000 al año.
+  assert.equal(Math.round(sin.useRetBase), 7000);
+  assert.ok(sin.roa > sin.roaFinancial && sin.totalGrossReturnBase > sin.netReturnBase - 1);
+  assert.ok(sin.coverage.usePct > 0, 'la cobertura por uso ya no es cero');
+});

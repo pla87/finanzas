@@ -35,6 +35,8 @@ export default async function run({ open, assert }) {
       // 2. El plan que rompe la monotonía.
       const s = JSON.parse(JSON.stringify(base));
       Object.assign(s, fixture);
+      // El plan del fixture es de antes de `familyMembers`: el del estado base ya no cuadra con su hogar.
+      delete s.familyMembers;
       applyStateObject(s);
       runSimulation();
       const res = calculateSimultaneousRetirement();
@@ -65,6 +67,7 @@ export default async function run({ open, assert }) {
       //    que la bisección aterrizaba, con un año suelto que falla en medio.
       const sb = JSON.parse(JSON.stringify(base));
       Object.assign(sb, fixtures.bisec);
+      delete sb.familyMembers;
       applyStateObject(sb);
       runSimulation();
       const rb = calculateSimultaneousRetirement();

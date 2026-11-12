@@ -388,7 +388,7 @@
     </div>
 
     <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-xl p-4 shadow-sm">
-      <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" title="Patrimonio neto estimado al cumplir la edad de retiro configurada.">
+      <div class="text-[11px] font-semibold text-brand-textMuted uppercase tracking-wider tooltip-help" title="Patrimonio neto al cierre del año en que se jubila el último de los dos&#10;(con una sola persona, el de su edad de retiro).">
         PATRIMONIO RETIRO (<span id="kpiRetireAgeText">45</span>) ⓘ
       </div>
       <div class="text-xl font-bold text-brand-accent mt-1.5" id="kpiRetireNW">€0</div>
@@ -1502,6 +1502,7 @@
               <li>La reducción del IRPF por alquiler de vivienda es un porcentaje fijo que fijas tú; no modela los incentivos escalonados (90%/70%/60%) de la reforma de 2023, que dependen del contrato, la zona y el perfil del inquilino.</li>
               <li><strong class="text-slate-100">No se aplica la exención por venta de la vivienda habitual</strong> (reinversión, mayores de 65 años): toda venta tributa por su plusvalía.</li>
               <li>No se modela la plusvalía municipal.</li>
+              <li><strong class="text-slate-100">Sin pareja, un activo «Conjunto (50/50)» cuenta el 50%</strong>: valor, alquiler, mantenimiento, hipoteca vinculada y compras o ventas programadas, en la proyección igual que en el punto de partida. La otra mitad es de alguien que no está en el plan. Una deuda sin inmueble vinculado no tiene titular y se cuenta entera.</li>
               <li>Los costes de transacción son fijos: 10% en la compra (ITP, notaría, registro) y 3% en la venta.</li>
               <li>La amortización deducible del alquiler se calcula sobre el 30% del valor actual como proxy del valor de construcción, en vez de sobre el coste de adquisición.</li>
               <li>El precio de la vivienda evoluciona a la tasa de revalorización inmobiliaria (vinculada al IPC salvo que la desvincules), sin ciclos ni diferencias por zona. El suelo (un solar, una finca) sigue a la inflación, no a la vivienda, y no paga mantenimiento ni da renta.</li>
@@ -3157,6 +3158,27 @@ let familyExpenses = {
 	// obligaba a que todo lo que lee buildStateObject() estuviese declarado por encima.
 	let SAMPLE_DATA = null;
 
+	// Chart.js llega de un CDN. Si no carga (red de empresa, extensión que bloquea, sin conexión),
+    // `new Chart` lanzaba «Chart is not defined» dentro de runSimulation y el resto del arranque
+    // -pestañas, tipos de cambio, bienvenida, compartir- no llegaba a ejecutarse. Todas las
+    // gráficas se crean por aquí: sin Chart.js no hay gráfica, hay un aviso discreto en su sitio, y
+    // quien la use debe aceptar `null` (ya lo hacían: `if (nwChartInstance) ...`).
+    function makeChart(target, config) {
+      if (typeof Chart === 'undefined') {
+        const canvas = target && (target.canvas || target);
+        const caja = canvas && canvas.parentElement;
+        if (caja && !caja.querySelector('[data-chart-fallback]')) {
+          canvas.style.display = 'none';
+          const aviso = document.createElement('div');
+          aviso.setAttribute('data-chart-fallback', '1');
+          aviso.className = 'text-[11px] text-brand-textMuted text-center py-6';
+          aviso.innerText = 'La gráfica no está disponible: no se ha podido cargar la librería de gráficas. Las cifras y las tablas funcionan igual.';
+          caja.appendChild(aviso);
+        }
+        return null;
+      }
+      return new Chart(target, config);
+    }
 	let nwChartInstance = null;
     let cfChartInstance = null;
     let deflatedAssetsChartInstance = null;
@@ -3455,11 +3477,13 @@ let familyExpenses = {
         deficitDest: document.getElementById('deficitDest')?.value || 'divStocks',
         ccaa: document.getElementById('selCCAAParam')?.value || 'madrid',
         childrenEmancipationAge: parseInt(document.getElementById('exp_childrenEmancipationAge')?.value) || 25,
-        ppContribution: Math.max(0, Math.min(1500, parseFloat(document.getElementById('param_ppContribution')?.value) ?? 1500)),
-        elderCareMonthly: Math.max(0, parseFloat(document.getElementById('exp_elderCareMonthly')?.value) ?? 500),
+        // numParam y no `parseFloat(x) ?? defecto`: un campo vacío da NaN, no null, así que el
+        // `??` nunca saltaba y toda la proyección salía NaN (y el autoguardado lo escribía).
+        ppContribution: Math.max(0, Math.min(1500, numParam('param_ppContribution', 1500))),
+        elderCareMonthly: Math.max(0, numParam('exp_elderCareMonthly', 500)),
         elderCareAge: Math.max(0, parseInt(document.getElementById('exp_elderCareAge')?.value) || 80),
         bufferMonths: Math.min(6, Math.max(3, parseInt(document.getElementById('bufferMonthsParam')?.value) || 6)),
-        pensionGrowth: (parseFloat(document.getElementById('pensionGrowthParam')?.value) ?? 2.0) / 100,
+        pensionGrowth: numParam('pensionGrowthParam', 2.0) / 100,
         expenseChangeFactor: getExpenseChangeFactor(),
         edu: { g: gEl ? gEl.value : 'publica', c: cEl ? cEl.value : 'concertado', u: uEl ? uEl.value : 'prestigio' }
       };
@@ -3704,6 +3728,38 @@ let familyExpenses = {
       return (Number(val) || 0) / rate;
     }
 
+    // «Sin pareja» y un activo «Conjunto (50/50)»: la otra mitad es de alguien que no está en el
+    // plan, así que cuenta el 50%. El punto de partida ya lo hacía, pero la proyección seguía
+    // contando entero el valor del inmueble, su alquiler, su mantenimiento, su amortización y su
+    // hipoteca (el patrimonio saltaba de 126 K a 428 K entre hoy y el cierre del primer año). La
+    // regla es una sola y vive aquí: los dos motores, el punto de partida y el informe la leen de
+    // estas tres funciones, y el 50% se aplica a los datos de entrada (valor, precio de compra,
+    // alquiler, principal y cuota de la hipoteca), no a cada fórmula, para que no pueda quedarse
+    // ninguna fórmula sin él. Con pareja, o con un activo de uno solo, devuelven el mismo objeto.
+    function soloShare(a) {
+      return (!hasPartner && ((a && a.owner) || 'joint') === 'joint') ? 0.5 : 1.0;
+    }
+    function soloScaleAsset(a) {
+      const sh = soloShare(a);
+      if (sh === 1) return a;
+      const out = { ...a, value: (Number(a.value) || 0) * sh };
+      // Sólo se escala lo que existe: un precio de compra vacío significa «no lo sé» (75% del
+      // valor, que ya va escalado) y no debe convertirse en un 0 que sí lo sabe.
+      if (Number(a.purchasePrice) > 0) out.purchasePrice = Number(a.purchasePrice) * sh;
+      if (Number(a.monthlyRent) > 0) out.monthlyRent = Number(a.monthlyRent) * sh;
+      return out;
+    }
+    // Una hipoteca vinculada a un inmueble conjunto pesa lo mismo que él. Una deuda sin vínculo
+    // no tiene titular en el fichero -ni aquí ni en balance-: se cuenta entera, como el punto de
+    // partida siempre hizo, que es además lo prudente.
+    function soloScaleLoan(l, assetList) {
+      if (hasPartner || !l.propertyLink) return l;
+      const prop = assetList.find(a => a.id === l.propertyLink);
+      const sh = prop ? soloShare(prop) : 1.0;
+      if (sh === 1) return l;
+      return { ...l, initialPrincipal: (Number(l.initialPrincipal) || 0) * sh, monthlyPayment: (Number(l.monthlyPayment) || 0) * sh };
+    }
+
     // Valor de mercado de un inmueble al cierre de un año simulado.
     // Los inmuebles iniciales parten de su valor de hoy y se revalorizan desde hoy.
     // Los comprados dentro de la simulación guardan en `value`/`purchasePrice` un importe
@@ -3790,10 +3846,13 @@ function calculateLoanAmortizationExact(P, annualRatePct, nMonths, startDateStr,
 }
 
 function calculateWorkerSocialSecurity(grossLabor) {
-      const BASE_MAX_MENSUAL = 4714;
-      const annualBaseMax = BASE_MAX_MENSUAL * 12;
-      const cotizable = Math.min(Math.max(0, grossLabor), annualBaseMax);
-      return cotizable * 0.0635;
+      // Cuota del trabajador en 2026: contingencias comunes 4,70% + desempleo (indefinido) 1,55% +
+      // formación profesional 0,10% + MEI 0,15% = 6,50%. Fuente: Orden PJC/297/2026, de 30 de marzo
+      // (BOE-A-2026-7296), arts. 4, 5 y 16 (el 0,90% del MEI se reparte 0,75 empresa / 0,15
+      // trabajador; con 2025 era 0,80 en total y la cuota obrera, sin MEI, de 6,35%). Desempleo y
+      // formación se mantienen en los tipos de siempre. La base máxima es la de la misma orden.
+      const cotizable = Math.min(Math.max(0, grossLabor), BASE_MAX_COTIZACION_ANUAL);
+      return cotizable * 0.065;
     }
 
     // Escala completa de las 17 Comunidades Autónomas de España y Regímenes Forales
@@ -3816,13 +3875,18 @@ function calculateWorkerSocialSecurity(grossLabor) {
 
       // 2. Reducción por obtención de rendimientos del trabajo (Art. 20 LIRPF). Solo procede si
       //    el resto de rentas distintas del trabajo no supera 6.500 € y nunca puede superar al
-      //    propio rendimiento neto del trabajo.
+      //    propio rendimiento neto del trabajo. Importes de la redacción vigente desde 2023, que
+      //    publica la AEAT en su manual de la renta: 7.302 € hasta 14.852 €; 7.302 − 1,75 ×
+      //    (RN − 14.852) hasta 17.673,52 €; 2.364,34 − 1,14 × (RN − 17.673,52) hasta 19.747,50 €;
+      //    nada por encima. (Antes estaban los de 2018: 6.498 € y 14.047,50 €.)
       let workReduction = 0;
       if (netWorkIncome > 0 && other <= 6500) {
-        if (netWorkIncome <= 14047.50) {
-          workReduction = 6498;
+        if (netWorkIncome <= 14852) {
+          workReduction = 7302;
+        } else if (netWorkIncome <= 17673.52) {
+          workReduction = 7302 - 1.75 * (netWorkIncome - 14852);
         } else if (netWorkIncome <= 19747.50) {
-          workReduction = Math.max(0, 6498 - 1.14 * (netWorkIncome - 14047.50));
+          workReduction = Math.max(0, 2364.34 - 1.14 * (netWorkIncome - 17673.52));
         }
         workReduction = Math.min(workReduction, netWorkIncome);
       }
@@ -3924,8 +3988,13 @@ function calculateWorkerSocialSecurity(grossLabor) {
       return tax;
     }
 
-const BASE_MAX_COTIZACION_ANUAL = 56600;
-    const PENSION_MAXIMA_INICIAL = 44000;
+// Cifras de 2026 (se actualizan cada año; las fuentes oficiales, para la próxima vez):
+    //  - Base máxima de cotización: 5.101,20 €/mes × 12 (Orden PJC/297/2026, de 30 de marzo,
+    //    BOE-A-2026-7296, art. 3). Era 4.909,50 en 2025.
+    //  - Pensión máxima: 3.359,60 €/mes en 14 pagas = 47.034,40 €/año (Real Decreto 39/2026, de 21
+    //    de enero, BOE-A-2026-1484, que revaloriza las pensiones).
+    const BASE_MAX_COTIZACION_ANUAL = 5101.20 * 12;
+    const PENSION_MAXIMA_INICIAL = 47034.40;
 
     function calculatePublicPensionDetails(yearsWorked, avgSalary) {
       const yrs = Math.max(0, Number(yearsWorked) || 0);
@@ -4136,8 +4205,17 @@ function handleUseTypeChange() {
         slider.min = Math.min(currentAge, maxAge);
         if (alreadyRetired) slider.value = maxAge;
         else if ((parseInt(slider.value) || 0) < currentAge) slider.value = currentAge;
+        // El rótulo «edad (año)» se rehace aquí, y no sólo al mover el deslizador: runSimulation
+        // pasa por esta función en cada cálculo, así que al cambiar la edad actual -que mueve el
+        // año de verdad- el rótulo ya no se queda con el de antes.
         const readout = document.getElementById(readoutId);
-        if (readout && alreadyRetired) readout.innerText = 'Ya jubilado';
+        if (readout) {
+          if (alreadyRetired) readout.innerText = 'Ya jubilado';
+          else {
+            const rAge = parseInt(slider.value) || 45;
+            readout.innerText = `${rAge} (${START_YEAR + (rAge - currentAge)})`;
+          }
+        }
       });
     }
 
@@ -4460,12 +4538,14 @@ function getParticipantContributedYears(pId, targetRetireAge) {
 //                         .bufferGlide { years, targetMonths } colchón que crece hacia el retiro
 function evaluateRetirementSafety(testAgeP1, testAgeP2, opts = {}) {
   // Copia local aislada para no corromper assetsData global ni las tablas de la interfaz
-  let evalAssets = assetsData.filter(a => !a.isPurchasedInSim).map(a => ({ ...a }));
+  let evalAssets = assetsData.filter(a => !a.isPurchasedInSim).map(a => ({ ...soloScaleAsset(a) }));
   evalAssets.forEach(a => { a.isSold = false; delete a.soldYear; });
   // Parámetros: los que se pasen, o los de la interfaz. El motor no vuelve a tocar el DOM.
   const P = opts.params || readSimParams();
   // loanForEngine: euríbor congelado en las variables y saldo real en las hipotecas que lo traen.
-  let evalLiabilities = liabilitiesData.filter(l => !l.id.startsWith('mort_re_buy_')).map(l => loanForEngine({ ...l }, P.euribor));
+  // La parte que toca en «Sin pareja» (soloScaleLoan) se calcula contra los activos originales,
+  // porque evalAssets ya viene escalado y su propietario sigue siendo el mismo.
+  let evalLiabilities = liabilitiesData.filter(l => !l.id.startsWith('mort_re_buy_')).map(l => soloScaleLoan(loanForEngine({ ...l }, P.euribor), assetsData));
   const p1CurrentAge = P.p1Age;
   const p2CurrentAge = hasPartner ? P.p2Age : 0;
   const oldestInitAge = Math.max(p1CurrentAge, p2CurrentAge);
@@ -4654,9 +4734,9 @@ function evaluateRetirementSafety(testAgeP1, testAgeP2, opts = {}) {
   const collectSeries = opts.collect ? [] : null;
 
   let catSums = { cash: 0, stocks: 0, divStocks: 0, bonds: 0, tips: 0, gold: 0, pensions: 0, pensionIns: 0, real_estate: 0, tangibles: 0 };
+  // evalAssets ya viene escalado por soloScaleAsset: aquí no se vuelve a multiplicar.
   activeAssets.forEach(a => {
-    const share = (!hasPartner && a.owner === 'joint') ? 0.5 : 1.0;
-    catSums[a.category] = (catSums[a.category] || 0) + (toEUR(a.value, a.currency) * share);
+    catSums[a.category] = (catSums[a.category] || 0) + toEUR(a.value, a.currency);
   });
 
 let nonMortgageInit = 0, mortgageInit = 0;
@@ -4708,9 +4788,8 @@ let nonMortgageInit = 0, mortgageInit = 0;
   const buildInitialLots = (category) => activeAssets
     .filter(a => a.category === category)
     .map(a => {
-      const share = (!hasPartner && a.owner === 'joint') ? 0.5 : 1.0;
-      const v = toEUR(a.value, a.currency) * share;
-      return makeLot(stockAcquisitionCost(a, toEUR(a.value, a.currency)) * share, v);
+      const v = toEUR(a.value, a.currency);
+      return makeLot(stockAcquisitionCost(a, v), v);
     })
     .filter(l => l.value > 0);
   let growthLots = buildInitialLots('stocks');
@@ -4800,8 +4879,11 @@ let capitalGainsTaxPaid = 0;
 
     const buysThisYear = realEstateEvents.filter(e => e.type === 'buy' && e.year === currentSimYear);
     buysThisYear.forEach(b => {
-      const nominalPrice = b.priceTodayEUR * (isLand(b) ? landFactor(i) : propFactor(i));
-      const nominalRent = b.rentTodayEUR * rentFactor(i);
+      // Una compra conjunta sin pareja es sólo la mitad: precio, alquiler, entrada, gastos e
+      // hipoteca. Aquí todo cuelga de nominalPrice, así que basta con escalarlo.
+      const buySh = soloShare(b);
+      const nominalPrice = b.priceTodayEUR * (isLand(b) ? landFactor(i) : propFactor(i)) * buySh;
+      const nominalRent = b.rentTodayEUR * rentFactor(i) * buySh;
       const downAmount = nominalPrice * (b.downPct / 100);
       const expAmount = nominalPrice * (b.expPct / 100);
       reExtraPurchaseOutflow += (downAmount + expAmount);
@@ -5174,7 +5256,8 @@ let grossSavingsP1 = 0, grossSavingsP2 = 0;
         if (a.owner === 'p1') grossSavingsP1 += div;
         else if (a.owner === 'p2' && hasPartner) grossSavingsP2 += div;
         else { 
-          grossSavingsP1 += hasPartner ? div / 2 : div * 0.5; 
+          // Sin pareja el valor ya viene a la mitad (soloScaleAsset): el dividendo entero es mío.
+          grossSavingsP1 += hasPartner ? div / 2 : div; 
           if (hasPartner) grossSavingsP2 += div / 2; 
         }
       }
@@ -6285,7 +6368,7 @@ const MC_WORKER_FUNCTIONS = () => [
   calculatePublicPensionDetails, getAnnualEducationCost, getParticipantContributedYears,
   getParticipantAvgSalary, wasEmployedAtRetirement, stageAtYear, annuityPayment,
   loanMonthsElapsedAtYearEnd, loanMonthlyPaymentOwnCurrency, prepaymentAtOrigin, settleAfterReturn, surplusDestFor,
-  variableRatePct, loanForEngine,
+  variableRatePct, loanForEngine, soloShare, soloScaleAsset, soloScaleLoan,
   makeRng, mcStandardShocks, mcMeanRevert, mcPropertyShocks, mcPathOverrides, mcPercentile, wilsonInterval, mcComputeAll
 ];
 
@@ -6523,7 +6606,7 @@ function renderMonteCarlo(r) {
       : 'Escala lineal: alguna trayectoria llega a patrimonio cero o negativo, y un eje logarítmico no admite esos valores.';
   }
 
-  mcFanChartInstance = new Chart(document.getElementById('mcFanChart').getContext('2d'), {
+  mcFanChartInstance = makeChart(document.getElementById('mcFanChart').getContext('2d'), {
     type: 'line',
     data: {
       // Etiqueta en dos líneas: el año y, debajo, la edad del participante 1 ese año.
@@ -6816,7 +6899,7 @@ function renderRobustnessTab() {
   const cut = (out) => out.series.slice(0, maxIdx).map(p => p.realNW);
 
   if (robPathsChartInstance) robPathsChartInstance.destroy();
-  robPathsChartInstance = new Chart(document.getElementById('robPathsChart').getContext('2d'), {
+  robPathsChartInstance = makeChart(document.getElementById('robPathsChart').getContext('2d'), {
     type: 'line',
     data: {
       labels,
@@ -6991,7 +7074,7 @@ function renderRobustnessTab() {
   if (robTimingChartInstance) robTimingChartInstance.destroy();
   const barBase = isLightTheme ? 'rgba(37, 99, 235, 0.55)' : 'rgba(59, 130, 246, 0.55)';
   const barRuin = 'rgba(244, 63, 94, 0.85)';
-  robTimingChartInstance = new Chart(document.getElementById('robTimingChart').getContext('2d'), {
+  robTimingChartInstance = makeChart(document.getElementById('robTimingChart').getContext('2d'), {
     type: 'bar',
     data: {
       labels: timing.map(t => String(t.year)),
@@ -7094,10 +7177,16 @@ function renderRobustnessTab() {
 
 		const retireAgeP1 = parseInt(document.getElementById('retireAge').value) || 45;
       const retireAgeP2 = parseInt(document.getElementById('retireAgeP2').value) || 45;
-      const effectiveMaxRetireAge = hasPartner ? Math.max(retireAgeP1, retireAgeP2) : retireAgeP1;
-
+      // «Patrimonio al retiro» es el cierre del año en que se jubila el ÚLTIMO de los dos, que no
+      // es el año en que el mayor cumple la edad más alta (con 40 y 30 años y retiros a los 50 y a
+      // los 45, el último en jubilarse es el de 30, dentro de 15 años, no el de 40, dentro de 10).
+      // Por eso la etiqueta nombra las dos edades en vez de una sola. Las edades salen de P (las
+      // mismas que usa el motor), no de `careers`, que aquí abajo todavía no se ha actualizado.
+      const retireYearIdx = Math.max(0, hasPartner
+        ? Math.max(retireAgeP1 - P.p1Age, retireAgeP2 - P.p2Age)
+        : retireAgeP1 - P.p1Age);
       const elKpiRetText = document.getElementById('kpiRetireAgeText');
-      if (elKpiRetText) elKpiRetText.innerText = effectiveMaxRetireAge;
+      if (elKpiRetText) elKpiRetText.innerText = hasPartner ? `${retireAgeP1} / ${retireAgeP2}` : retireAgeP1;
       const defaultSurplusDest = P.surplusDest;
       const ccaa = P.ccaa;
       const childrenEmancipationAge = P.childrenEmancipationAge;
@@ -7134,14 +7223,16 @@ function renderRobustnessTab() {
         : Math.max(oldestInitAge + 1, parseInt(horizonChoice) || 70);
       const bufferMonths = P.bufferMonths;
 
-const activeAssets = assetsData.filter(a => hasPartner || a.owner !== 'p2');
+// Copias escaladas por soloScaleAsset (sin pareja, lo conjunto cuenta el 50%): de aquí salen
+      // el punto de partida, los lotes y los tipos efectivos, y nada de esto se escribe después.
+      const activeAssets = assetsData.filter(a => hasPartner || a.owner !== 'p2').map(soloScaleAsset);
       const activeLiabs = liabilitiesData.filter(l => {
         if (!hasPartner && l.propertyLink) {
           const prop = assetsData.find(a => a.id === l.propertyLink);
           if (prop && prop.owner === 'p2') return false;
         }
         return true;
-      }).map(l => loanForEngine(l, P.euribor));
+      }).map(l => soloScaleLoan(loanForEngine(l, P.euribor), assetsData));
 
 
   // Tipos EFECTIVOS por categoría: media ponderada de los tipos de cada posición, usando el
@@ -7163,9 +7254,7 @@ const activeAssets = assetsData.filter(a => hasPartner || a.owner !== 'p2');
 
       let catSums = { cash: 0, stocks: 0, divStocks: 0, bonds: 0, tips: 0, gold: 0, pensions: 0, pensionIns: 0, real_estate: 0, tangibles: 0 };
       activeAssets.forEach(a => {
-        const share = (!hasPartner && a.owner === 'joint') ? 0.5 : 1.0;
-        const valEUR = toEUR(a.value, a.currency) * share;
-        catSums[a.category] = (catSums[a.category] || 0) + valEUR;
+        catSums[a.category] = (catSums[a.category] || 0) + toEUR(a.value, a.currency);
       });
 
       let nonMortgageTotalDebt = 0;
@@ -7207,9 +7296,8 @@ const currentMonth = new Date().getMonth() + 1;
       const buildInitialLots = (category) => activeAssets
         .filter(a => a.category === category)
         .map(a => {
-          const share = (!hasPartner && a.owner === 'joint') ? 0.5 : 1.0;
-          const v = toEUR(a.value, a.currency) * share;
-          return makeLot(stockAcquisitionCost(a, toEUR(a.value, a.currency)) * share, v);
+          const v = toEUR(a.value, a.currency);
+          return makeLot(stockAcquisitionCost(a, v), v);
         })
         .filter(l => l.value > 0);
       let growthLots = buildInitialLots('stocks');
@@ -7220,6 +7308,7 @@ const currentMonth = new Date().getMonth() + 1;
 
 let individualPensions = assetsData
         .filter(a => a.category === 'pensions' || a.category === 'pensionIns')
+        .map(soloScaleAsset)
         .map(a => ({
           id: a.id,
           name: a.name,
@@ -7398,11 +7487,15 @@ for (let i = 0; i < totalSimulationYears; i++) {
         // 1. Procesar Compras Programadas en este año
         const buysThisYear = realEstateEvents.filter(e => e.type === 'buy' && e.year === year);
         buysThisYear.forEach(b => {
+          // El activo se da de alta entero (es lo que enseñan las tablas); lo que pesa en el plan
+          // es su parte, y por eso el desembolso, el principal de la hipoteca y el valor del año
+          // se multiplican por buySh.
+          const buySh = soloShare(b);
           const nominalPrice = b.priceTodayEUR * Math.pow(1 + (isLand(b) ? inflationRate : propertyInflationRate), i);
           const nominalRent = b.rentTodayEUR * Math.pow(1 + rentInflationRate, i);
           const downAmount = nominalPrice * (b.downPct / 100);
           const expAmount = nominalPrice * (b.expPct / 100);
-          const totalOutflow = downAmount + expAmount;
+          const totalOutflow = (downAmount + expAmount) * buySh;
           reExtraPurchaseOutflow += totalOutflow;
 
           // Dar de alta el activo inmobiliario para los cálculos de este año en adelante
@@ -7452,15 +7545,15 @@ if (b.hasMort && b.downPct < 100) {
                 subcategory: 'mortgages',
                 propertyLink: b.assetId,
                 currency: 'EUR',
-                initialPrincipal: mortPrincipal,
+                initialPrincipal: mortPrincipal * buySh,
                 startDate: `${year + 1}-01`,
                 durationMonths: b.mortYears * 12,
                 interestRatePct: b.mortRate,
                 monthlyPayment: 0,
-                curBalEUR: mortPrincipal,
+                curBalEUR: mortPrincipal * buySh,
                 rate: b.mortRate / 100,
                 // La cuota francesa real: con 0 la hipoteca aparecía en el balance sin cuota.
-                monthlyEUR: annuityPayment(mortPrincipal, b.mortRate, b.mortYears * 12)
+                monthlyEUR: annuityPayment(mortPrincipal * buySh, b.mortRate, b.mortYears * 12)
               });
             }
           }
@@ -7536,9 +7629,11 @@ if (loan.propertyLink) {
           if (asset && (!asset.isSold || asset.soldYear >= year)) {
             const reCapGrowth = (asset.capitalReturnPct !== undefined ? Number(asset.capitalReturnPct) : ((isLand(asset) ? inflationRate : propertyInflationRate) * 100)) / 100;
             const yearsSinceStart = (asset.purchaseSimYear !== undefined) ? (year - asset.purchaseSimYear) : i;
-            const currentSaleVal = (asset.purchaseSimYear !== undefined ? asset.purchasePrice : toEUR(asset.value, asset.currency)) * Math.pow(1 + reCapGrowth, yearsSinceStart);
+            // Sin pareja, de un inmueble conjunto se vende (y se cancela, y tributa) sólo la mitad.
+            const saleSh = soloShare(asset);
+            const currentSaleVal = (asset.purchaseSimYear !== undefined ? asset.purchasePrice : toEUR(asset.value, asset.currency)) * Math.pow(1 + reCapGrowth, yearsSinceStart) * saleSh;
 
-            const origCost = realEstateAcquisitionCost(asset);
+            const origCost = realEstateAcquisitionCost(asset) * saleSh;
             const buyExp = origCost * RE_BUY_COST_PCT;
             const sellExp = currentSaleVal * RE_SELL_COST_PCT;
             const gain = Math.max(0, currentSaleVal - origCost - buyExp - sellExp);
@@ -7792,7 +7887,7 @@ return {
         let totalOpexAnnual = 0;
         let reBreakdownLines = [];
 
-assetsData.filter(a => a.category === 'real_estate' && (!a.isSold || a.soldYear >= year)).forEach(re => {
+assetsData.filter(a => a.category === 'real_estate' && (!a.isSold || a.soldYear >= year)).map(soloScaleAsset).forEach(re => {
           // Si el inmueble se compró a cierre de este mismo año, no genera rentas ni costes operativos hasta el año siguiente
           if (re.purchaseSimYear && re.purchaseSimYear === year) return;
 
@@ -7820,7 +7915,7 @@ if (reBreakdownLines.length === 0) reBreakdownLines.push('  • Sin inmuebles al
         // filtro de venta la proyección seguía deduciendo para siempre la amortización de un piso
         // ya vendido, pagaba menos IRPF que el optimizador y los dos motores se separaban unos
         // euros al año hasta discrepar en el año de quiebra (fuzzer, semilla 700572).
-        assetsData.filter(a => a.category === 'real_estate' && a.useType === 'rented' && (!a.purchaseSimYear || a.purchaseSimYear < year) && (!a.isSold || a.soldYear >= year)).forEach(re => {
+        assetsData.filter(a => a.category === 'real_estate' && a.useType === 'rented' && (!a.purchaseSimYear || a.purchaseSimYear < year) && (!a.isSold || a.soldYear >= year)).map(soloScaleAsset).forEach(re => {
           const yearsSinceBuy = re.purchaseSimYear ? (year - re.purchaseSimYear) : i;
           const startVal = re.purchaseSimYear ? re.purchasePrice : toEUR(re.value, re.currency);
           const valEUR = startVal * Math.pow(1 + propertyInflationRate, yearsSinceBuy);
@@ -7871,7 +7966,8 @@ let grossSavingsP1 = 0, grossSavingsP2 = 0;
             if (a.owner === 'p1') grossSavingsP1 += div;
             else if (a.owner === 'p2' && hasPartner) grossSavingsP2 += div;
             else { 
-              grossSavingsP1 += hasPartner ? (div / 2) : (div * 0.5); 
+              // Sin pareja el valor ya viene a la mitad (soloScaleAsset): el dividendo entero es mío.
+              grossSavingsP1 += hasPartner ? (div / 2) : div; 
               if (hasPartner) grossSavingsP2 += div / 2; 
             }
           }
@@ -8479,18 +8575,18 @@ let totalREAtYearEnd = 0;
         const elapsedYearsRE = (i === 0) ? yearFrac0 : (yearFrac0 + i);
 
         // Al cierre del año, solo permanecen los inmuebles no vendidos (o vendidos en años posteriores)
-        assetsData.filter(a => a.category === 'real_estate' && (!a.isSold || a.soldYear > year)).forEach(re => {
+        assetsData.filter(a => a.category === 'real_estate' && (!a.isSold || a.soldYear > year)).map(soloScaleAsset).forEach(re => {
           totalREAtYearEnd += realEstateValueAtYearEnd(re, elapsedYearsRE, year, isLand(re) ? inflationRate : propertyInflationRate);
         });
 
         // Inmuebles vendidos en este ejercicio para la reconciliación exacta
-        assetsData.filter(a => a.category === 'real_estate' && a.isSold && a.soldYear === year).forEach(re => {
+        assetsData.filter(a => a.category === 'real_estate' && a.isSold && a.soldYear === year).map(soloScaleAsset).forEach(re => {
           totalSoldValueThisYear += realEstateValueAtYearEnd(re, elapsedYearsRE, year, isLand(re) ? inflationRate : propertyInflationRate);
         });
 
         // Inmuebles comprados en este ejercicio
         buysThisYear.forEach(b => {
-          totalBoughtValueThisYear += b.priceTodayEUR * Math.pow(1 + (isLand(b) ? inflationRate : propertyInflationRate), i);
+          totalBoughtValueThisYear += soloShare(b) * b.priceTodayEUR * Math.pow(1 + (isLand(b) ? inflationRate : propertyInflationRate), i);
         });
 
         // Revalorización pura por inflación sobre los inmuebles en cartera
@@ -8623,8 +8719,7 @@ capTaxesPaid: capitalGainsTaxPaid,
         const livingMonthly = baseOutflows / (12 * yearFrac);
         if (!fireAgeAchieved && passiveMonthly >= livingMonthly) fireAgeAchieved = ageP1;
 
-		const currentTargetAge = hasPartner ? Math.max(ageP1, ageP2) : ageP1;
-        if (currentTargetAge === effectiveMaxRetireAge) {
+        if (i === retireYearIdx) {
           retireNW = nominalNW;
           retireRealNW = deflatedNW;
         }
@@ -9397,7 +9492,7 @@ if (retYrP2 && hasPartner && retYrP2 <= START_YEAR + (chartMaxAge - careers[2].a
         };
       }
 
-nwChartInstance = new Chart(ctxNW, {
+nwChartInstance = makeChart(ctxNW, {
         type: 'line',
         data: {
           labels: labels.map(String),
@@ -9421,7 +9516,7 @@ nwChartInstance = new Chart(ctxNW, {
         }
       });
 
-cfChartInstance = new Chart(ctxCF, {
+cfChartInstance = makeChart(ctxCF, {
         type: 'bar',
         data: {
           labels: labels.map(String),
@@ -9454,7 +9549,7 @@ cfChartInstance = new Chart(ctxCF, {
 // 3. Gráfica de Componentes Deflactados (Controlada por los botones superiores con línea de Gastos 3 Años)
       const elDef = document.getElementById('deflatedAssetsChart');
       if (elDef && moreData.defGrowthData) {
-deflatedAssetsChartInstance = new Chart(elDef.getContext('2d'), {
+deflatedAssetsChartInstance = makeChart(elDef.getContext('2d'), {
           type: 'line',
           data: {
             labels: labels.map(String),
@@ -9486,7 +9581,7 @@ deflatedAssetsChartInstance = new Chart(elDef.getContext('2d'), {
       // 4. Gráfica Ingresos Pasivos vs Gastos Totales
       const elPass = document.getElementById('passiveVsLivingChart');
       if (elPass && moreData.passiveIncomeData) {
-        passiveVsLivingChartInstance = new Chart(elPass.getContext('2d'), {
+        passiveVsLivingChartInstance = makeChart(elPass.getContext('2d'), {
           type: 'line',
           data: {
             labels: labels.map(String),
@@ -9515,7 +9610,7 @@ deflatedAssetsChartInstance = new Chart(elDef.getContext('2d'), {
         const bgColors = moreData.realGrowthRates.map(r => r >= 0 ? 'rgba(16, 185, 129, 0.65)' : 'rgba(244, 63, 94, 0.65)');
         const borderColors = moreData.realGrowthRates.map(r => r >= 0 ? '#10b981' : '#f43f5e');
 
-        realGrowthRateChartInstance = new Chart(elRealG.getContext('2d'), {
+        realGrowthRateChartInstance = makeChart(elRealG.getContext('2d'), {
           data: {
             labels: labels.map(String),
             datasets: [
@@ -9629,7 +9724,7 @@ deflatedAssetsChartInstance = new Chart(elDef.getContext('2d'), {
                 </div>
                 <div>
                   <label class="block text-brand-textMuted mb-1 ${sIdx === 0 ? 'tooltip-help' : ''}" ${sIdx === 0 ? 'title="Años que quedan en este empleo contados desde hoy: con 3, la etapa&#10;termina dentro de 36 meses y ese año se trabaja a medias."' : ''}>${sIdx === 0 ? 'Restante (años) ⓘ' : 'Duración (años)'}</label>
-                  <input type="number" step="any" min="1" max="40" value="${st.years || 1}" class="w-full bg-brand-bg border border-brand-border rounded p-1.5 text-white font-mono text-center" onchange="updateStage(${pId}, ${sIdx}, 'years', parseInt(this.value)||1)">
+                  <input type="number" step="any" min="0.25" max="40" value="${st.years || 1}" class="w-full bg-brand-bg border border-brand-border rounded p-1.5 text-white font-mono text-center" onchange="updateStage(${pId}, ${sIdx}, 'years', Math.max(0.25, parseFloat(this.value)||1))">
                 </div>
 
                 ${st.type !== 'unemployed' ? `
@@ -9665,7 +9760,7 @@ deflatedAssetsChartInstance = new Chart(elDef.getContext('2d'), {
                   </div>
                   <div>
                     <label class="block text-brand-textMuted mb-1">Días Despido / Año</label>
-                    <input type="number" step="any" min="0" max="45" value="${st.layoffDays || 0}" class="w-full bg-brand-bg border border-brand-border rounded p-1.5 text-white font-mono text-center" onchange="updateStage(${pId}, ${sIdx}, 'layoffDays', parseInt(this.value)||0)">
+                    <input type="number" step="any" min="0" max="45" value="${st.layoffDays || 0}" class="w-full bg-brand-bg border border-brand-border rounded p-1.5 text-white font-mono text-center" onchange="updateStage(${pId}, ${sIdx}, 'layoffDays', parseFloat(this.value)||0)">
                   </div>
                   <div>
                     <label class="block text-brand-textMuted mb-1" title="Si la etapa termina de forma voluntaria (no un despido), no se&#10;calcula indemnización ni prestación por desempleo.">Motivo de fin de etapa</label>
@@ -9676,7 +9771,7 @@ deflatedAssetsChartInstance = new Chart(elDef.getContext('2d'), {
                   </div>
                   <div>
                     <label class="block text-brand-textMuted mb-1">Antigüedad Previa (años)</label>
-                    <input type="number" step="any" min="0" value="${st.tenureBefore || 0}" class="w-full bg-brand-bg border border-brand-border rounded p-1.5 text-white font-mono text-center" onchange="updateStage(${pId}, ${sIdx}, 'tenureBefore', parseInt(this.value)||0)">
+                    <input type="number" step="any" min="0" value="${st.tenureBefore || 0}" class="w-full bg-brand-bg border border-brand-border rounded p-1.5 text-white font-mono text-center" onchange="updateStage(${pId}, ${sIdx}, 'tenureBefore', parseFloat(this.value)||0)">
                   </div>
 					<div>
                     <label class="block text-brand-textMuted mb-1">Aport. Seg. Jubilación Empleado (%)</label>
@@ -10212,9 +10307,12 @@ function toggleAssetModalFields() {
 let value = Math.max(0, numParam('modalAssetValue', 0));
       const grams = category === 'gold' ? Math.max(0, numParam('modalAssetGrams', 0)) : 0;
       if (grams > 0) { value = goldValueFromGrams(grams); currency = 'EUR'; }
-      const cashReturnPct = Math.max(0, numParam('modalAssetCashReturn', 0));
-      const useReturnPct = Math.max(0, numParam('modalAssetUseReturn', 0));
-let capitalReturnPct = Math.max(0, numParam('modalAssetCapReturn', 0));
+      // Los importes no admiten negativos; los porcentajes sí: un activo que se deprecia tiene
+      // revalorización negativa y el efectivo ha llegado a tener tipos por debajo de cero. Con el
+      // suelo en 0 aquí, guardar el modal sin tocar nada borraba un -2% que venía del fichero.
+      const cashReturnPct = numParam('modalAssetCashReturn', 0);
+      const useReturnPct = numParam('modalAssetUseReturn', 0);
+let capitalReturnPct = numParam('modalAssetCapReturn', 0);
 
       const cashReturnCoupled = document.getElementById('modalAssetCashReturnCoupled').checked;
       const capitalReturnCoupled = document.getElementById('modalAssetCapReturnCoupled').checked;
@@ -10685,14 +10783,15 @@ function buildStateObject() {
   if (careers[1]) {
     careers[1].name = getVal('p1_name') || careers[1].name;
     careers[1].age = parseInt(getVal('p1_age')) || careers[1].age;
-    careers[1].cotizados = parseFloat(getVal('p1_cotizados')) || careers[1].cotizados;
-    careers[1].paroInitMonths = parseInt(getVal('p1_paro_init')) ?? careers[1].paroInitMonths;
+    { const v = parseFloat(getVal('p1_cotizados')); if (Number.isFinite(v)) careers[1].cotizados = v; }
+    // Un campo vacío da NaN, no null: `??` no lo atrapa y el fichero guardaba `null`.
+    { const v = parseInt(getVal('p1_paro_init')); if (Number.isFinite(v)) careers[1].paroInitMonths = v; }
   }
   if (careers[2]) {
     careers[2].name = getVal('p2_name') || careers[2].name;
     careers[2].age = parseInt(getVal('p2_age')) || careers[2].age;
-    careers[2].cotizados = parseFloat(getVal('p2_cotizados')) || careers[2].cotizados;
-    careers[2].paroInitMonths = parseInt(getVal('p2_paro_init')) ?? careers[2].paroInitMonths;
+    { const v = parseFloat(getVal('p2_cotizados')); if (Number.isFinite(v)) careers[2].cotizados = v; }
+    { const v = parseInt(getVal('p2_paro_init')); if (Number.isFinite(v)) careers[2].paroInitMonths = v; }
   }
 
   // Limpiar activos y pasivos de mutaciones temporales de la simulación antes de exportar
@@ -10889,21 +10988,33 @@ function applyStateObject(parsed) {
     });
   }
 
-  if (parsed.exchangeRates) exchangeRates = parsed.exchangeRates;
+  // Se FUSIONA con los tipos vigentes en vez de sustituirlos: un fichero que no trae una divisa
+  // (el de Balance, uno recortado a mano) dejaba esa divisa sin tipo y `toEUR` la contaba 1:1
+  // -1.200 USD valían 1.200 €-. Lo que el fichero sí trae manda; el resto conserva el tipo de hoy.
+  if (parsed.exchangeRates) {
+    const delFichero = {};
+    Object.entries(parsed.exchangeRates).forEach(([k, v]) => { const n = Number(v); if (Number.isFinite(n) && n > 0) delFichero[k] = n; });
+    exchangeRates = { ...exchangeRates, ...delFichero, EUR: 1.0 };
+  }
 
   // 5. Parámetros Macroeconómicos, Fiscales y Objetivos
   if (parsed.macro) {
     const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
-    setVal('stockGrowthParam', parsed.macro.stockGrowth || 6.0);
-    setVal('divYieldParam', parsed.macro.divYield || 3.0);
-    setVal('cashYieldParam', parsed.macro.cashYield || 1.5);
+    // Un 0 del fichero es un 0 deliberado (Balance exporta números, no cadenas): `x || defecto`
+    // lo convertía en el valor por defecto -costes operativos 0% → 15%, deducción 0% → 50%-. Sólo
+    // lo que no es un número (ausente, vacío, texto) cae en el defecto.
+    // Devuelve el valor tal cual venía (cadena o número) para no reescribir «15.0» como «15».
+    const numOr = (v, d) => { const n = (v === null || v === '' || typeof v === 'boolean') ? NaN : Number(v); return Number.isFinite(n) ? v : d; };
+    setVal('stockGrowthParam', numOr(parsed.macro.stockGrowth, 6.0));
+    setVal('divYieldParam', numOr(parsed.macro.divYield, 3.0));
+    setVal('cashYieldParam', numOr(parsed.macro.cashYield, 1.5));
     setVal('bondYieldParam', parsed.macro.bondYield !== undefined ? parsed.macro.bondYield : 3.0);
     setVal('tipsRealYieldParam', parsed.macro.tipsRealYield !== undefined ? parsed.macro.tipsRealYield : 1.0);
     setVal('goldRealReturnParam', parsed.macro.goldRealReturn !== undefined ? parsed.macro.goldRealReturn : 0.0);
     setVal('goldPricePerGramParam', parsed.macro.goldPricePerGram !== undefined ? parsed.macro.goldPricePerGram : 100);
-    setVal('inflationParam', parsed.macro.inflation || 2.0);
-    setVal('propertyInflationParam', parsed.macro.propertyInflation !== undefined ? parsed.macro.propertyInflation : (parsed.macro.inflation || 2.0));
-    setVal('rentInflationParam', parsed.macro.rentInflation !== undefined ? parsed.macro.rentInflation : (parsed.macro.inflation || 2.0));
+    setVal('inflationParam', numOr(parsed.macro.inflation, 2.0));
+    setVal('propertyInflationParam', parsed.macro.propertyInflation !== undefined ? parsed.macro.propertyInflation : numOr(parsed.macro.inflation, 2.0));
+    setVal('rentInflationParam', parsed.macro.rentInflation !== undefined ? parsed.macro.rentInflation : numOr(parsed.macro.inflation, 2.0));
     const propBox = document.getElementById('propertyInflationCoupled');
     if (propBox) propBox.checked = parsed.macro.propertyInflationCoupled !== false;
     const pensBox = document.getElementById('pensionGrowthCoupled');
@@ -10924,11 +11035,11 @@ function applyStateObject(parsed) {
     const rentBox = document.getElementById('rentInflationCoupled');
     if (rentBox) rentBox.checked = parsed.macro.rentInflationCoupled !== false;
     setVal('pensionGrowthParam', parsed.macro.pensionGrowth !== undefined ? parsed.macro.pensionGrowth : 2.0);
-    setVal('reRentalYieldParam', parsed.macro.reRentalYield || 3.8);
-    setVal('param_reMaint', parsed.macro.reMaint || 0.6);
-    setVal('param_reOpex', parsed.macro.reOpex || 15.0);
-    setVal('param_reDeduction', parsed.macro.reDeduction || 50.0);
-    setVal('bufferMonthsParam', parsed.macro.bufferMonths || 6);
+    setVal('reRentalYieldParam', numOr(parsed.macro.reRentalYield, 3.8));
+    setVal('param_reMaint', numOr(parsed.macro.reMaint, 0.6));
+    setVal('param_reOpex', numOr(parsed.macro.reOpex, 15.0));
+    setVal('param_reDeduction', numOr(parsed.macro.reDeduction, 50.0));
+    setVal('bufferMonthsParam', numOr(parsed.macro.bufferMonths, 6));
     // Los deslizadores de edad de retiro conservan el `min` del plan anterior (la edad de sus
     // participantes). Al asignar una edad por debajo de ese mínimo, el navegador la sube sola y
     // el plan se cargaba con una edad de retiro que no era la suya, sin avisar: bastaba importar
@@ -10939,8 +11050,8 @@ function applyStateObject(parsed) {
       const el = document.getElementById(id);
       if (el) { el.min = 0; el.disabled = false; }
     });
-    setVal('retireAge', parsed.macro.retireAgeP1 || 45);
-    setVal('retireAgeP2', parsed.macro.retireAgeP2 || 45);
+    setVal('retireAge', numOr(parsed.macro.retireAgeP1, 45));
+    setVal('retireAgeP2', numOr(parsed.macro.retireAgeP2, 45));
     setVal('surplusDest', parsed.macro.surplusDest || 'divStocks');
     setVal('deficitDest', parsed.macro.deficitDest || 'divStocks');
     setVal('selCCAAParam', parsed.macro.ccaa || 'madrid');
@@ -10951,7 +11062,8 @@ function applyStateObject(parsed) {
     setVal('param_ppContribution', parsed.macro.ppContribution !== undefined ? parsed.macro.ppContribution : 1500);
     setVal('exp_elderCareMonthly', parsed.macro.elderCareMonthly !== undefined ? parsed.macro.elderCareMonthly : 500);
     setVal('exp_elderCareAge', parsed.macro.elderCareAge !== undefined ? parsed.macro.elderCareAge : 80);
-    setVal('exp_childrenEmancipationAge', parsed.macro.childrenEmancipationAge || 25);
+    // La edad de emancipación tiene su propio rango (16-35): un 0 del fichero no es una edad.
+    setVal('exp_childrenEmancipationAge', Math.min(35, Math.max(16, numOr(parsed.macro.childrenEmancipationAge, 25))));
     setVal('robHorizonInput', parsed.macro.robHorizonAge || ROBUSTNESS_HORIZON_DEFAULT);
 
     const activeCCAA = document.getElementById('lblActiveCCAA');
@@ -11016,19 +11128,71 @@ function exportData() {
   a.click();
 }
 
+// ¿Tiene la forma de una copia de seguridad? Devuelve '' si sí, o el motivo en castellano. El
+// formato lo comparte Balance, que no trae carreras, así que sólo se exige que haya ALGUNA clave
+// conocida y que lo que venga tenga el tipo que el código luego da por hecho: un `[]`, un número o
+// el JSON de otra cosa no son copias, y una lista que no es lista o una carrera sin etapas
+// reventaban a mitad de aplicarla, con medio plan nuevo y medio viejo.
+const BACKUP_KNOWN_KEYS = ['careers', 'familyExpenses', 'hasPartner', 'childrenAges', 'customYearlyRouting',
+  'realEstateEvents', 'chattelEvents', 'assetsData', 'liabilitiesData', 'exchangeRates', 'macro'];
+function validateBackupShape(parsed) {
+  const esObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+  if (!esObj(parsed)) return 'el fichero no es una copia de seguridad (no es un objeto JSON).';
+  if (!BACKUP_KNOWN_KEYS.some(k => parsed[k] !== undefined)) {
+    return 'el fichero no tiene el formato de una copia de seguridad de este simulador o de Balance (no trae activos, deudas, parámetros ni carreras).';
+  }
+  for (const k of ['assetsData', 'liabilitiesData', 'realEstateEvents', 'chattelEvents']) {
+    if (parsed[k] === undefined) continue;
+    if (!Array.isArray(parsed[k])) return `«${k}» debería ser una lista.`;
+    if (!parsed[k].every(esObj)) return `«${k}» tiene elementos que no son fichas válidas.`;
+  }
+  if (parsed.childrenAges !== undefined && !Array.isArray(parsed.childrenAges)) return '«childrenAges» debería ser una lista.';
+  for (const k of ['familyExpenses', 'macro', 'customYearlyRouting', 'exchangeRates']) {
+    if (parsed[k] !== undefined && !esObj(parsed[k])) return `«${k}» debería ser un objeto.`;
+  }
+  if (parsed.careers !== undefined) {
+    if (!esObj(parsed.careers)) return '«careers» debería ser un objeto con las carreras de los dos participantes.';
+    for (const n of ['1', '2']) {
+      const c = parsed.careers[n];
+      if (c === undefined) continue;
+      if (!esObj(c) || !Array.isArray(c.stages) || !c.stages.every(esObj)) return `la carrera ${n} no trae su lista de etapas laborales.`;
+    }
+  }
+  return '';
+}
+
 function importData(e) {
-  const file = e.target.files[0];
+  const input = e.target;
+  const file = input.files && input.files[0];
   if (!file) return;
+  // Se vacía siempre, salga bien o mal: con el mismo fichero seleccionado el navegador no
+  // dispara `change` al volver a elegirlo, y tras un error no se podía reintentar.
+  const libera = () => { try { input.value = ''; } catch (err) {} };
   const r = new FileReader();
+  r.onerror = () => { libera(); alert("❌ No se pudo leer el archivo."); };
   r.onload = function(evt) {
+    // Instantánea ANTES de tocar nada: applyStateObject escribe en muchas variables y campos, y
+    // si falla a mitad quedaba medio plan nuevo y medio viejo. Con ella se vuelve al de antes.
+    let snapshot = null;
+    try { snapshot = JSON.parse(JSON.stringify(buildStateObject())); } catch (err) { console.error(err); }
     try {
-      const parsed = JSON.parse(evt.target.result);
-      applyStateObject(parsed);
-      e.target.value = '';
+      let parsed;
+      try { parsed = JSON.parse(evt.target.result); }
+      catch (err) { alert("❌ El archivo no es un JSON válido."); return; }
+      const motivo = validateBackupShape(parsed);
+      if (motivo) { alert("❌ No se ha cargado nada: " + motivo); return; }
+      try {
+        applyStateObject(parsed);
+      } catch (err) {
+        console.error(err);
+        let restaurado = false;
+        if (snapshot) { try { applyStateObject(snapshot); restaurado = true; } catch (err2) { console.error(err2); } }
+        alert("❌ Error al procesar el archivo de respaldo." + (restaurado ? " Se ha conservado tu plan anterior." : ""));
+        return;
+      }
       alert("✅ Modelo completo cargado correctamente.");
-    } catch (err) {
-      console.error(err);
-      alert("❌ Error al procesar el archivo de respaldo.");
+    } finally {
+      libera();
     }
   };
   r.readAsText(file);
@@ -11038,7 +11202,9 @@ function importData(e) {
 	// Cierre de todos los modales al pulsar la tecla Escape
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-const modalIds = ['assetModal', 'debtModal', 'faqModal', 'feedbackModal', 'yearReportModal', 'welcomeModal', 'shareModal', 'reEventModal', 'reYearPickerModal'];
+// Todos los modales del documento (capa fija a pantalla completa con id «…Modal»), no una
+      // lista a mano: el de bienes muebles se quedó fuera de la lista y Escape no lo cerraba.
+      const modalIds = [...document.querySelectorAll('div[id$="Modal"].fixed.inset-0')].map(m => m.id);
       modalIds.forEach(id => {
         const modal = document.getElementById(id);
         if (modal && !modal.classList.contains('hidden')) {
@@ -11191,7 +11357,7 @@ function generatePDFReport() {
         offCanvas1.height = 240;
         const offCtx1 = offCanvas1.getContext('2d');
 
-        const tempDefChart = new Chart(offCtx1, {
+        const tempDefChart = makeChart(offCtx1, {
           type: 'line',
           data: {
             labels: deflatedAssetsChartInstance.data.labels || [],
@@ -11238,7 +11404,7 @@ function generatePDFReport() {
         offCanvas2.height = 240;
         const offCtx2 = offCanvas2.getContext('2d');
 
-        const tempRealGChart = new Chart(offCtx2, {
+        const tempRealGChart = makeChart(offCtx2, {
           type: 'bar',
           data: {
             labels: realGrowthRateChartInstance.data.labels || [],
@@ -11302,7 +11468,7 @@ function generatePDFReport() {
         if (prop && prop.owner === 'p2') return false;
       }
       return true;
-    }).map(l => loanForEngine(l));
+    }).map(l => soloScaleLoan(loanForEngine(l), assetsData));
 
     let totalActivosHoy = 0;
     let totalLiquidezHoy = 0;
@@ -11644,7 +11810,7 @@ function generatePDFReport() {
       <html lang="es">
       <head>
         <meta charset="UTF-8">
-        <title>FIRE & Balance Personal - Plan Estratégico</title>
+        <title>Simulador de Retiro FIRE — Plan Estratégico</title>
         <style>
           @page { size: A4 landscape; margin: 8mm 10mm; }
           * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
@@ -12108,15 +12274,19 @@ function cleanTableForPrint(htmlRows, isCashFlow = false) {
     }
 
 // Control del Modal de Bienvenida
+    // El almacenamiento local puede estar bloqueado (navegación privada estricta, política del
+    // navegador) y entonces incluso LEER `localStorage` lanza. Es una comodidad, no un requisito:
+    // sin él se enseña la bienvenida cada vez y el arranque sigue.
     function checkFirstVisit() {
-      const visited = localStorage.getItem('fire_simulator_welcome_seen');
+      let visited = null;
+      try { visited = localStorage.getItem('fire_simulator_welcome_seen'); } catch (err) {}
       if (!visited) {
         openGenericModal('welcomeModal');
       }
     }
 
     function closeWelcomeModal() {
-      localStorage.setItem('fire_simulator_welcome_seen', 'true');
+      try { localStorage.setItem('fire_simulator_welcome_seen', 'true'); } catch (err) {}
       closeGenericModal('welcomeModal');
     }
 
@@ -12249,6 +12419,9 @@ function copyShareUrl() {
           // Solo se restaura un autoguardado de la misma versión del modelo: una copia con otro
           // esquema se aplicaría a medias y dejaría los datos en un estado incoherente sin avisar.
           if (parsed && parsed.version === APP_VERSION) {
+            // La forma se mira antes de aplicar nada: unas carreras sin etapas lanzaban a mitad.
+            const motivo = validateBackupShape(parsed);
+            if (motivo) throw new Error(motivo);
             applyStateObject(parsed);
             restoredFromAutosave = true;
           } else {
@@ -12256,7 +12429,14 @@ function copyShareUrl() {
           }
         }
       } catch (err) {
+        console.error('Autoguardado descartado:', err);
         try { localStorage.removeItem('fire_v26_autosave'); } catch (e) {}
+        // Si la restauración falló a mitad, `careers` y compañía pueden haberse quedado a medio
+        // poner. Seguir con eso rompe la proyección, así que se vuelve al ejemplo, que es el
+        // estado con el que nació la página.
+        if (SAMPLE_DATA) {
+          try { applyStateObject(deepCopy(SAMPLE_DATA)); } catch (e2) { console.error(e2); }
+        }
       }
 
       if (!restoredFromAutosave) {

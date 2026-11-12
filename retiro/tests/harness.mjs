@@ -36,6 +36,12 @@ export async function open({ waitMs = 1500, onDialog = null, pinClock = true } =
   if (onDialog) page.on('dialog', onDialog);
   await page.route('**/npm/chart.js**', r => r.fulfill({ contentType: 'application/javascript', body: chartJs }));
   await page.route('**chartjs-plugin-annotation**', r => r.fulfill({ contentType: 'application/javascript', body: annotationJs }));
+  // Red cortada a propósito: la página pide tipos de cambio y precio del oro en vivo, y las
+  // pruebas (la 21 en concreto) asumen que no contestan. Sin esto el resultado dependía de la
+  // red. Una suite que quiera una respuesta concreta registra su propia ruta después, que gana
+  // a esta (Playwright consulta las rutas de la última a la primera).
+  await page.route('**/open.er-api.com/**', r => r.abort());
+  await page.route('**/api.gold-api.com/**', r => r.abort());
   await page.goto(INDEX);
   await page.waitForTimeout(waitMs);
   if (pinClock) {

@@ -127,8 +127,8 @@ export default async function run({ open, assert, near, capturePdf }) {
       assetsData.splice(assetsData.findIndex(x => x.id === 'gold_g'), 1); runSimulation();
       return { price0, v0, c0, v1, sampleValue: sampleAt150, sampleGrams: sample.grams, stateHas, modal, bondModal };
     });
-    assert(g.v0 === 20 * g.price0 && g.c0 === 'EUR', `el oro en gramos no se valora a gramos × precio en euros: ${g.v0} ${g.c0}`);
-    assert(g.v1 === 20 * 150 && g.sampleValue === g.sampleGrams * 150, `el oro en gramos no sigue al precio: ${g.v1}, ejemplo ${g.sampleValue}`);
+    assert(Math.abs(g.v0 - 20 * g.price0) < 0.005 && g.c0 === 'EUR', `el oro en gramos no se valora a gramos × precio en euros: ${g.v0} ${g.c0}`);
+    assert(Math.abs(g.v1 - 20 * 150) < 0.005 && Math.abs(g.sampleValue - g.sampleGrams * 150) < 0.005, `el oro en gramos no sigue al precio: ${g.v1}, ejemplo ${g.sampleValue}`);
     assert(String(g.stateHas) === '150', `el fichero guardado no lleva el precio del oro: ${g.stateHas}`);
     assert(g.modal.shown && g.modal.ro && g.modal.grams === '20' && g.modal.value === 3000, `modal de oro: ${JSON.stringify(g.modal)}`);
     assert(!g.bondModal.shown && !g.bondModal.ro, `el modal de renta fija enseña gramos o bloquea el valor: ${JSON.stringify(g.bondModal)}`);

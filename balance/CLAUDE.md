@@ -25,7 +25,7 @@ no es que falle, es que no encuentra ni un fichero.
 
 ```bash
 npm run dev      # desarrollo
-npm test         # 317 pruebas (node:test, sin dependencias)
+npm test         # 344 pruebas (node:test, sin dependencias)
 npm run build    # compilar a dist/
 npm run informe  # comprobar que el PDF dice lo mismo que la pantalla (necesita build)
 FUZZ_N=50000 npm test   # apretar el barrido aleatorio antes de tocar el motor

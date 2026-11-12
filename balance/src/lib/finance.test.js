@@ -583,7 +583,7 @@ test('importar: un país que no existe no entra', () => {
   // interpretados en dólares.
   assert.equal(parseImportPayload({ selectedCountry: 'es_avg' }).selectedCountry, 'es_avg');
   assert.equal(parseImportPayload({ selectedCountry: 'us_inventado' }).selectedCountry, undefined);
-  assert.equal(parseImportPayload({ selectedCountry: 42 }).selectedCountry, undefined);
+  assert.equal(parseImportPayload({ selectedCountry: 42, baseCurrency: 'EUR' }).selectedCountry, undefined);
 });
 
 test('importar: un porcentaje negativo sí se respeta', () => {

@@ -2,7 +2,7 @@
 // número de verdad. El idioma llega por contexto y no por prop para que ningún
 // punto de uso pueda olvidarse de pasarlo.
 import { useState, useEffect, createContext, useContext } from 'react';
-import { parseLocaleNumber } from '../lib/finance.js';
+import { parseLocaleNumber, evaluarEntrada } from '../lib/finance.js';
 
 // --- IDIOMA PARA LA ENTRADA DE NÚMEROS ---
 // El componente vive fuera de App, así que el idioma le llega por contexto
@@ -18,6 +18,8 @@ export const LocaleContext = createContext('es-ES');
     decimals = 0,
     min,
     max,
+    // [mínimo, máximo] del parámetro: ver evaluarEntrada.
+    range,
     disabled = false
   }) {
     const locale = useContext(LocaleContext);
@@ -50,13 +52,25 @@ export const LocaleContext = createContext('es-ES');
       // valor anterior intacto: vaciar un campo es un estado de edición,
       // no una forma de escribir cero.
       const num = parseLocaleNumber(text, locale, decimals);
+      if (range) {
+        const r = evaluarEntrada(text, locale, decimals, range);
+        if (r.estado !== 'ok') return;
+      }
       if (num === null) return;
       if (min !== undefined && num < min) return;
       if (max !== undefined && num > max) return;
       onChange(num);
     };
 
+    // Con rango, lo escrito fuera de él se recorta al salir; vacío vuelve al
+    // valor de antes (formatVal(value) ya lo hace).
+    const invalido = !!range && isFocused && evaluarEntrada(displayVal, locale, decimals, range).estado !== 'ok';
+
     const handleBlur = () => {
+      if (range) {
+        const r = evaluarEntrada(displayVal, locale, decimals, range);
+        if (r.estado === 'fuera') onChange(r.recortado);
+      }
       setIsFocused(false);
       setDisplayVal(formatVal(value));
     };
@@ -76,7 +90,8 @@ export const LocaleContext = createContext('es-ES');
         onBlur={handleBlur}
         placeholder={placeholder}
         disabled={disabled}
-        className={className}
+        aria-invalid={invalido || undefined}
+        className={invalido ? `${className} border-rose-500 ring-1 ring-rose-500` : className}
       />
     );
   }

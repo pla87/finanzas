@@ -11,6 +11,9 @@
 //  8  el nombre de una opción del comparador se lee entero a 390 px
 //  9  la leyenda del donut y los importes de «Los tres regímenes» no se cortan a 390 px
 // 10  el tooltip de Mantenimiento habla del alquiler bruto de doce meses
+// 15  sin Chart.js cada gráfica oculta su lienzo y enseña un aviso, en los dos idiomas
+// 16  cada canvas es role="img" con aria-label en el idioma activo
+// 17  las pestañas son role="tab" dentro de role="tablist", con paneles role="tabpanel" y aria-selected al día
 // 11  el texto de Parámetros en inglés dice lo mismo que el español
 // 12  el enlace de «Estos cálculos» lleva el idioma y se aplica al abrir
 // 13  el motivo de un campo en rojo sale en el globo al enfocar o tocar
@@ -361,6 +364,67 @@ await seccion('8y9', async () => {
   });
   check('390: los importes de «Los tres regímenes» no se parten en dos líneas', r9b.partidas.length === 0 && /^−\s?[\d.]+\s€$/.test(r9b.neg.trim()), JSON.stringify(r9b));
   await m.close();
+});
+
+// ---------- 15) sin Chart.js, cada gráfica lo dice ----------
+// Con el CDN bloqueado, renderCharts se calla: sin este aviso la tarjeta quedaría en blanco.
+await seccion('15', async () => {
+  const TEXTO_ES = 'Gráficas no disponibles: no se ha podido cargar la librería. Las cifras están en la tabla «Año a año».';
+  const TEXTO_EN = 'Charts unavailable: the library could not be loaded. The figures are in the year-by-year table.';
+  const IDS = ['chartPatrimonio', 'chartRentabilidad', 'chartGastos', 'chartIngresos'];
+  const sin = await b.newPage({ viewport: { width: 1300, height: 1100 } });
+  const erroresSin = [];
+  sin.on('pageerror', e => erroresSin.push(e.message));
+  await sin.route('**/cdn.jsdelivr.net/**', r => r.abort());
+  await sin.route('**googletagmanager.com/**', r => r.fulfill({ body: '', contentType: 'application/javascript' }));
+  await sin.goto(PAGINA); await sin.waitForTimeout(500);
+  const estado = () => sin.evaluate((ids) => ids.map(id => {
+    const c = document.getElementById(id), a = c.parentElement.querySelector('.grafica-aviso');
+    return { id, lienzoOculto: c.hidden, avisoVisible: !!a && !a.hidden, texto: a ? a.textContent : null };
+  }), IDS);
+  const es = await estado();
+  check('sin Chart.js: cada gráfica oculta el lienzo y enseña el aviso (es)', es.every(x => x.lienzoOculto && x.avisoVisible && x.texto === TEXTO_ES), JSON.stringify(es.map(x => [x.id, x.lienzoOculto, x.avisoVisible])));
+  await sin.evaluate(() => alternarIdioma());
+  const en = await estado();
+  check('  y al cambiar a inglés el aviso cambia con él', en.every(x => x.texto === TEXTO_EN), JSON.stringify(en.map(x => x.texto)));
+  check('  sin errores de página al faltar la librería', erroresSin.length === 0, erroresSin[0] ?? '');
+  await sin.close();
+
+  // Y con la librería cargada el aviso no aparece en ninguna.
+  const q = await abrir();
+  const conLib = await q.evaluate((ids) => ids.map(id => {
+    const c = document.getElementById(id), a = c.parentElement.querySelector('.grafica-aviso');
+    return { lienzoOculto: c.hidden, avisoOculto: !a || a.hidden };
+  }), IDS);
+  check('con Chart.js: lienzos visibles y avisos ocultos', conLib.every(x => !x.lienzoOculto && x.avisoOculto), JSON.stringify(conLib));
+
+  // ---------- 16) canvas con role="img" y aria-label en el idioma activo ----------
+  const aria = await q.evaluate((ids) => ids.map(id => [document.getElementById(id).getAttribute('role'), document.getElementById(id).getAttribute('aria-label')]), IDS);
+  const claves = ['ariaPatrimonio', 'ariaRentabilidad', 'ariaGastos', 'ariaIngresos'];
+  // Los textos esperados salen del propio TEXTOS de la página, así no se duplican aquí.
+  const esperadoAria = (idioma) => q.evaluate(([i, ks]) => ks.map(k => TEXTOS[i][k]), [idioma, claves]);
+  const ariaEsEsperado = await esperadoAria('es');
+  check('los cuatro canvas son role="img" con aria-label en castellano', aria.every(([r, l], i) => r === 'img' && l === ariaEsEsperado[i]), JSON.stringify(aria));
+  await q.evaluate(() => alternarIdioma());
+  const ariaEn = await q.evaluate((ids) => ids.map(id => document.getElementById(id).getAttribute('aria-label')), IDS);
+  const ariaEnEsperado = await esperadoAria('en');
+  check('  y se actualizan al cambiar a inglés', ariaEn.every((l, i) => l === ariaEnEsperado[i]) && ariaEn[0] !== ariaEsEsperado[0], JSON.stringify(ariaEn));
+
+  // ---------- 17) pestañas con roles y aria-selected al día ----------
+  const tabs = () => q.evaluate(() => ({
+    listas: document.querySelectorAll('[role="tablist"]').length,
+    enLista: document.querySelector('[role="tablist"]') ? document.querySelector('[role="tablist"]').querySelectorAll('[role="tab"]').length : 0,
+    seleccion: [...document.querySelectorAll('[role="tab"]')].map(b => b.getAttribute('aria-selected')),
+    paneles: document.querySelectorAll('[role="tabpanel"]').length,
+    visibles: [...document.querySelectorAll('[role="tabpanel"]')].filter(p => !p.classList.contains('hidden')).map(p => p.id),
+  }));
+  const t0 = await tabs();
+  check('pestañas: una lista con cuatro role="tab" y cuatro paneles', t0.listas === 1 && t0.enLista === 4 && t0.paneles === 4, JSON.stringify(t0));
+  check('  la activa al cargar es la primera (aria-selected="true") y el resto "false"', JSON.stringify(t0.seleccion) === '["true","false","false","false"]', JSON.stringify(t0.seleccion));
+  await q.click('[onclick*="cajaTab"]');
+  const t1 = await tabs();
+  check('  al cambiar de pestaña, aria-selected sigue a la activa', JSON.stringify(t1.seleccion) === '["false","true","false","false"]' && JSON.stringify(t1.visibles) === '["cajaTab"]', JSON.stringify(t1));
+  await q.close();
 });
 
 check('sin errores de consola', errs.length === 0, errs[0] ?? '');

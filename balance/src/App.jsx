@@ -1312,7 +1312,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
         </a>
         {/* Cenefa solo en móvil: esto no está pensado para el teléfono (las
             tablas de activos y pasivos son anchas) y el aviso pequeño de antes
-            pasaba desapercibido. Cruza la pantalla sin bloquear nada. */}
+            pasaba desapercibido. Es una línea fina abajo que no tapa nada. */}
         <div className="mobile-ribbon no-print" aria-hidden="true"><span>{t.mobile_ribbon}</span></div>
 
         {/* HEADER */}

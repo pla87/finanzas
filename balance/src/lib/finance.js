@@ -78,6 +78,11 @@ export const DEFAULT_MACRO_PARAMS = {
 // siempre el mismo número.
 // Contribuyentes entre los que se reparte el patrimonio: el campo ya lo limitaba.
 export const MAX_CONTRIBUYENTES = 20;
+
+// Cuántas personas pagan el gasto «por persona». Sin tope, un fichero con 1e9
+// miembros multiplicaba la cesta hasta el infinito, y 2,5 personas no existen.
+export const MAX_MIEMBROS = 20;
+export const miembrosDelHogar = (v) => Math.min(MAX_MIEMBROS, Math.max(1, Math.round(Number(v) || 1)));
 const TASA = [-50, 100];
 const COSTE = [0, 100];
 export const PARAM_LIMITS = {
@@ -350,6 +355,16 @@ export function calculateRealEstateReturns(value, monthlyRent, useType, macroPar
     const netAnnualCashflow = val * (maintRate / 100);
     return { cashReturnPct: maintRate, useReturnPct: 0, capitalReturnPct: capRate, netAnnualCashflow };
   }
+}
+
+// Los tres rendimientos de un inmueble salen siempre del cálculo, no de lo que
+// quedó guardado: una vivienda habitual guardada cuando el uso valía 0 seguía
+// enseñando 0 % en la tabla y en el informe mientras el motor ya contaba el
+// 3,5 %. Lo demás, que sí se escribe a mano, se devuelve tal cual.
+export function conRendimientosCalculados(a, macroParams) {
+  if (a.subcategory !== 'real_estate') return a;
+  const r = calculateRealEstateReturns(a.value, a.monthlyRent, a.useType || 'habitual', macroParams);
+  return { ...a, cashReturnPct: r.cashReturnPct, useReturnPct: r.useReturnPct, capitalReturnPct: r.capitalReturnPct };
 }
 
 export function syncLiabilitiesAmortization(items, { euriborPct } = {}) {
@@ -984,7 +999,8 @@ export function deserializeMacro(macroSrc, base = DEFAULT_MACRO_PARAMS) {
 }
 
 export function serializeAssets(assets, { baseCurrency, macroParams }) {
-  return assets.map(a => {
+  return assets.map(aGuardado => {
+    const a = conRendimientosCalculados(aGuardado, macroParams);
     let cat = a.subcategory || 'cash';
     let cashPct = Number(a.cashReturnPct) || 0;
     let capPct = Number(a.capitalReturnPct) || 0;
@@ -1021,6 +1037,8 @@ export function serializeAssets(assets, { baseCurrency, macroParams }) {
       acquisitionCost: Number(a.acquisitionCost) || 0,
       monthlyRent: Number(a.monthlyRent) || 0,
       useType: a.useType || 'habitual',
+      // Si el inmueble vino de Retiro con su propio opex, se devuelve ese (va
+      // en CAMPOS_SOLO_DE_RETIRO, más abajo); aquí solo el de Parámetros.
       opexPct: numeroOr(macroParams.rentalOperatingCostsPct, 15.0),
       hasMaint: a.useType === 'habitual',
       // `land` lo entiende Retiro desde que existe el suelo; un fichero
@@ -1036,12 +1054,35 @@ export function serializeAssets(assets, { baseCurrency, macroParams }) {
       // del inmueble, los gramos de oro y si cada rentabilidad sigue al valor
       // estándar de sus Parámetros. Se conservan tal cual para que abrir una
       // copia aquí y volver a guardarla no se los lleve por delante.
-      ...pick(a, CAMPOS_SOLO_DE_RETIRO)
+      ...pick(a, CAMPOS_SOLO_DE_RETIRO),
+      // El mantenimiento solo es una elección en un inmueble vacío. En los
+      // demás lo decide el uso, y un valor que quedó de cuando era otra cosa
+      // no puede ganar. Un vacío hecho aquí sale con mantenimiento, porque Balance siempre se lo
+      // cuenta: si saliese sin él, Retiro lo proyectaría sin ese gasto.
+      hasMaint: a.useType === 'vacant'
+        ? (typeof a.hasMaint === 'boolean' ? a.hasMaint : true)
+        : a.useType === 'habitual'
     };
   });
 }
 
-const CAMPOS_SOLO_DE_RETIRO = ['owner', 'isActivePP', 'purchaseDate', 'grams', 'cashReturnCoupled', 'capitalReturnCoupled'];
+// `opexPct` es el coste operativo propio de cada inmueble y `hasMaint` si un
+// vacío paga mantenimiento: Retiro los guarda por inmueble y Balance solo
+// conoce el opex general. No se usan en el cálculo (el campo de Parámetros
+// quedaría muerto para todo lo que viniera de Retiro) pero se devuelven tal
+// cual: derivarlos del macro al exportar cambiaba la proyección de Retiro.
+const CAMPOS_SOLO_DE_RETIRO = ['owner', 'isActivePP', 'purchaseDate', 'grams', 'cashReturnCoupled', 'capitalReturnCoupled', 'opexPct', 'hasMaint'];
+
+// Lo que pick() copia sin mirar, aquí se mira: un opex negativo o ilegible, o
+// un mantenimiento que no es sí/no, no entran (y Retiro usará su valor).
+const CAMPOS_A_SANEAR = ['opexPct', 'hasMaint'];
+function opexYMantenimientoSaneados(a) {
+  const out = {};
+  const opex = numeroOr(a.opexPct, null);
+  if (opex !== null) out.opexPct = Math.max(0, opex);
+  if (typeof a.hasMaint === 'boolean') out.hasMaint = a.hasMaint;
+  return out;
+}
 
 function pick(obj, campos) {
   const out = {};
@@ -1197,7 +1238,8 @@ export function deserializeAssets(rawAssets, importedMacro) {
         ...(stockClass ? { stockClass } : {}),
         ...(pensionType ? { pensionType } : {}),
         // Ver el comentario de serializeAssets: no se usan aquí, se conservan.
-        ...pick(a, CAMPOS_SOLO_DE_RETIRO),
+        ...pick(a, CAMPOS_SOLO_DE_RETIRO.filter(k => !CAMPOS_A_SANEAR.includes(k))),
+        ...opexYMantenimientoSaneados(a),
         // Un cero significa «no lo sé», no «me costó cero».
         //
         // `purchasePrice` es como Retiro llama a este mismo dato, así que sirve
@@ -1289,8 +1331,34 @@ export function deserializeLiabilities(rawLiabs) {
   return syncLiabilitiesAmortization(conIdsUnicos(sanitized, 'liab'));
 }
 
+// Lo que Retiro guarda en `macro` y en `familyExpenses` y Balance no usa: la
+// edad de retiro, la comunidad, la educación, el alquiler imputado... Se
+// conserva al importar y se devuelve al exportar, o Retiro lo recibe vacío y
+// vuelve a sus valores de fábrica sin avisar. Ajeno es lo que Balance no
+// escribe ni lee con ningún nombre.
+const CLAVES_MACRO_DE_BALANCE = new Set([
+  ...Object.keys(serializeMacro(DEFAULT_MACRO_PARAMS)), ...Object.keys(DEFAULT_MACRO_PARAMS)
+]);
+const CLAVES_GASTOS_DE_BALANCE = new Set(Object.values(EXPENSE_FILE_KEYS).flatMap(g => Object.values(g)));
+
+const sinClavesDe = (obj, propias) => {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) if (!propias.has(k) && k !== '__proto__') out[k] = v;
+  return out;
+};
+
+// Lo guardado en localStorage puede venir roto: solo se aceptan dos objetos.
+export function leerExtrasDeRetiro(raw) {
+  const s = esObjeto(raw) ? raw : {};
+  return {
+    macro: esObjeto(s.macro) ? sinClavesDe(s.macro, new Set()) : {},
+    familyExpenses: esObjeto(s.familyExpenses) ? sinClavesDe(s.familyExpenses, new Set()) : {}
+  };
+}
+
 export function buildExportPayload(state) {
-  const { assets, liabilities, expenses, macroParams, baseCurrency, selectedCountry, familyMembers, householdDetail, exchangeRates } = state;
+  const { assets, liabilities, expenses, macroParams, baseCurrency, selectedCountry, familyMembers, householdDetail, exchangeRates, retiroExtras } = state;
+  const extras = leerExtrasDeRetiro(retiroExtras);
   return {
     version: '9.7',
     exportDate: new Date().toISOString(),
@@ -1303,8 +1371,10 @@ export function buildExportPayload(state) {
     ...(householdDetail ? { hasPartner: householdDetail.hasPartner, childrenAges: householdDetail.childrenAges } : {}),
     assetsData: serializeAssets(assets, { baseCurrency, macroParams }),
     liabilitiesData: serializeLiabilities(liabilities, { baseCurrency }),
-    familyExpenses: serializeExpenses(expenses),
-    macro: serializeMacro(macroParams),
+    // Primero lo ajeno y después lo propio: si una clave coincidiera, manda
+    // lo que Balance gestiona.
+    familyExpenses: { ...sinClavesDe(extras.familyExpenses, CLAVES_GASTOS_DE_BALANCE), ...serializeExpenses(expenses) },
+    macro: { ...sinClavesDe(extras.macro, CLAVES_MACRO_DE_BALANCE), ...serializeMacro(macroParams) },
     exchangeRates
   };
 }
@@ -1348,10 +1418,10 @@ export function parseImportPayload(parsed, { expenseFallback, macroFallback } = 
     out.selectedCountry = parsed.selectedCountry;
   }
   if (parsed.familyMembers !== undefined) {
-    out.familyMembers = Math.max(1, Number(parsed.familyMembers) || 1);
+    out.familyMembers = miembrosDelHogar(parsed.familyMembers);
   } else if (parsed.hasPartner !== undefined) {
     const numChildren = Array.isArray(parsed.childrenAges) ? parsed.childrenAges.length : 0;
-    out.familyMembers = (parsed.hasPartner ? 2 : 1) + numChildren;
+    out.familyMembers = miembrosDelHogar((parsed.hasPartner ? 2 : 1) + numChildren);
   }
   // El detalle del hogar de Retiro, para devolvérselo al exportar (ver buildExportPayload).
   if (typeof parsed.hasPartner === 'boolean' && Array.isArray(parsed.childrenAges)) {
@@ -1364,7 +1434,10 @@ export function parseImportPayload(parsed, { expenseFallback, macroFallback } = 
   // Una sección ausente no es una sección vacía: sin ella el llamante conserva
   // lo que ya tiene en vez de vaciarlo.
   const macroDelFichero = esObjeto(parsed.macro) ? parsed.macro : parsed.macroParams;
-  if (esObjeto(macroDelFichero)) out.macroParams = deserializeMacro(macroDelFichero, macroFallback);
+  if (esObjeto(macroDelFichero)) {
+    out.macroParams = deserializeMacro(macroDelFichero, macroFallback);
+    out.retiroExtras = { ...out.retiroExtras, macro: sinClavesDe(macroDelFichero, CLAVES_MACRO_DE_BALANCE) };
+  }
   const activos = deserializeAssets(Array.isArray(parsed.assetsData) ? parsed.assetsData : parsed.assets, out.macroParams || macroFallback || DEFAULT_MACRO_PARAMS);
   if (activos) out.assets = activos;
   const pasivos = deserializeLiabilities(Array.isArray(parsed.liabilitiesData) ? parsed.liabilitiesData : parsed.liabilities);
@@ -1381,6 +1454,9 @@ export function parseImportPayload(parsed, { expenseFallback, macroFallback } = 
 
   if (parsed.familyExpenses) {
     out.expenses = deserializeExpenses(parsed.familyExpenses);
+    if (esObjeto(parsed.familyExpenses)) {
+      out.retiroExtras = { ...out.retiroExtras, familyExpenses: sinClavesDe(parsed.familyExpenses, CLAVES_GASTOS_DE_BALANCE) };
+    }
   } else if (parsed.expenses && typeof parsed.expenses === 'object') {
     const sanitizeGroup = (grp, fallback) => {
       const res = { ...fallback };

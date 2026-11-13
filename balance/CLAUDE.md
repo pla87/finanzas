@@ -25,7 +25,7 @@ no es que falle, es que no encuentra ni un fichero.
 
 ```bash
 npm run dev      # desarrollo
-npm test         # 344 pruebas (node:test, sin dependencias)
+npm test         # 368 pruebas (node:test, sin dependencias)
 npm run build    # compilar a dist/
 npm run informe  # comprobar que el PDF dice lo mismo que la pantalla (necesita build)
 FUZZ_N=50000 npm test   # apretar el barrido aleatorio antes de tocar el motor
@@ -135,6 +135,23 @@ tal cual al exportar, para que Retiro no pierda las edades. Si el detalle no cua
 pareja ni hijos, 2 = pareja, N>=3 = pareja y N-2 hijos). Un fichero antiguo de Retiro sin
 `familyMembers` sigue entrando por `hasPartner` y `childrenAges`.
 
+**Lo que Balance no usa, vuelve tal como llegó.** El principio es uno solo: abrir una copia de
+Retiro aquí y volver a guardarla no puede cambiarle nada a Retiro. Cuatro sitios lo cumplen:
+- `macro` y `familyExpenses`: las claves que Balance no escribe ni lee con ningún nombre (edades
+  de retiro, comunidad, educación, precio del oro, destino de excedente y déficit, alquiler
+  imputado `rent_imputed`... unas 25 de `macro`) se guardan al importar en `retiroExtras`
+  (persistido en localStorage, como `householdDetail`) y se devuelven al exportar. Se reemplazan
+  sección a sección con cada fichero, y lo que Balance sí gestiona **manda siempre** sobre lo
+  que traía el fichero. «Restaurar ejemplo» las borra.
+- Por inmueble, `opexPct` y `hasMaint` están en `CAMPOS_SOLO_DE_RETIRO`: se conservan y se
+  devuelven. **El cálculo de Balance no usa el `opexPct` del inmueble**, sigue usando el de
+  Parámetros: usarlo dejaría muerto ese campo para todo lo que venga de Retiro. La excepción
+  deliberada es `hasMaint`, que solo se conserva en un inmueble vacío (en los demás lo decide el
+  uso, y un valor de cuando era otra cosa no puede ganar).
+- `familyMembers` es un entero de 1 a 20 al importar, al leer de localStorage y en el campo.
+- Si añades a `macro` o a los gastos una clave que Balance gestione, ponla en `serializeMacro` o
+  en `EXPENSE_FILE_KEYS`: así deja de contar como ajena y no se duplica.
+
 La **vivienda habitual** sin alquiler imputado escrito rinde de uso un 3,5 % del valor
 (`USO_VIVIENDA_HABITUAL_PCT`, la misma cifra que Retiro); con alquiler escrito manda el
 alquiler. El uso solo mueve la rentabilidad total, el ROA, el ROE y la cobertura «por uso»: la
@@ -192,7 +209,8 @@ lo que alguien tiene que saber antes de decidir tocar algo.
   las dos aplicaciones abiertas en un navegador, guardando en una y cargando en
   la otra por sus botones. Un plan de Retiro con las diez categorías, suelo,
   hipoteca variable y saldo real vuelve de aquí con la misma proyección al euro
-  (restituyendo lo que solo es de Retiro: carreras, edades de retiro, eventos),
+  (restituyendo solo lo que Balance no puede llevar: carreras y eventos; el resto de `macro`
+  y de los gastos ya vuelve de aquí, ver arriba),
   y un balance de aquí vuelve de Retiro con las mismas cifras. Ese viaje sacó
   tres desviaciones que las pruebas con datos de ejemplo no veían; están
   arregladas y cada una tiene su prueba en `finance.test.js`. El guion del viaje

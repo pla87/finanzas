@@ -254,7 +254,15 @@ check('el modal de compartir lleva 🧮 y 💾', await p.evaluate(() => {
   const m = [...document.querySelectorAll('#shareModal button[onclick^="compartir"]')].map(b => b.textContent);
   return m[0].includes('🧮') && m[1].includes('💾'); }));
 
-check('sin errores de consola', [p, p2, p3, largo].every(x => x.errs.length === 0), [p, p2, p3, largo].flatMap(x => x.errs).join(' | '));
+// --- un enlace nuevo con cifras y sin comparación no arrastra las opciones del visitante ---
+await p.evaluate(() => { resetDefaults(); document.getElementById('btnComparar').click(); document.getElementById('pctFinanciado').value = '60'; confirmarCambio(); document.getElementById('btnComparar').click(); guardarYa(); });
+const guardadas = await p.evaluate(() => OPCIONES.length);
+const pNuevo = await abrir('?o=200000&ver=2');
+check('enlace nuevo sin «opc»: sin opciones del visitante', guardadas === 2 && (await pNuevo.evaluate(() => OPCIONES.length)) === 0, `${guardadas} → ${await pNuevo.evaluate(() => OPCIONES.length)}`);
+await p.evaluate(() => { resetDefaults(); document.getElementById('btnComparar').click(); document.getElementById('pctFinanciado').value = '60'; confirmarCambio(); document.getElementById('btnComparar').click(); guardarYa(); });
+const pViejo = await abrir('?o=200000');
+check('  y uno antiguo (sin «ver») las conserva', (await pViejo.evaluate(() => OPCIONES.length)) === 2, await pViejo.evaluate(() => OPCIONES.length));
+check('sin errores de consola', [p, p2, p3, largo, pNuevo, pViejo].every(x => x.errs.length === 0), [p, p2, p3, largo, pNuevo, pViejo].flatMap(x => x.errs).join(' | '));
 await b.close();
 console.log(fallos === 0 ? '\nTODO OK' : `\n${fallos} fallos`);
 process.exit(fallos === 0 ? 0 : 1);

@@ -5,7 +5,7 @@
 // Lo que se fija: un fichero con `familyMembers` y sin detalle ajusta el hogar (1 = solo; 2 = pareja;
 // N>=3 = pareja y N-2 hijos); las edades que no trae se conservan si Retiro ya tenía hijos y el
 // número cuadra, y si no, se avisa; y Retiro escribe `familyMembers` al exportar.
-export default async function run({ open, assert }) {
+export default async function run({ open, assert, esperaDialogo }) {
   const dialogos = [];
   const { browser, page, errors } = await open({ onDialog: async (d) => { dialogos.push(d.message()); await d.accept(); } });
   try {
@@ -87,7 +87,7 @@ export default async function run({ open, assert }) {
       });
       dialogos.length = 0;
       await page.setInputFiles('#fullBackupInput', { name: 'balance.txt', mimeType: 'text/plain', buffer: Buffer.from(fichero) });
-      await page.waitForTimeout(3000);
+      await esperaDialogo(page, dialogos);
       assert(dialogos.some(m => /edades de los hijos/i.test(m)), 'tras importar un hogar de Balance con hijos sin edades se avisa de revisar las edades: ' + JSON.stringify(dialogos));
       const fichero2 = await page.evaluate(() => {
         const s = JSON.parse(JSON.stringify(buildStateObject())); delete s.hasPartner; delete s.childrenAges; s.familyMembers = 2;
@@ -95,7 +95,7 @@ export default async function run({ open, assert }) {
       });
       dialogos.length = 0;
       await page.setInputFiles('#fullBackupInput', { name: 'balance.txt', mimeType: 'text/plain', buffer: Buffer.from(fichero2) });
-      await page.waitForTimeout(3000);
+      await esperaDialogo(page, dialogos);
       assert(!dialogos.some(m => /edades de los hijos/i.test(m)), 'sin hijos no se avisa');
       assert(errors.length === 0, 'errores de página: ' + errors.join(' | '));
     } finally {

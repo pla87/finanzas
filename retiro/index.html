@@ -112,7 +112,10 @@
       /* Antes era una franja diagonal roja de lado a lado que tapaba los indicadores de arriba. Ahora
          es una línea fina abajo, translúcida: avisa igual sin esconder nada. El cuerpo deja su alto
          libre al final para que el último contenido no quede debajo. */
-      body { padding-bottom: 1.75rem; }
+      /* La utilidad p-3 de Tailwind (clase en el <body>) pone todo el relleno y una clase pesa más que
+         el selector `body` a secas, así que pisaba este margen y el último contenido quedaba bajo la
+         línea. `html > body[class]` pesa más que una clase. Se suma a los .75rem de p-3. */
+      html > body[class] { padding-bottom: calc(.75rem + 1.75rem + env(safe-area-inset-bottom, 0px)); }
       .mobile-ribbon > span {
         display: block; padding: .3rem 1rem; line-height: 1.2;
         background-color: rgb(225 29 72 / .78); color: #ffffff;
@@ -133,6 +136,20 @@
        debajo de 640 px (la misma condición que la cenefa). Va con clases propias escritas a
        mano por lo mismo que el resto del bloque: así es idéntico en las dos herramientas. Por
        encima de la cenefa (9998) y de la burbuja de ayuda táctil (9999), para que se lea entero. */
+    /* Capas de todos los modales de la herramienta (div «…Modal» fijo a pantalla completa). Antes
+       centraban la tarjeta con items-center y la tarjeta llevaba max-h-[90vh]: en un móvil bajo
+       (375×667) el botón «Cerrar» quedaba fuera de la vista y no había forma de llegar a él. Ahora
+       la capa es la que se desplaza, la tarjeta crece lo que necesite y `margin-block: auto` la
+       centra cuando cabe sin comerse la parte de arriba cuando no cabe (cosa que items-center sí
+       hace). Abajo se deja sitio a la línea del aviso de móvil, que va por encima. */
+    div[id$="Modal"].fixed.inset-0 {
+      overflow-y: auto; overscroll-behavior: contain; align-items: flex-start;
+      padding-top: 1rem; padding-bottom: 1rem;
+    }
+    div[id$="Modal"].fixed.inset-0 > :first-child { margin-block: auto; max-height: none; overflow-y: visible; }
+    @media (max-width: 639px) {
+      div[id$="Modal"].fixed.inset-0 { padding-bottom: calc(2.25rem + env(safe-area-inset-bottom, 0px)); }
+    }
     .mobile-modal {
       position: fixed; inset: 0; z-index: 10000;
       display: flex; align-items: center; justify-content: center; padding: 1rem;
@@ -2412,6 +2429,9 @@ let annualReportsData = {};
     }
 function openReEventModal(year) {
       const modal = document.getElementById('reEventModal');
+      // Sin pareja, una compra nueva es de uno solo; con pareja, conjunta como siempre.
+      document.getElementById('reBuyOwner').value = titularPorDefecto();
+      preparaTitularSelect('reBuyOwner', titularPorDefecto());
       document.getElementById('modalReBuyYear').value = year;
       document.getElementById('modalReSellYear').value = year;
       document.getElementById('modalReEventYearText').innerText = year;
@@ -3706,6 +3726,23 @@ let familyExpenses = {
     // Titular por defecto de lo que viene sin él: p1 si no hay pareja, conjunto si la hay.
     function titularPorDefecto() {
       return hasPartner ? 'joint' : 'p1';
+    }
+    // Desplegable de titular de los formularios. Sin pareja, «Participante 2» y «Conjunto (50/50)» no
+    // tienen sentido para algo nuevo (P2 no cuenta y conjunto cuenta la mitad): se ocultan. Si lo que
+    // se edita YA es de P2 o conjunto, su opción se conserva —quitarla cambiaba el titular en
+    // silencio al guardar— y se rotula con lo que de verdad pasa. Con pareja, todo vuelve a su sitio.
+    function preparaTitularSelect(selectId, actual) {
+      const sel = document.getElementById(selectId);
+      if (!sel) return;
+      const rotulos = { p2: ['Participante 2', 'Participante 2 (no cuenta: es de la pareja)'], joint: ['Conjunto (50/50)', 'Conjunto (50/50) (cuenta al 50 %)'] };
+      Array.from(sel.options).forEach(o => {
+        const r = rotulos[o.value];
+        if (!r) return;
+        const ocultar = !hasPartner && o.value !== actual;
+        o.hidden = ocultar;
+        o.disabled = ocultar;
+        o.textContent = hasPartner ? r[0] : r[1];
+      });
     }
     function normalizaTitulares() {
       const valido = (o) => o === 'p1' || o === 'p2' || o === 'joint';
@@ -8996,17 +9033,22 @@ cashflowRows.push({
       
       const elFireAge = document.getElementById('kpiFireAge');
       if (fireAgeAchieved) {
-        elFireAge.innerText = `${fireAgeAchieved} años`;
+        // Con pareja la edad es la del Participante 1 (el motor la mide con ageP1): se dice, para que
+        // nadie la lea como la de los dos.
+        elFireAge.innerText = `${fireAgeAchieved} años${hasPartner ? ' (P1)' : ''}`;
         elFireAge.className = `text-xl font-bold mt-1.5 ${getAgeColorClass(fireAgeAchieved)}`;
         document.getElementById('kpiFireYear').innerText = `Año: ${START_YEAR + (fireAgeAchieved - careers[1].age)}`;
       } else {
-        elFireAge.innerText = '100+ años';
+        // «100+ años» daba a entender una edad; lo que pasa es que no hay ninguna. Se dice por qué:
+        // el criterio es que las rentas pasivas cubran los gastos SIN vender patrimonio.
+        elFireAge.innerText = 'No alcanzado';
         elFireAge.className = 'text-xl font-bold mt-1.5 text-rose-400';
-        document.getElementById('kpiFireYear').innerText = 'No alcanzado';
+        document.getElementById('kpiFireYear').innerText = 'Las rentas no cubren los gastos sin vender';
       }
       
-      document.getElementById('kpiDebtFreeAge').innerText = debtFreeAgeAchieved ? `${debtFreeAgeAchieved} años` : 'Deuda Permanente';
-      document.getElementById('kpiDebtFreeYear').innerText = debtFreeYearAchieved ? `Año: ${debtFreeYearAchieved}` : 'No saldada';
+      document.getElementById('kpiDebtFreeAge').innerText = debtFreeAgeAchieved ? `${debtFreeAgeAchieved} años${hasPartner ? ' (P1)' : ''}` : 'Deuda Permanente';
+      // La edad es la del Participante 1: con pareja, «58 años» a secas se leía como la de ambos.
+      document.getElementById('kpiDebtFreeYear').innerText = debtFreeYearAchieved ? `Año: ${debtFreeYearAchieved}${hasPartner ? ' · a los ' + debtFreeAgeAchieved + ' años de P1' : ''}` : 'No saldada';
 
 // Evaluación precisa del Criterio de Crecimiento Real Anual ≥ 0%
 let minGrowthRateSeen = Infinity;
@@ -9873,11 +9915,18 @@ const currentInfPct = numParam('inflationParam', 2.0);
       const assetsContainer = document.getElementById('assetsCategorizedTables');
       if (assetsContainer) {
         assetsContainer.innerHTML = assetSections.map(sec => {
-          const totalEUR = sec.items.reduce((s, a) => s + toEUR(a.value, a.currency), 0);
+          // Lo que cuenta en el plan, no el bruto: sin pareja un activo de P2 no entra y uno conjunto
+          // cuenta la mitad, igual que en el «Resumen consolidado». Con pareja los dos coinciden.
+          const brutoEUR = sec.items.reduce((s, a) => s + toEUR(a.value, a.currency), 0);
+          const totalEUR = sec.items.filter(enPlan).reduce((s, a) => s + toEUR(a.value, a.currency) * soloShare(a), 0);
+          const difiere = Math.abs(brutoEUR - totalEUR) > 0.5;
+          const totalTxt = difiere
+            ? `<span title="Cuenta en el plan ${fmt(totalEUR)} de ${fmt(brutoEUR)} en bruto (sin pareja, lo de P2 no cuenta y lo conjunto cuenta al 50 %).">(${fmt(totalEUR)} <span class="text-[10px]">de ${fmt(brutoEUR)} bruto</span>)</span>`
+            : `(${fmt(totalEUR)})`;
           return `
             <div class="border border-brand-border rounded-xl bg-brand-card overflow-hidden">
               <div class="p-3.5 bg-brand-cardInner border-b border-brand-border flex justify-between items-center text-xs">
-                <strong class="text-white text-sm font-bold">${sec.title} <span class="font-normal font-mono text-brand-textMuted">(${fmt(totalEUR)})</span></strong>
+                <strong class="text-white text-sm font-bold">${sec.title} <span class="font-normal font-mono text-brand-textMuted">${totalTxt}</span></strong>
                 <button onclick="openAddAssetModal('${sec.key}')" class="text-xs text-brand-emerald font-semibold hover:underline">+ Añadir</button>
               </div>
               <div class="overflow-x-auto scrollbar-thin">
@@ -9923,6 +9972,11 @@ const currentInfPct = numParam('inflationParam', 2.0);
                       }
 
                       const ownerLabel = a.owner === 'p1' ? 'P1' : (a.owner === 'p2' ? 'P2' : 'Conjunto');
+                      // Sin pareja, lo de P2 no entra en el plan y lo conjunto cuenta la mitad: se dice aquí
+                      // para que nadie crea que el activo se ha perdido.
+                      const ownerNote = hasPartner ? '' : (a.owner === 'p2'
+                        ? '<div class="text-[10px] text-amber-400/90">no cuenta: es de la pareja</div>'
+                        : (a.owner === 'joint' ? '<div class="text-[10px] text-amber-400/90">cuenta al 50 %</div>' : ''));
 
                       return `
                         <tr class="hover:bg-brand-bg/40">
@@ -9931,7 +9985,7 @@ const currentInfPct = numParam('inflationParam', 2.0);
                             <button onclick="reorderItem('assets', '${a.id}', 'down')" class="px-1 hover:text-white ${idx === sec.items.length - 1 ? 'text-slate-600' : 'text-slate-400'}">▼</button>
                           </td>
                           <td class="p-2.5 font-sans font-bold text-white cursor-pointer" onclick="editAssetModal('${escAttrId(a.id)}')">✏️ ${escHtml(a.name)}${a.category === 'gold' && a.grams > 0 ? ` <span class="text-[10px] font-normal text-brand-textMuted">${fmtNumber(a.grams, 1)} g</span>` : ''}</td>
-							<td class="p-2.5 font-sans text-slate-300 text-[11px]">${ownerLabel}</td>
+							<td class="p-2.5 font-sans text-slate-300 text-[11px]">${ownerLabel}${ownerNote}</td>
                           ${sec.hasUse ? `<td class="p-2.5">${useBadge}</td>` : ''}
                           ${sec.isPP ? `
                             <td class="p-2.5 text-center font-sans">
@@ -9974,14 +10028,26 @@ const liabSections = [
       const liabContainer = document.getElementById('liabilitiesCategorizedTables');
       if (liabContainer) {
 		liabContainer.innerHTML = liabSections.map(sec => {
-          const totalEUR = sec.items.map(l => loanForEngine(l)).reduce((s, l) => {
+          const saldoDe = (lista) => lista.map(l => loanForEngine(l)).reduce((s, l) => {
             const a = calculateLoanAmortizationExact(l.initialPrincipal, l.interestRatePct, l.durationMonths, l.startDate, START_YEAR, new Date().getMonth() + 1, l.monthlyPayment, l.currency, !!l.noMonthlyPayment);
             return s + a.balance;
           }, 0);
+          // Mismo criterio que los activos: sin pareja, la hipoteca de un inmueble de P2 no cuenta y la
+          // de uno conjunto cuenta la mitad (las deudas sin vínculo cuentan enteras).
+          const brutoEUR = saldoDe(sec.items);
+          const enPlanLoans = sec.items.filter(l => {
+            const prop = (!hasPartner && l.propertyLink) ? assetsData.find(a => a.id === l.propertyLink) : null;
+            return !prop || enPlan(prop);
+          });
+          const totalEUR = saldoDe(enPlanLoans.map(l => soloScaleLoan(l, assetsData)));
+          const difiere = Math.abs(brutoEUR - totalEUR) > 0.5;
+          const totalTxt = difiere
+            ? `<span title="Cuenta en el plan ${fmt(totalEUR)} de ${fmt(brutoEUR)} en bruto (sin pareja, la hipoteca de un inmueble de P2 no cuenta y la de uno conjunto cuenta al 50 %).">(${fmt(totalEUR)} <span class="text-[10px]">de ${fmt(brutoEUR)} bruto</span>)</span>`
+            : `(${fmt(totalEUR)})`;
           return `
             <div class="border border-brand-border rounded-xl bg-brand-card overflow-hidden">
               <div class="p-3.5 bg-brand-cardInner border-b border-brand-border flex justify-between items-center text-xs">
-                <strong class="text-white text-sm font-bold">${sec.title} <span class="font-normal font-mono text-brand-textMuted">(${fmt(totalEUR)})</span></strong>
+                <strong class="text-white text-sm font-bold">${sec.title} <span class="font-normal font-mono text-brand-textMuted">${totalTxt}</span></strong>
                 <button onclick="openAddDebtModal('${sec.key}')" class="text-xs text-brand-rose font-semibold hover:underline">+ Añadir</button>
               </div>
               <div class="overflow-x-auto scrollbar-thin">
@@ -10115,6 +10181,7 @@ function deleteAllAssets() {
       document.getElementById('modalAssetOpexPct').value = numParam('param_reOpex', 15.0);
       document.getElementById('modalAssetCategory').value = forcedCategory || 'stocks';
       document.getElementById('modalAssetOwner').value = 'p1';
+      preparaTitularSelect('modalAssetOwner', 'p1');
       document.getElementById('modalAssetCurrency').value = 'EUR';
       document.getElementById('modalAssetValue').value = '';
       document.getElementById('modalAssetCashReturn').value = '0';
@@ -10157,7 +10224,8 @@ function deleteAllAssets() {
       document.getElementById('modalAssetId').value = a.id;
       document.getElementById('modalAssetName').value = a.name;
       document.getElementById('modalAssetCategory').value = a.category;
-      document.getElementById('modalAssetOwner').value = a.owner || 'joint';
+      document.getElementById('modalAssetOwner').value = a.owner || titularPorDefecto();
+      preparaTitularSelect('modalAssetOwner', document.getElementById('modalAssetOwner').value);
       document.getElementById('modalAssetCurrency').value = a.currency || 'EUR';
       document.getElementById('modalAssetValue').value = a.value;
       document.getElementById('modalAssetGrams').value = (a.category === 'gold' && a.grams > 0) ? a.grams : '';
@@ -12549,9 +12617,9 @@ function copyShareUrl() {
       <span>Ayuda</span>
     </button>
     <span class="text-slate-600">•</span>
-    <a href="https://pacolucena.com/balance" target="_blank" class="flex items-center gap-1.5 underline hover:text-white transition">
+    <a href="https://pacolucena.com/balance" target="_blank" title="Balance Personal: la herramienta hermana, para medir tu patrimonio" class="flex items-center gap-1.5 underline hover:text-white transition">
       <span>🔗</span>
-      <span>Compartir Balance Personal</span>
+      <span>Balance Personal</span>
     </a>
   </div>
 </footer>

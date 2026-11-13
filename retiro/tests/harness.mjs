@@ -76,3 +76,15 @@ export async function capturePdf(page) {
     });
   });
 }
+
+// Espera a que importData termine, sea cual sea el resultado: siempre acaba en un alert (éxito,
+// aviso o error), así que ese diálogo es la señal real de que ya acabó. Una espera fija de 2,5 s
+// fallaba con la máquina cargada (la lectura del fichero y applyStateObject tardan más) y
+// sobraba cuando no lo estaba. `dialogos` es el array que rellena el onDialog de la suite.
+export async function esperaDialogo(page, dialogos, { tope = 15000 } = {}) {
+  const t0 = Date.now();
+  while (dialogos.length === 0) {
+    if (Date.now() - t0 > tope) throw new AssertionFailed(`importData no mostró ningún diálogo en ${tope} ms`);
+    await page.waitForTimeout(25);
+  }
+}

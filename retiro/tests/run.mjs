@@ -5,7 +5,7 @@
 import { readdirSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
-import { open, assert, near, capturePdf, AssertionFailed } from './harness.mjs';
+import { open, assert, near, capturePdf, esperaDialogo, AssertionFailed } from './harness.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const onlyIdx = process.argv.indexOf('--only');
@@ -26,7 +26,7 @@ for (const f of files) {
   process.stdout.write(`${f.padEnd(34)} `);
   try {
     const mod = await import(pathToFileURL(path.join(HERE, 'suites', f)).href);
-    const summary = await mod.default({ open, assert, near, capturePdf });
+    const summary = await mod.default({ open, assert, near, capturePdf, esperaDialogo });
     console.log(`OK   ${((Date.now() - t1) / 1000).toFixed(1)}s  ${summary || ''}`);
   } catch (e) {
     failed++;

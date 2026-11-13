@@ -1,6 +1,6 @@
 // Segunda ronda de la revisión de noviembre de 2026. Cada bloque dice qué fallaba; todos se
 // escribieron antes que el arreglo y se vieron fallar con el código sin arreglar.
-export default async function run({ open, assert, near, capturePdf }) {
+export default async function run({ open, assert, near, capturePdf, esperaDialogo }) {
   const notas = [];
   const dialogos = [];
   const onDialog = async (d) => { dialogos.push(d.message()); await d.accept(); };
@@ -248,11 +248,11 @@ export default async function run({ open, assert, near, capturePdf }) {
       }, n);
       dialogos.length = 0;
       await page.setInputFiles('#fullBackupInput', { name: 'balance.txt', mimeType: 'text/plain', buffer: Buffer.from(await fichero(9)) });
-      await page.waitForTimeout(2500);
+      await esperaDialogo(page, dialogos);
       const aviso9 = dialogos.join(' | ');
       dialogos.length = 0;
       await page.setInputFiles('#fullBackupInput', { name: 'balance.txt', mimeType: 'text/plain', buffer: Buffer.from(await fichero(7)) });
-      await page.waitForTimeout(2500);
+      await esperaDialogo(page, dialogos);
       const aviso7 = dialogos.join(' | ');
       assert(/recort/i.test(aviso9) && /9/.test(aviso9), `un hogar de 9 no cabe y debe avisar del recorte: ${aviso9}`);
       assert(!/recort/i.test(aviso7), `un hogar de 7 sí cabe: ${aviso7}`);

@@ -4196,7 +4196,11 @@
       }
       // La comparación del enlace sustituye a la guardada, pasando por el mismo filtro que lo
       // guardado en el navegador: lo que no tenga la forma esperada se descarta.
+      // Un enlace nuevo (ver≥2) con cifras y sin comparación es un piso sin opciones: las que el
+      // visitante tuviera guardadas eran de su piso, y compararlas con el del enlace no tiene
+      // sentido. Los enlaces de antes no llevaban comparación, así que esos no las tocan.
       if (hayOpciones) OPCIONES = leerOpciones(decodificarOpciones(params.get(CLAVE_OPCIONES)));
+      else if (Object.keys(estado).length && (parseInt(params.get(CLAVE_VERSION), 10) || 1) >= 2) OPCIONES = [];
       // Se limpia la dirección: si no, recargar la página volvería a pisar lo que se cambie después.
       try { history.replaceState(null, '', location.pathname); } catch (e) {}
     }

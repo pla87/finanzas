@@ -86,44 +86,23 @@ body {
 }
 .manual-banner:hover { background-color: rgb(var(--brand-accent) / .16); }
 .manual-banner:hover .manual-banner-text { text-decoration: underline; }
-/* La cenefa cruza la pantalla de esquina a esquina: el ángulo es el de la diagonal de la
-   ventana (atan2 del alto y el ancho), con -60° de reserva para navegadores sin atan2. Es
-   más larga que la diagonal para que sus extremos queden siempre fuera de la pantalla.
-   pointer-events: none deja tocar lo que hay debajo; solo avisa, no bloquea.
-   En el móvil se movía al hacer scroll rápido. La causa: la caja era `inset: 0`, o sea tan
-   alta como la ventana visible, y esa altura cambia cada vez que la barra de direcciones se
-   esconde o reaparece al desplazarse; con ella cambiaban el centro (top: 50%) y el ángulo
-   (atan2 de un alto que cambiaba), y la cenefa daba saltos
-   mientras el navegador repintaba una pieza girada y semitransparente en cada fotograma.
-   Ahora la caja tiene un tamaño fijo en píxeles (--ribbon-w y --ribbon-h, que pone el
-   guion de la cabecera con el alto GRANDE de la ventana y solo vuelve a calcular cuando
-   cambia el ancho, es decir al girar el teléfono) y va en su propia capa de composición,
-   así que el scroll ya no la toca: la tarjeta gráfica la deja donde está. Hasta que corre el
-   guion valen 100vw y 100vh. `contain: strict` impide además que nada de dentro o de fuera
-   obligue a recalcular su maquetación. */
+/* Aviso de móvil: una línea fina pegada abajo, solo por debajo de 640 px. */
 .mobile-ribbon { display: none; }
 @media (max-width: 639px) {
   .mobile-ribbon {
-    display: block; position: fixed; top: 0; left: 0; z-index: 9998;
-    width: var(--ribbon-w, 100vw); height: var(--ribbon-h, 100vh);
-    pointer-events: none; overflow: hidden; contain: strict;
-    transform: translateZ(0); will-change: transform;
-    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 9998;
+    pointer-events: none; text-align: center;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  /* Pendiente del 50 % (atan 0,5 = 26,57°): menos inclinada que la diagonal de la pantalla.
-     La franja cruza el centro de lado a lado, así que su largo útil es el ancho entre el coseno
-     del ángulo (×1,118). El texto se parte en dos líneas dentro de ese largo, con 1,5 rem de
-     margen por cada lado para que ninguna letra quede fuera de la pantalla, y el fondo sigue
-     2 rem más por cada punta para que los extremos no dejen un hueco al cortar el borde. */
+  /* Antes era una franja diagonal roja de lado a lado que tapaba los indicadores de arriba. Ahora
+     es una línea fina abajo, translúcida: avisa igual sin esconder nada. El cuerpo deja su alto
+     libre al final para que el último contenido no quede debajo. */
+  body { padding-bottom: 1.75rem; }
   .mobile-ribbon > span {
-    position: absolute; top: 50%; left: 50%; box-sizing: border-box;
-    width: calc(112vw + 4rem); width: calc(var(--ribbon-w, 100vw) * 1.118 + 4rem);
-    transform: translate(-50%, -50%) rotate(-26.565deg);
-    padding: .5rem 3.5rem; text-align: center; white-space: normal; line-height: 1.35;
-    background-color: rgb(225 29 72 / .88); color: #ffffff;
-    border-top: 2px solid rgb(255 255 255 / .6); border-bottom: 2px solid rgb(255 255 255 / .6);
-    font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
-    box-shadow: 0 4px 18px rgb(0 0 0 / .35);
+    display: block; padding: .3rem 1rem; line-height: 1.2;
+    background-color: rgb(225 29 72 / .78); color: #ffffff;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
   }
 }
 .manual-cta {

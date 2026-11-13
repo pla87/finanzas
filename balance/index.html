@@ -21,36 +21,6 @@
         } catch (e) {}
       })();
     </script>
-    <script>
-      // Tamaño fijo para la cenefa de móvil (.mobile-ribbon). Si siguiera a la ventana visible, se
-      // movería cada vez que la barra de direcciones del navegador se esconde o reaparece al hacer
-      // scroll, que es justo lo que se veía. Se toma el alto GRANDE de la ventana (100lvh: con la
-      // barra escondida), para que la cenefa llegue al borde de abajo en los dos estados, y solo
-      // se vuelve a calcular si cambia el ancho, que en un teléfono quiere decir que se ha girado.
-      // Los cambios que solo tocan el alto —la barra, el teclado— no la mueven. Va en una variable
-      // CSS de <html> y no en el elemento, para valer antes de que exista la cenefa.
-      (function () {
-        var raiz = document.documentElement;
-        var anchoFijado = -1;
-        function altoGrande() {
-          var sonda = document.createElement('div');
-          sonda.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none';
-          raiz.appendChild(sonda);
-          var alto = sonda.offsetHeight;
-          raiz.removeChild(sonda);
-          return Math.max(alto, window.innerHeight || 0, raiz.clientHeight || 0);
-        }
-        function fijarCenefa() {
-          var ancho = raiz.clientWidth || window.innerWidth;
-          if (!ancho || ancho === anchoFijado) return;
-          anchoFijado = ancho;
-          raiz.style.setProperty('--ribbon-w', ancho + 'px');
-          raiz.style.setProperty('--ribbon-h', altoGrande() + 'px');
-        }
-        fijarCenefa();
-        window.addEventListener('resize', fijarCenefa);
-      })();
-    </script>
     <title>Balance Personal — Calcula tu patrimonio neto y tu nivel FIRE</title>
     <meta name="description" content="Calculadora gratuita de patrimonio neto: activos, deudas, impuesto sobre el patrimonio y qué parte de tu vida pagan tus activos. Sin registro." />
     <link rel="canonical" href="https://pacolucena.com/balance/" />

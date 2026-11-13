@@ -154,7 +154,8 @@ export function wealthTaxDue({
   const cuotaAutonomica = cuotaIntegra * (1 - bonificacion / 100);
 
   // El impuesto de solidaridad no se bonifica: lo que ahorra la comunidad se
-  // lo lleva el Estado a partir de tres millones. También es por contribuyente,
+  // lo lleva el Estado cuando la base de solidaridad pasa de tres millones
+  // (3,7 de patrimonio computable, por los 700.000 € que resta). También es por contribuyente,
   // así que el umbral de los tres millones es el de cada uno.
   // Su base es el patrimonio computable menos 700.000 € siempre: usar el mínimo
   // de la comunidad le daba una base distinta en Cataluña (500.000) o Baleares

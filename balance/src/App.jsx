@@ -28,6 +28,10 @@ import {
   clampParam,
   PARAM_LIMITS,
   MAX_CONTRIBUYENTES,
+  MAX_MIEMBROS,
+  miembrosDelHogar,
+  leerExtrasDeRetiro,
+  conRendimientosCalculados,
   restoreDeleted,
   listaDeObjetos
 } from './lib/finance.js';
@@ -352,7 +356,7 @@ function App() {
   }, []);
   
   const [selectedCountry, setSelectedCountry] = useState(() => localStorage.getItem('fire_country_v14') || 'es_urban');
-  const [familyMembers, setFamilyMembers] = useState(() => Number(localStorage.getItem('fire_members_v14')) || 2);
+  const [familyMembers, setFamilyMembers] = useState(() => miembrosDelHogar(localStorage.getItem('fire_members_v14') || 2));
   
   useEffect(() => { localStorage.setItem('fire_country_v14', selectedCountry); }, [selectedCountry]);
   useEffect(() => { localStorage.setItem('fire_members_v14', String(familyMembers)); }, [familyMembers]);
@@ -368,6 +372,14 @@ function App() {
       else localStorage.removeItem('fire_household_detail_v1');
     } catch (e) { /* almacenamiento no disponible: solo se pierde la comodidad */ }
   }, [householdDetail]);
+
+  // Lo que Retiro guarda en `macro` y en `familyExpenses` y Balance no usa (edades de retiro,
+  // comunidad, educación, alquiler imputado...). Se devuelve al exportar, como el detalle del hogar.
+  const [retiroExtras, setRetiroExtras] = useState(() => leerExtrasDeRetiro(safeParse('fire_retiro_extras_v1', null)));
+  useEffect(() => {
+    try { localStorage.setItem('fire_retiro_extras_v1', JSON.stringify(retiroExtras)); }
+    catch (e) { /* almacenamiento no disponible: solo se pierde la comodidad */ }
+  }, [retiroExtras]);
 
   const [expenses, setExpenses] = useState(() => {
     const parsed = safeParse('v14_expenses', {
@@ -543,6 +555,9 @@ function App() {
     setMacroParams(DEFAULT_MACRO_PARAMS);
     setSelectedCountry('es_urban');
     setFamilyMembers(2);
+    // Lo que trajo un fichero de Retiro (pareja, hijos, claves ajenas) no es del ejemplo.
+    setHouseholdDetail(null);
+    setRetiroExtras(leerExtrasDeRetiro(null));
     setExpensesSample('es_urban');
     setPendingUndo(null);
     setDataFeedbackMsg({ type: 'success', text: t.restore_sample_done });
@@ -723,7 +738,7 @@ const handleExportPDF = () => {
   const handleExportData = () => {
     const exportObject = buildExportPayload({
       assets, liabilities, expenses, macroParams,
-      baseCurrency, selectedCountry, familyMembers, householdDetail, exchangeRates
+      baseCurrency, selectedCountry, familyMembers, householdDetail, retiroExtras, exchangeRates
     });
 
     const jsonString = JSON.stringify(exportObject, null, 2);
@@ -810,6 +825,9 @@ const applyImportPreview = () => {
     if (next.expenses) setExpenses(convertExpensesToBase(next.expenses, next.baseCurrency, baseCurrency, exchangeRates));
     // Lo que viene de un fichero se da por propio, aunque coincida con una media.
     setExpensesSample(null);
+    // Las claves ajenas se reemplazan sección a sección, igual que lo propio: un fichero con
+    // `macro` trae las suyas y se llevan las del anterior.
+    if (next.retiroExtras) setRetiroExtras(prev => ({ ...prev, ...next.retiroExtras }));
 
     setImportPreview(null);
     if (next.currencyConversions?.length) setCurrencyNotice(next.currencyConversions);
@@ -1414,9 +1432,15 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
             </Tooltip>
             <div className={`text-xl sm:text-2xl font-extrabold ${themeClasses.textTitle} mt-1`}>{formatCurrencyCompact(calculations.netWorth)}</div>
             <Tooltip text={t.tt_roe}>
-              <span className={`text-[11px] sm:text-xs font-bold font-sans ${calculations.roe < 0 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                {calculations.roe < 0 ? '▼' : '▲'} ROE {formatNumber(calculations.roe)}% {t.kpi_roe_suffix}
-              </span>
+              {/* Con patrimonio neto negativo o nulo el ROE no existe (el motor lo deja en 0): un
+                  «▲ 0 %» en verde decía que todo iba bien justo cuando no se puede medir. */}
+              {calculations.netWorth > 0 ? (
+                <span className={`text-[11px] sm:text-xs font-bold font-sans ${calculations.roe < 0 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                  {calculations.roe < 0 ? '▼' : '▲'} ROE {formatNumber(calculations.roe)}% {t.kpi_roe_suffix}
+                </span>
+              ) : (
+                <span className={`text-[11px] sm:text-xs font-bold font-sans ${themeClasses.textMuted}`}>ROE — {t.kpi_roe_suffix}</span>
+              )}
             </Tooltip>
           </div>
 
@@ -1695,7 +1719,9 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                                   </td>
                                 </tr>
                               ) : (
-                                secAssets.map((a, aIdx) => {
+                                secAssets.map((aGuardado, aIdx) => {
+                                  // Los rendimientos de un inmueble salen del cálculo, como en el motor.
+                                  const a = conRendimientosCalculados(aGuardado, macroParams);
                                   const cashReturnAmount = Math.round(assetAnnualCashflow(a, macroParams, calculations.effectiveSavingsRatePct).net);
                                   return (
                                     <tr
@@ -2311,6 +2337,8 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                     <input
                         type="number"
                         min="1"
+                        max={MAX_MIEMBROS}
+                        step="1"
                         value={familyMembers === '' ? '' : familyMembers}
                         onChange={e => {
                           const val = e.target.value;
@@ -2320,7 +2348,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                             setFamilyMembers('');
                           } else {
                             const n = parseInt(val, 10);
-                            if (!isNaN(n)) setFamilyMembers(Math.max(1, n));
+                            if (!isNaN(n)) setFamilyMembers(miembrosDelHogar(n));
                           }
                         }}
                         onBlur={() => {
@@ -3722,7 +3750,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                   <div className="text-right border-0">
                     <div className="text-base font-black text-slate-900 font-mono border-0">{formatCurrency(calculations.netWorth)}</div>
                     <div className="text-[9.5px] font-bold border-0">
-                      <span className="pdf-green">ROE {formatNumber(calculations.roe)}%</span>
+                      <span className={calculations.netWorth > 0 ? 'pdf-green' : 'pdf-muted'}>ROE {calculations.netWorth > 0 ? `${formatNumber(calculations.roe)}%` : '—'}</span>
                       <span className="pdf-muted"> | </span>
                       <span className={ltvColorClass}>LTV {formatNumber(calculations.ltv, 1)}% ({calculations.ltv < 40 ? t.ltv_healthy_short : calculations.ltv <= 60 ? t.ltv_moderate_short : t.ltv_high_short})</span>
                     </div>
@@ -3769,7 +3797,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                       </tr>
                     </thead>
                     <tbody>
-                      {assets.map(a => (
+                      {assets.map(aGuardado => { const a = conRendimientosCalculados(aGuardado, macroParams); return (
                         <tr key={a.id}>
                           <td className="font-medium">
                             {a.name}
@@ -3791,7 +3819,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                           </td>                              <td className="text-right font-mono pdf-sky">{formatNumber(a.useReturnPct)}%</td>
                           <td className="text-right font-mono pdf-purple">{formatNumber(a.capitalReturnPct)}%</td>
                         </tr>
-                      ))}
+                      ); })}
                     </tbody>
                   </table>
                 </div>
@@ -5058,7 +5086,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
                 // el aviso dice qué, para no asustar ni engañar.
                 const nx = importPreview.next;
                 if (nx.assets && nx.liabilities && nx.expenses) return t.import_preview_warning;
-                const lista = [nx.assets && t.tab_assets, nx.liabilities && t.tab_liabilities, nx.expenses && t.tab_expenses, nx.macroParams && t.tab_params]
+                const lista = [nx.assets && t.tab_assets, nx.liabilities && t.tab_liabilities, nx.expenses && t.tab_expenses, nx.macroParams && t.tab_params, nx.familyMembers !== undefined && t.family_members]
                   .filter(Boolean).map(x => x.toLowerCase());
                 const texto = lista.length > 1 ? lista.slice(0, -1).join(', ') + t.import_sep_and + lista[lista.length - 1] : (lista[0] || '—');
                 return t.import_preview_warning_partial.replace('{list}', texto);
@@ -5593,7 +5621,7 @@ const shareUrl = typeof window !== 'undefined' ? window.location.href.split('#')
         <div
           role="status"
           aria-live="polite"
-          className="fixed inset-x-0 bottom-0 z-50 p-3 pointer-events-none flex justify-center"
+          className="toast-sobre-cenefa fixed inset-x-0 bottom-0 z-50 p-3 pointer-events-none flex justify-center"
         >
           <div className={`pointer-events-auto max-w-md w-full flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl text-xs font-sans ${themeClasses.modalBg}`}>
             <span className={`flex-1 ${themeClasses.textTitle}`}>{pendingUndo.message}</span>
